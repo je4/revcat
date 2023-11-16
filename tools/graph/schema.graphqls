@@ -1,0 +1,85 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+type KeyValue {
+  key: String!
+  value: String!
+}
+
+type Media {
+  name: String!
+  mimetype: String!
+  pronom: String
+  type: String!
+  uri: String!
+  orientation: Int
+  fulltext: String
+  width: Int
+  height: Int
+  length: Int
+}
+
+type MediaList {
+  name: String!
+  items: [Media!]!
+}
+
+type MediathekEntry {
+    id: ID!
+  signature: String!
+  signatureOriginal: String!
+  source: String!
+  title: String!
+  series: String
+  place: String
+  date: String
+  category: [String!]
+  tags: [String!]
+  notes: [String!]
+  url: String
+  abstract: String
+  references: [MediathekEntry!]
+  publisher: String
+  rights: String
+  license: String
+  type: String
+  extra: [KeyValue!]
+  media: [MediaList!]
+}
+
+type FacetValue {
+  valStr: String
+  valInt: Int
+  count: Int!
+}
+
+type Facet {
+  key: String!
+  values: [FacetValue!]!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: String!
+  endCursor: String!
+}
+
+type SearchResult {
+  totalCount: Int!
+  pageInfo: PageInfo!
+  edges: [MediathekEntry!]!
+  facets: [Facet!]!
+}
+
+input FacetInput {
+  key: String!
+  valuesString: [String!]
+  ValuesInt: [Int!]
+}
+
+type Query {
+  search(query: String!, facets: [FacetInput!], first: Int, after: String, last: Int, before: String): SearchResult!
+  mediathekEntries(signatures: [String!]!): [MediathekEntry!]
+}

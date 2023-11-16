@@ -1,0 +1,36 @@
+query MediathekEntries($signatures: [String!]!) {
+    mediathekEntries(signatures: $signatures) {
+        id
+        signature
+        source
+        title
+        series
+        place
+        date
+        category
+        tags
+        notes
+        url
+        abstract
+        publisher
+        rights
+        license
+        type
+        extra {
+            key
+            value
+        }
+        media {
+            name
+            items {
+                name
+                mimetype
+                pronom
+                type
+                uri
+                orientation
+            }
+        }
+        __typename
+    }
+}

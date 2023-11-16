@@ -1,0 +1,18 @@
+model:
+  package: client
+  filename: ./client/models_gen.go # https://github.com/99designs/gqlgen/tree/master/plugin/modelgen
+client:
+  package: client
+  filename: ./client/client.go # Where should any generated client go?
+models:
+  Int:
+    model: github.com/99designs/gqlgen/graphql.Int64
+  Date:
+    model: github.com/99designs/gqlgen/graphql.Time
+schema:
+  - "graph/**/*.graphqls" # Where are all the schema files located?
+query:
+  - "./graph/*.graphql" # Where are all the query files located?
+generate:
+  clientV2: true # Generate a Client that provides a new signature
+  clientInterfaceName: "RevCatGraphQLClient" # Determine the name of the generated client interface

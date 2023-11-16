@@ -1,0 +1,11 @@
+logfile = ""
+loglevel = "DEBUG"
+
+localaddr = "localhost:8443"
+externaladdr = "https://localhost:8443/graphql"
+
+[elasticsearch]
+# endpoint = ["http://localhost:9201", "http://localhost:9200"]
+endpoint = ["https://elastic.med.campusderkuenste.ch/"]
+index = "fhnw_ink"
+apikey = "%%ELASTIC_APIKEY%%"
