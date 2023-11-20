@@ -12,6 +12,7 @@ import (
 )
 
 type SourceData struct {
+	ID                string               `json:"-"`
 	Signature         string               `json:"signature"`
 	SignatureOriginal string               `json:"signatureoriginal"`
 	Source            string               `json:"source"`

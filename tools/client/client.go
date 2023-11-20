@@ -3,12 +3,14 @@
 package client
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/Yamashou/gqlgenc/clientv2"
 )
 
 type RevCatGraphQLClient interface {
+	MediathekEntries(ctx context.Context, signatures []string, interceptors ...clientv2.RequestInterceptor) (*MediathekEntries, error)
 }
 
 type Client struct {
@@ -20,8 +22,403 @@ func NewClient(cli *http.Client, baseURL string, options *clientv2.Options, inte
 }
 
 type Query struct {
-	Search           SearchResult      "json:\"search\" graphql:\"search\""
-	MediathekEntries []*MediathekEntry "json:\"mediathekEntries,omitempty\" graphql:\"mediathekEntries\""
+	Search           SearchResult          "json:\"search\" graphql:\"search\""
+	MediathekEntries []*MediathekFullEntry "json:\"mediathekEntries,omitempty\" graphql:\"mediathekEntries\""
+}
+type MediathekBaseFragment struct {
+	Signature  string               "json:\"signature\" graphql:\"signature\""
+	Source     string               "json:\"source\" graphql:\"source\""
+	Title      string               "json:\"title\" graphql:\"title\""
+	Series     *string              "json:\"series,omitempty\" graphql:\"series\""
+	Place      *string              "json:\"place,omitempty\" graphql:\"place\""
+	Date       *string              "json:\"date,omitempty\" graphql:\"date\""
+	Category   []string             "json:\"category,omitempty\" graphql:\"category\""
+	Tags       []string             "json:\"tags,omitempty\" graphql:\"tags\""
+	URL        *string              "json:\"url,omitempty\" graphql:\"url\""
+	Publisher  *string              "json:\"publisher,omitempty\" graphql:\"publisher\""
+	Rights     *string              "json:\"rights,omitempty\" graphql:\"rights\""
+	License    *string              "json:\"license,omitempty\" graphql:\"license\""
+	Type       *string              "json:\"type,omitempty\" graphql:\"type\""
+	Poster     *MediaItemFragment   "json:\"poster,omitempty\" graphql:\"poster\""
+	References []*ReferenceFragment "json:\"references,omitempty\" graphql:\"references\""
 }
 
-var DocumentOperationNames = map[string]string{}
+func (t *MediathekBaseFragment) GetSignature() string {
+	if t == nil {
+		t = &MediathekBaseFragment{}
+	}
+	return t.Signature
+}
+func (t *MediathekBaseFragment) GetSource() string {
+	if t == nil {
+		t = &MediathekBaseFragment{}
+	}
+	return t.Source
+}
+func (t *MediathekBaseFragment) GetTitle() string {
+	if t == nil {
+		t = &MediathekBaseFragment{}
+	}
+	return t.Title
+}
+func (t *MediathekBaseFragment) GetSeries() *string {
+	if t == nil {
+		t = &MediathekBaseFragment{}
+	}
+	return t.Series
+}
+func (t *MediathekBaseFragment) GetPlace() *string {
+	if t == nil {
+		t = &MediathekBaseFragment{}
+	}
+	return t.Place
+}
+func (t *MediathekBaseFragment) GetDate() *string {
+	if t == nil {
+		t = &MediathekBaseFragment{}
+	}
+	return t.Date
+}
+func (t *MediathekBaseFragment) GetCategory() []string {
+	if t == nil {
+		t = &MediathekBaseFragment{}
+	}
+	return t.Category
+}
+func (t *MediathekBaseFragment) GetTags() []string {
+	if t == nil {
+		t = &MediathekBaseFragment{}
+	}
+	return t.Tags
+}
+func (t *MediathekBaseFragment) GetURL() *string {
+	if t == nil {
+		t = &MediathekBaseFragment{}
+	}
+	return t.URL
+}
+func (t *MediathekBaseFragment) GetPublisher() *string {
+	if t == nil {
+		t = &MediathekBaseFragment{}
+	}
+	return t.Publisher
+}
+func (t *MediathekBaseFragment) GetRights() *string {
+	if t == nil {
+		t = &MediathekBaseFragment{}
+	}
+	return t.Rights
+}
+func (t *MediathekBaseFragment) GetLicense() *string {
+	if t == nil {
+		t = &MediathekBaseFragment{}
+	}
+	return t.License
+}
+func (t *MediathekBaseFragment) GetType() *string {
+	if t == nil {
+		t = &MediathekBaseFragment{}
+	}
+	return t.Type
+}
+func (t *MediathekBaseFragment) GetPoster() *MediaItemFragment {
+	if t == nil {
+		t = &MediathekBaseFragment{}
+	}
+	return t.Poster
+}
+func (t *MediathekBaseFragment) GetReferences() []*ReferenceFragment {
+	if t == nil {
+		t = &MediathekBaseFragment{}
+	}
+	return t.References
+}
+
+type NoteFragment struct {
+	Title *string "json:\"title,omitempty\" graphql:\"title\""
+	Text  string  "json:\"text\" graphql:\"text\""
+}
+
+func (t *NoteFragment) GetTitle() *string {
+	if t == nil {
+		t = &NoteFragment{}
+	}
+	return t.Title
+}
+func (t *NoteFragment) GetText() string {
+	if t == nil {
+		t = &NoteFragment{}
+	}
+	return t.Text
+}
+
+type ReferenceFragment struct {
+	Type      *string "json:\"type,omitempty\" graphql:\"type\""
+	Title     *string "json:\"title,omitempty\" graphql:\"title\""
+	Signature string  "json:\"signature\" graphql:\"signature\""
+}
+
+func (t *ReferenceFragment) GetType() *string {
+	if t == nil {
+		t = &ReferenceFragment{}
+	}
+	return t.Type
+}
+func (t *ReferenceFragment) GetTitle() *string {
+	if t == nil {
+		t = &ReferenceFragment{}
+	}
+	return t.Title
+}
+func (t *ReferenceFragment) GetSignature() string {
+	if t == nil {
+		t = &ReferenceFragment{}
+	}
+	return t.Signature
+}
+
+type MediaItemFragment struct {
+	Name        string  "json:\"name\" graphql:\"name\""
+	Mimetype    string  "json:\"mimetype\" graphql:\"mimetype\""
+	Pronom      *string "json:\"pronom,omitempty\" graphql:\"pronom\""
+	Type        string  "json:\"type\" graphql:\"type\""
+	URI         string  "json:\"uri\" graphql:\"uri\""
+	Orientation int64   "json:\"orientation\" graphql:\"orientation\""
+}
+
+func (t *MediaItemFragment) GetName() string {
+	if t == nil {
+		t = &MediaItemFragment{}
+	}
+	return t.Name
+}
+func (t *MediaItemFragment) GetMimetype() string {
+	if t == nil {
+		t = &MediaItemFragment{}
+	}
+	return t.Mimetype
+}
+func (t *MediaItemFragment) GetPronom() *string {
+	if t == nil {
+		t = &MediaItemFragment{}
+	}
+	return t.Pronom
+}
+func (t *MediaItemFragment) GetType() string {
+	if t == nil {
+		t = &MediaItemFragment{}
+	}
+	return t.Type
+}
+func (t *MediaItemFragment) GetURI() string {
+	if t == nil {
+		t = &MediaItemFragment{}
+	}
+	return t.URI
+}
+func (t *MediaItemFragment) GetOrientation() int64 {
+	if t == nil {
+		t = &MediaItemFragment{}
+	}
+	return t.Orientation
+}
+
+type MediaListFragment struct {
+	Name  string               "json:\"name\" graphql:\"name\""
+	Items []*MediaItemFragment "json:\"items\" graphql:\"items\""
+}
+
+func (t *MediaListFragment) GetName() string {
+	if t == nil {
+		t = &MediaListFragment{}
+	}
+	return t.Name
+}
+func (t *MediaListFragment) GetItems() []*MediaItemFragment {
+	if t == nil {
+		t = &MediaListFragment{}
+	}
+	return t.Items
+}
+
+type KeyValueFragment struct {
+	Key   string "json:\"key\" graphql:\"key\""
+	Value string "json:\"value\" graphql:\"value\""
+}
+
+func (t *KeyValueFragment) GetKey() string {
+	if t == nil {
+		t = &KeyValueFragment{}
+	}
+	return t.Key
+}
+func (t *KeyValueFragment) GetValue() string {
+	if t == nil {
+		t = &KeyValueFragment{}
+	}
+	return t.Value
+}
+
+type MediathekEntries_MediathekEntries struct {
+	ID             string                   "json:\"id\" graphql:\"id\""
+	Base           *MediathekBaseFragment   "json:\"base\" graphql:\"base\""
+	Notes          []*NoteFragment          "json:\"notes,omitempty\" graphql:\"notes\""
+	Abstract       *string                  "json:\"abstract,omitempty\" graphql:\"abstract\""
+	Extra          []*KeyValueFragment      "json:\"extra,omitempty\" graphql:\"extra\""
+	Media          []*MediaListFragment     "json:\"media,omitempty\" graphql:\"media\""
+	ReferencesFull []*MediathekBaseFragment "json:\"referencesFull,omitempty\" graphql:\"referencesFull\""
+	Typename       *string                  "json:\"__typename,omitempty\" graphql:\"__typename\""
+}
+
+func (t *MediathekEntries_MediathekEntries) GetID() string {
+	if t == nil {
+		t = &MediathekEntries_MediathekEntries{}
+	}
+	return t.ID
+}
+func (t *MediathekEntries_MediathekEntries) GetBase() *MediathekBaseFragment {
+	if t == nil {
+		t = &MediathekEntries_MediathekEntries{}
+	}
+	return t.Base
+}
+func (t *MediathekEntries_MediathekEntries) GetNotes() []*NoteFragment {
+	if t == nil {
+		t = &MediathekEntries_MediathekEntries{}
+	}
+	return t.Notes
+}
+func (t *MediathekEntries_MediathekEntries) GetAbstract() *string {
+	if t == nil {
+		t = &MediathekEntries_MediathekEntries{}
+	}
+	return t.Abstract
+}
+func (t *MediathekEntries_MediathekEntries) GetExtra() []*KeyValueFragment {
+	if t == nil {
+		t = &MediathekEntries_MediathekEntries{}
+	}
+	return t.Extra
+}
+func (t *MediathekEntries_MediathekEntries) GetMedia() []*MediaListFragment {
+	if t == nil {
+		t = &MediathekEntries_MediathekEntries{}
+	}
+	return t.Media
+}
+func (t *MediathekEntries_MediathekEntries) GetReferencesFull() []*MediathekBaseFragment {
+	if t == nil {
+		t = &MediathekEntries_MediathekEntries{}
+	}
+	return t.ReferencesFull
+}
+func (t *MediathekEntries_MediathekEntries) GetTypename() *string {
+	if t == nil {
+		t = &MediathekEntries_MediathekEntries{}
+	}
+	return t.Typename
+}
+
+type MediathekEntries struct {
+	MediathekEntries []*MediathekEntries_MediathekEntries "json:\"mediathekEntries,omitempty\" graphql:\"mediathekEntries\""
+}
+
+func (t *MediathekEntries) GetMediathekEntries() []*MediathekEntries_MediathekEntries {
+	if t == nil {
+		t = &MediathekEntries{}
+	}
+	return t.MediathekEntries
+}
+
+const MediathekEntriesDocument = `query MediathekEntries ($signatures: [String!]!) {
+	mediathekEntries(signatures: $signatures) {
+		id
+		base {
+			... MediathekBaseFragment
+		}
+		notes {
+			... NoteFragment
+		}
+		abstract
+		extra {
+			... KeyValueFragment
+		}
+		media {
+			... MediaListFragment
+		}
+		referencesFull {
+			... MediathekBaseFragment
+		}
+		__typename
+	}
+}
+fragment MediathekBaseFragment on MediathekBaseEntry {
+	signature
+	source
+	title
+	series
+	place
+	date
+	category
+	tags
+	url
+	publisher
+	rights
+	license
+	type
+	poster {
+		... MediaItemFragment
+	}
+	references {
+		... ReferenceFragment
+	}
+}
+fragment MediaItemFragment on Media {
+	name
+	mimetype
+	pronom
+	type
+	uri
+	orientation
+}
+fragment ReferenceFragment on Reference {
+	type
+	title
+	signature
+}
+fragment NoteFragment on Note {
+	title
+	text
+}
+fragment KeyValueFragment on KeyValue {
+	key
+	value
+}
+fragment MediaListFragment on MediaList {
+	name
+	items {
+		... MediaItemFragment
+	}
+}
+`
+
+func (c *Client) MediathekEntries(ctx context.Context, signatures []string, interceptors ...clientv2.RequestInterceptor) (*MediathekEntries, error) {
+	vars := map[string]interface{}{
+		"signatures": signatures,
+	}
+
+	var res MediathekEntries
+	if err := c.Client.Post(ctx, "MediathekEntries", MediathekEntriesDocument, &res, vars, interceptors...); err != nil {
+		if c.Client.ParseDataWhenErrors {
+			return &res, err
+		}
+
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+var DocumentOperationNames = map[string]string{
+	MediathekEntriesDocument: "MediathekEntries",
+}

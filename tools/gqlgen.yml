@@ -86,7 +86,9 @@ models:
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
 
-  MediathekEntry:
+
+  MediathekFullEntry:
     fields:
-      references:
+      referencesFull:
         resolver: true
+

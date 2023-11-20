@@ -13,11 +13,11 @@ type Media {
   pronom: String
   type: String!
   uri: String!
-  orientation: Int
+  orientation: Int!
   fulltext: String
-  width: Int
-  height: Int
-  length: Int
+  width: Int!
+  height: Int!
+  length: Int!
 }
 
 type MediaList {
@@ -25,25 +25,51 @@ type MediaList {
   items: [Media!]!
 }
 
-type MediathekEntry {
+type Person {
+  name: String!
+  role: String
+}
+
+type Note {
+    title: String
+    text: String!
+}
+
+type Reference {
+    type: String
+    title: String
+    signature: String!
+}
+
+type MediathekBaseEntry {
     id: ID!
-  signature: String!
-  signatureOriginal: String!
-  source: String!
-  title: String!
-  series: String
-  place: String
-  date: String
-  category: [String!]
-  tags: [String!]
-  notes: [String!]
-  url: String
+    signature: String!
+    signatureOriginal: String!
+    source: String!
+    title: String!
+    series: String
+    place: String
+    date: String
+    collectionTitle: String
+    person: [Person!]
+    catalog: [String!]
+    category: [String!]
+    tags: [String!]
+    url: String
+    publisher: String
+    rights: String
+    license: String
+    references: [Reference!]
+    type: String
+    poster: Media
+}
+
+type MediathekFullEntry {
+    id: ID!
+  base: MediathekBaseEntry!
+  notes: [Note!]
   abstract: String
-  references: [MediathekEntry!]
-  publisher: String
-  rights: String
-  license: String
-  type: String
+  referencesFull: [MediathekBaseEntry!]
   extra: [KeyValue!]
   media: [MediaList!]
 }
@@ -69,7 +95,7 @@ type PageInfo {
 type SearchResult {
   totalCount: Int!
   pageInfo: PageInfo!
-  edges: [MediathekEntry!]!
+  edges: [MediathekFullEntry!]!
   facets: [Facet!]!
 }
 
@@ -81,5 +107,5 @@ input FacetInput {
 
 type Query {
   search(query: String!, facets: [FacetInput!], first: Int, after: String, last: Int, before: String): SearchResult!
-  mediathekEntries(signatures: [String!]!): [MediathekEntry!]
+  mediathekEntries(signatures: [String!]!): [MediathekFullEntry!]
 }

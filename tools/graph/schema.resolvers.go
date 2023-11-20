@@ -6,17 +6,30 @@ package graph
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	emperror "emperror.dev/errors"
-	"github.com/je4/revcat/v2/pkg/sourcetype"
 	"github.com/je4/revcat/v2/tools/graph/model"
 )
 
-// References is the resolver for the references field.
-func (r *mediathekEntryResolver) References(ctx context.Context, obj *model.MediathekEntry) ([]*model.MediathekEntry, error) {
-	panic(fmt.Errorf("not implemented: References - references"))
+// ReferencesFull is the resolver for the referencesFull field.
+func (r *mediathekFullEntryResolver) ReferencesFull(ctx context.Context, obj *model.MediathekFullEntry) ([]*model.MediathekBaseEntry, error) {
+	var result = make([]*model.MediathekBaseEntry, 0)
+	var signatures = []string{}
+	for _, ref := range obj.Base.References {
+		signatures = append(signatures, ref.Signature)
+	}
+	if len(signatures) == 0 {
+		return result, nil
+	}
+	docs, err := loadEntries(ctx, r.elastic, r.index, signatures)
+	if err != nil {
+		return nil, emperror.Wrapf(err, "cannot load entries %v", signatures)
+	}
+	for _, doc := range docs {
+		result = append(result, sourceToMediathekBaseEntry(&doc))
+	}
+	return result, nil
 }
 
 // Search is the resolver for the search field.
@@ -25,80 +38,27 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 }
 
 // MediathekEntries is the resolver for the mediathekEntries field.
-func (r *queryResolver) MediathekEntries(ctx context.Context, signatures []string) ([]*model.MediathekEntry, error) {
-	result, err := r.elastic.Mget().Index(r.index).Ids(signatures...).Do(ctx)
+func (r *queryResolver) MediathekEntries(ctx context.Context, signatures []string) ([]*model.MediathekFullEntry, error) {
+	docs, err := loadEntries(ctx, r.elastic, r.index, signatures)
 	if err != nil {
-		return nil, emperror.Wrapf(err, "cannot load '%s' entries %v", r.index, signatures)
+		return nil, emperror.Wrapf(err, "cannot load entries %v", signatures)
 	}
-	entries := make([]*model.MediathekEntry, 0)
-	for _, docInt := range result.Docs {
-		doc, ok := docInt.(map[string]interface{})
-		if !ok {
-			return nil, emperror.Errorf("cannot convert doc %v to map", docInt)
-		}
-		if found, ok := doc["found"].(bool); !ok || !found {
-			return nil, emperror.Errorf("document %s not found", doc["id"])
-		}
-		id, ok := doc["_id"].(string)
-		if !ok {
-			return nil, emperror.Errorf("cannot convert doc id %v to string", doc["_id"])
-		}
-		sourceMap, ok := doc["_source"].(map[string]interface{})
-		if !ok {
-			return nil, emperror.Errorf("cannot convert doc source %v to map", doc["_source"])
-		}
-		jsonBytes, err := json.Marshal(sourceMap)
-		if err != nil {
-			return nil, emperror.Wrapf(err, "cannot marshal source %v", sourceMap)
-		}
-		source := sourcetype.SourceData{}
-		if err := json.Unmarshal(jsonBytes, &source); err != nil {
-			return nil, emperror.Wrapf(err, "cannot unmarshal source %v", source)
-		}
 
-		entry := &model.MediathekEntry{
-			ID:                id,
-			Signature:         source.Signature,
-			SignatureOriginal: source.SignatureOriginal,
-			Source:            source.Source,
-			Title:             source.Title,
-			Series:            &source.Series,
-			Place:             &source.Place,
-			Date:              &source.Date,
-			Category:          source.Category,
-			Tags:              source.Tags,
-			Notes:             nil,
-			URL:               &source.Url,
-			Abstract:          &source.Abstract,
-			References:        nil,
-			Publisher:         &source.Publisher,
-			Rights:            nil,
-			License:           nil,
-			Type:              nil,
-			Extra:             nil,
-			Media:             nil,
-		}
+	entries := make([]*model.MediathekFullEntry, 0)
+	for _, source := range docs {
+		entry := sourceToMediathekFullEntry(&source)
 		entries = append(entries, entry)
-		_ = source
-		_ = entry
-		_ = doc
-		_ = id
-		/*		if err := doc.Unmarshal(entry); err != nil {
-
-					return nil, errors.Wrapf(err, "cannot unmarshal document %s", doc.Id)
-				}
-				entries = append(entries, entry)
-
-		*/
 	}
 	return entries, nil
 }
 
-// MediathekEntry returns MediathekEntryResolver implementation.
-func (r *Resolver) MediathekEntry() MediathekEntryResolver { return &mediathekEntryResolver{r} }
+// MediathekFullEntry returns MediathekFullEntryResolver implementation.
+func (r *Resolver) MediathekFullEntry() MediathekFullEntryResolver {
+	return &mediathekFullEntryResolver{r}
+}
 
 // Query returns QueryResolver implementation.
 func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
-type mediathekEntryResolver struct{ *Resolver }
+type mediathekFullEntryResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

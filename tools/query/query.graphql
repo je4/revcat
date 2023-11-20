@@ -1,36 +1,76 @@
 query MediathekEntries($signatures: [String!]!) {
     mediathekEntries(signatures: $signatures) {
         id
-        signature
-        source
-        title
-        series
-        place
-        date
-        category
-        tags
-        notes
-        url
+        base {
+            ...MediathekBaseFragment
+        }
+        notes {
+            ...NoteFragment
+        }
         abstract
-        publisher
-        rights
-        license
-        type
         extra {
-            key
-            value
+            ...KeyValueFragment
         }
         media {
-            name
-            items {
-                name
-                mimetype
-                pronom
-                type
-                uri
-                orientation
-            }
+            ...MediaListFragment
+        }
+        referencesFull {
+            ...MediathekBaseFragment
         }
         __typename
     }
+}
+
+fragment MediathekBaseFragment on MediathekBaseEntry {
+    signature
+    source
+    title
+    series
+    place
+    date
+    category
+    tags
+    url
+    publisher
+    rights
+    license
+    type
+    poster {
+        ...MediaItemFragment
+    }
+    references {
+        ...ReferenceFragment
+    }
+}
+
+fragment NoteFragment on Note {
+    title
+    text
+}
+
+fragment ReferenceFragment on Reference {
+    type
+    title
+    signature
+}
+
+
+fragment MediaItemFragment on Media {
+        name
+        mimetype
+        pronom
+        type
+        uri
+        orientation
+}
+fragment MediaListFragment on MediaList {
+    name
+    items {
+        ...MediaItemFragment
+    }
+}
+
+fragment KeyValueFragment on KeyValue {
+    key
+    value
 }

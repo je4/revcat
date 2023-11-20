@@ -10,9 +10,9 @@ models:
   Date:
     model: github.com/99designs/gqlgen/graphql.Time
 schema:
-  - "graph/**/*.graphqls" # Where are all the schema files located?
+  - "graph/*.graphqls" # Where are all the schema files located?
 query:
-  - "./graph/*.graphql" # Where are all the query files located?
+  - "./query/*.graphql" # Where are all the query files located?
 generate:
   clientV2: true # Generate a Client that provides a new signature
   clientInterfaceName: "RevCatGraphQLClient" # Determine the name of the generated client interface

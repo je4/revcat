@@ -39,7 +39,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
-	MediathekEntry() MediathekEntryResolver
+	MediathekFullEntry() MediathekFullEntryResolver
 	Query() QueryResolver
 }
 
@@ -81,16 +81,16 @@ type ComplexityRoot struct {
 		Name  func(childComplexity int) int
 	}
 
-	MediathekEntry struct {
-		Abstract          func(childComplexity int) int
+	MediathekBaseEntry struct {
+		Catalog           func(childComplexity int) int
 		Category          func(childComplexity int) int
+		CollectionTitle   func(childComplexity int) int
 		Date              func(childComplexity int) int
-		Extra             func(childComplexity int) int
 		ID                func(childComplexity int) int
 		License           func(childComplexity int) int
-		Media             func(childComplexity int) int
-		Notes             func(childComplexity int) int
+		Person            func(childComplexity int) int
 		Place             func(childComplexity int) int
+		Poster            func(childComplexity int) int
 		Publisher         func(childComplexity int) int
 		References        func(childComplexity int) int
 		Rights            func(childComplexity int) int
@@ -104,6 +104,21 @@ type ComplexityRoot struct {
 		URL               func(childComplexity int) int
 	}
 
+	MediathekFullEntry struct {
+		Abstract       func(childComplexity int) int
+		Base           func(childComplexity int) int
+		Extra          func(childComplexity int) int
+		ID             func(childComplexity int) int
+		Media          func(childComplexity int) int
+		Notes          func(childComplexity int) int
+		ReferencesFull func(childComplexity int) int
+	}
+
+	Note struct {
+		Text  func(childComplexity int) int
+		Title func(childComplexity int) int
+	}
+
 	PageInfo struct {
 		EndCursor       func(childComplexity int) int
 		HasNextPage     func(childComplexity int) int
@@ -111,9 +126,20 @@ type ComplexityRoot struct {
 		StartCursor     func(childComplexity int) int
 	}
 
+	Person struct {
+		Name func(childComplexity int) int
+		Role func(childComplexity int) int
+	}
+
 	Query struct {
 		MediathekEntries func(childComplexity int, signatures []string) int
 		Search           func(childComplexity int, query string, facets []*model.FacetInput, first *int, after *string, last *int, before *string) int
+	}
+
+	Reference struct {
+		Signature func(childComplexity int) int
+		Title     func(childComplexity int) int
+		Type      func(childComplexity int) int
 	}
 
 	SearchResult struct {
@@ -124,12 +150,12 @@ type ComplexityRoot struct {
 	}
 }
 
-type MediathekEntryResolver interface {
-	References(ctx context.Context, obj *model.MediathekEntry) ([]*model.MediathekEntry, error)
+type MediathekFullEntryResolver interface {
+	ReferencesFull(ctx context.Context, obj *model.MediathekFullEntry) ([]*model.MediathekBaseEntry, error)
 }
 type QueryResolver interface {
 	Search(ctx context.Context, query string, facets []*model.FacetInput, first *int, after *string, last *int, before *string) (*model.SearchResult, error)
-	MediathekEntries(ctx context.Context, signatures []string) ([]*model.MediathekEntry, error)
+	MediathekEntries(ctx context.Context, signatures []string) ([]*model.MediathekFullEntry, error)
 }
 
 type executableSchema struct {
@@ -284,145 +310,208 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.MediaList.Name(childComplexity), true
 
-	case "MediathekEntry.abstract":
-		if e.complexity.MediathekEntry.Abstract == nil {
+	case "MediathekBaseEntry.catalog":
+		if e.complexity.MediathekBaseEntry.Catalog == nil {
 			break
 		}
 
-		return e.complexity.MediathekEntry.Abstract(childComplexity), true
+		return e.complexity.MediathekBaseEntry.Catalog(childComplexity), true
 
-	case "MediathekEntry.category":
-		if e.complexity.MediathekEntry.Category == nil {
+	case "MediathekBaseEntry.category":
+		if e.complexity.MediathekBaseEntry.Category == nil {
 			break
 		}
 
-		return e.complexity.MediathekEntry.Category(childComplexity), true
+		return e.complexity.MediathekBaseEntry.Category(childComplexity), true
 
-	case "MediathekEntry.date":
-		if e.complexity.MediathekEntry.Date == nil {
+	case "MediathekBaseEntry.collectionTitle":
+		if e.complexity.MediathekBaseEntry.CollectionTitle == nil {
 			break
 		}
 
-		return e.complexity.MediathekEntry.Date(childComplexity), true
+		return e.complexity.MediathekBaseEntry.CollectionTitle(childComplexity), true
 
-	case "MediathekEntry.extra":
-		if e.complexity.MediathekEntry.Extra == nil {
+	case "MediathekBaseEntry.date":
+		if e.complexity.MediathekBaseEntry.Date == nil {
 			break
 		}
 
-		return e.complexity.MediathekEntry.Extra(childComplexity), true
+		return e.complexity.MediathekBaseEntry.Date(childComplexity), true
 
-	case "MediathekEntry.id":
-		if e.complexity.MediathekEntry.ID == nil {
+	case "MediathekBaseEntry.id":
+		if e.complexity.MediathekBaseEntry.ID == nil {
 			break
 		}
 
-		return e.complexity.MediathekEntry.ID(childComplexity), true
+		return e.complexity.MediathekBaseEntry.ID(childComplexity), true
 
-	case "MediathekEntry.license":
-		if e.complexity.MediathekEntry.License == nil {
+	case "MediathekBaseEntry.license":
+		if e.complexity.MediathekBaseEntry.License == nil {
 			break
 		}
 
-		return e.complexity.MediathekEntry.License(childComplexity), true
+		return e.complexity.MediathekBaseEntry.License(childComplexity), true
 
-	case "MediathekEntry.media":
-		if e.complexity.MediathekEntry.Media == nil {
+	case "MediathekBaseEntry.person":
+		if e.complexity.MediathekBaseEntry.Person == nil {
 			break
 		}
 
-		return e.complexity.MediathekEntry.Media(childComplexity), true
+		return e.complexity.MediathekBaseEntry.Person(childComplexity), true
 
-	case "MediathekEntry.notes":
-		if e.complexity.MediathekEntry.Notes == nil {
+	case "MediathekBaseEntry.place":
+		if e.complexity.MediathekBaseEntry.Place == nil {
 			break
 		}
 
-		return e.complexity.MediathekEntry.Notes(childComplexity), true
+		return e.complexity.MediathekBaseEntry.Place(childComplexity), true
 
-	case "MediathekEntry.place":
-		if e.complexity.MediathekEntry.Place == nil {
+	case "MediathekBaseEntry.poster":
+		if e.complexity.MediathekBaseEntry.Poster == nil {
 			break
 		}
 
-		return e.complexity.MediathekEntry.Place(childComplexity), true
+		return e.complexity.MediathekBaseEntry.Poster(childComplexity), true
 
-	case "MediathekEntry.publisher":
-		if e.complexity.MediathekEntry.Publisher == nil {
+	case "MediathekBaseEntry.publisher":
+		if e.complexity.MediathekBaseEntry.Publisher == nil {
 			break
 		}
 
-		return e.complexity.MediathekEntry.Publisher(childComplexity), true
+		return e.complexity.MediathekBaseEntry.Publisher(childComplexity), true
 
-	case "MediathekEntry.references":
-		if e.complexity.MediathekEntry.References == nil {
+	case "MediathekBaseEntry.references":
+		if e.complexity.MediathekBaseEntry.References == nil {
 			break
 		}
 
-		return e.complexity.MediathekEntry.References(childComplexity), true
+		return e.complexity.MediathekBaseEntry.References(childComplexity), true
 
-	case "MediathekEntry.rights":
-		if e.complexity.MediathekEntry.Rights == nil {
+	case "MediathekBaseEntry.rights":
+		if e.complexity.MediathekBaseEntry.Rights == nil {
 			break
 		}
 
-		return e.complexity.MediathekEntry.Rights(childComplexity), true
+		return e.complexity.MediathekBaseEntry.Rights(childComplexity), true
 
-	case "MediathekEntry.series":
-		if e.complexity.MediathekEntry.Series == nil {
+	case "MediathekBaseEntry.series":
+		if e.complexity.MediathekBaseEntry.Series == nil {
 			break
 		}
 
-		return e.complexity.MediathekEntry.Series(childComplexity), true
+		return e.complexity.MediathekBaseEntry.Series(childComplexity), true
 
-	case "MediathekEntry.signature":
-		if e.complexity.MediathekEntry.Signature == nil {
+	case "MediathekBaseEntry.signature":
+		if e.complexity.MediathekBaseEntry.Signature == nil {
 			break
 		}
 
-		return e.complexity.MediathekEntry.Signature(childComplexity), true
+		return e.complexity.MediathekBaseEntry.Signature(childComplexity), true
 
-	case "MediathekEntry.signatureOriginal":
-		if e.complexity.MediathekEntry.SignatureOriginal == nil {
+	case "MediathekBaseEntry.signatureOriginal":
+		if e.complexity.MediathekBaseEntry.SignatureOriginal == nil {
 			break
 		}
 
-		return e.complexity.MediathekEntry.SignatureOriginal(childComplexity), true
+		return e.complexity.MediathekBaseEntry.SignatureOriginal(childComplexity), true
 
-	case "MediathekEntry.source":
-		if e.complexity.MediathekEntry.Source == nil {
+	case "MediathekBaseEntry.source":
+		if e.complexity.MediathekBaseEntry.Source == nil {
 			break
 		}
 
-		return e.complexity.MediathekEntry.Source(childComplexity), true
+		return e.complexity.MediathekBaseEntry.Source(childComplexity), true
 
-	case "MediathekEntry.tags":
-		if e.complexity.MediathekEntry.Tags == nil {
+	case "MediathekBaseEntry.tags":
+		if e.complexity.MediathekBaseEntry.Tags == nil {
 			break
 		}
 
-		return e.complexity.MediathekEntry.Tags(childComplexity), true
+		return e.complexity.MediathekBaseEntry.Tags(childComplexity), true
 
-	case "MediathekEntry.title":
-		if e.complexity.MediathekEntry.Title == nil {
+	case "MediathekBaseEntry.title":
+		if e.complexity.MediathekBaseEntry.Title == nil {
 			break
 		}
 
-		return e.complexity.MediathekEntry.Title(childComplexity), true
+		return e.complexity.MediathekBaseEntry.Title(childComplexity), true
 
-	case "MediathekEntry.type":
-		if e.complexity.MediathekEntry.Type == nil {
+	case "MediathekBaseEntry.type":
+		if e.complexity.MediathekBaseEntry.Type == nil {
 			break
 		}
 
-		return e.complexity.MediathekEntry.Type(childComplexity), true
+		return e.complexity.MediathekBaseEntry.Type(childComplexity), true
 
-	case "MediathekEntry.url":
-		if e.complexity.MediathekEntry.URL == nil {
+	case "MediathekBaseEntry.url":
+		if e.complexity.MediathekBaseEntry.URL == nil {
 			break
 		}
 
-		return e.complexity.MediathekEntry.URL(childComplexity), true
+		return e.complexity.MediathekBaseEntry.URL(childComplexity), true
+
+	case "MediathekFullEntry.abstract":
+		if e.complexity.MediathekFullEntry.Abstract == nil {
+			break
+		}
+
+		return e.complexity.MediathekFullEntry.Abstract(childComplexity), true
+
+	case "MediathekFullEntry.base":
+		if e.complexity.MediathekFullEntry.Base == nil {
+			break
+		}
+
+		return e.complexity.MediathekFullEntry.Base(childComplexity), true
+
+	case "MediathekFullEntry.extra":
+		if e.complexity.MediathekFullEntry.Extra == nil {
+			break
+		}
+
+		return e.complexity.MediathekFullEntry.Extra(childComplexity), true
+
+	case "MediathekFullEntry.id":
+		if e.complexity.MediathekFullEntry.ID == nil {
+			break
+		}
+
+		return e.complexity.MediathekFullEntry.ID(childComplexity), true
+
+	case "MediathekFullEntry.media":
+		if e.complexity.MediathekFullEntry.Media == nil {
+			break
+		}
+
+		return e.complexity.MediathekFullEntry.Media(childComplexity), true
+
+	case "MediathekFullEntry.notes":
+		if e.complexity.MediathekFullEntry.Notes == nil {
+			break
+		}
+
+		return e.complexity.MediathekFullEntry.Notes(childComplexity), true
+
+	case "MediathekFullEntry.referencesFull":
+		if e.complexity.MediathekFullEntry.ReferencesFull == nil {
+			break
+		}
+
+		return e.complexity.MediathekFullEntry.ReferencesFull(childComplexity), true
+
+	case "Note.text":
+		if e.complexity.Note.Text == nil {
+			break
+		}
+
+		return e.complexity.Note.Text(childComplexity), true
+
+	case "Note.title":
+		if e.complexity.Note.Title == nil {
+			break
+		}
+
+		return e.complexity.Note.Title(childComplexity), true
 
 	case "PageInfo.endCursor":
 		if e.complexity.PageInfo.EndCursor == nil {
@@ -452,6 +541,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PageInfo.StartCursor(childComplexity), true
 
+	case "Person.name":
+		if e.complexity.Person.Name == nil {
+			break
+		}
+
+		return e.complexity.Person.Name(childComplexity), true
+
+	case "Person.role":
+		if e.complexity.Person.Role == nil {
+			break
+		}
+
+		return e.complexity.Person.Role(childComplexity), true
+
 	case "Query.mediathekEntries":
 		if e.complexity.Query.MediathekEntries == nil {
 			break
@@ -475,6 +578,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Search(childComplexity, args["query"].(string), args["facets"].([]*model.FacetInput), args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+
+	case "Reference.signature":
+		if e.complexity.Reference.Signature == nil {
+			break
+		}
+
+		return e.complexity.Reference.Signature(childComplexity), true
+
+	case "Reference.title":
+		if e.complexity.Reference.Title == nil {
+			break
+		}
+
+		return e.complexity.Reference.Title(childComplexity), true
+
+	case "Reference.type":
+		if e.complexity.Reference.Type == nil {
+			break
+		}
+
+		return e.complexity.Reference.Type(childComplexity), true
 
 	case "SearchResult.edges":
 		if e.complexity.SearchResult.Edges == nil {
@@ -1290,11 +1414,14 @@ func (ec *executionContext) _Media_orientation(ctx context.Context, field graphq
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Media_orientation(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1372,11 +1499,14 @@ func (ec *executionContext) _Media_width(ctx context.Context, field graphql.Coll
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Media_width(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1413,11 +1543,14 @@ func (ec *executionContext) _Media_height(ctx context.Context, field graphql.Col
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Media_height(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1454,11 +1587,14 @@ func (ec *executionContext) _Media_length(ctx context.Context, field graphql.Col
 		return graphql.Null
 	}
 	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
-	res := resTmp.(*int)
+	res := resTmp.(int)
 	fc.Result = res
-	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+	return ec.marshalNInt2int(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Media_length(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1584,8 +1720,8 @@ func (ec *executionContext) fieldContext_MediaList_items(ctx context.Context, fi
 	return fc, nil
 }
 
-func (ec *executionContext) _MediathekEntry_id(ctx context.Context, field graphql.CollectedField, obj *model.MediathekEntry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediathekEntry_id(ctx, field)
+func (ec *executionContext) _MediathekBaseEntry_id(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_id(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1615,9 +1751,9 @@ func (ec *executionContext) _MediathekEntry_id(ctx context.Context, field graphq
 	return ec.marshalNID2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MediathekEntry_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MediathekBaseEntry_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MediathekEntry",
+		Object:     "MediathekBaseEntry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1628,8 +1764,8 @@ func (ec *executionContext) fieldContext_MediathekEntry_id(ctx context.Context, 
 	return fc, nil
 }
 
-func (ec *executionContext) _MediathekEntry_signature(ctx context.Context, field graphql.CollectedField, obj *model.MediathekEntry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediathekEntry_signature(ctx, field)
+func (ec *executionContext) _MediathekBaseEntry_signature(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_signature(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1659,9 +1795,9 @@ func (ec *executionContext) _MediathekEntry_signature(ctx context.Context, field
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MediathekEntry_signature(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MediathekBaseEntry_signature(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MediathekEntry",
+		Object:     "MediathekBaseEntry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1672,8 +1808,8 @@ func (ec *executionContext) fieldContext_MediathekEntry_signature(ctx context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _MediathekEntry_signatureOriginal(ctx context.Context, field graphql.CollectedField, obj *model.MediathekEntry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediathekEntry_signatureOriginal(ctx, field)
+func (ec *executionContext) _MediathekBaseEntry_signatureOriginal(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_signatureOriginal(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1703,9 +1839,9 @@ func (ec *executionContext) _MediathekEntry_signatureOriginal(ctx context.Contex
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MediathekEntry_signatureOriginal(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MediathekBaseEntry_signatureOriginal(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MediathekEntry",
+		Object:     "MediathekBaseEntry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1716,8 +1852,8 @@ func (ec *executionContext) fieldContext_MediathekEntry_signatureOriginal(ctx co
 	return fc, nil
 }
 
-func (ec *executionContext) _MediathekEntry_source(ctx context.Context, field graphql.CollectedField, obj *model.MediathekEntry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediathekEntry_source(ctx, field)
+func (ec *executionContext) _MediathekBaseEntry_source(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_source(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1747,9 +1883,9 @@ func (ec *executionContext) _MediathekEntry_source(ctx context.Context, field gr
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MediathekEntry_source(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MediathekBaseEntry_source(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MediathekEntry",
+		Object:     "MediathekBaseEntry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1760,8 +1896,8 @@ func (ec *executionContext) fieldContext_MediathekEntry_source(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _MediathekEntry_title(ctx context.Context, field graphql.CollectedField, obj *model.MediathekEntry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediathekEntry_title(ctx, field)
+func (ec *executionContext) _MediathekBaseEntry_title(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_title(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1791,9 +1927,9 @@ func (ec *executionContext) _MediathekEntry_title(ctx context.Context, field gra
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MediathekEntry_title(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MediathekBaseEntry_title(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MediathekEntry",
+		Object:     "MediathekBaseEntry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1804,8 +1940,8 @@ func (ec *executionContext) fieldContext_MediathekEntry_title(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _MediathekEntry_series(ctx context.Context, field graphql.CollectedField, obj *model.MediathekEntry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediathekEntry_series(ctx, field)
+func (ec *executionContext) _MediathekBaseEntry_series(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_series(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1832,9 +1968,9 @@ func (ec *executionContext) _MediathekEntry_series(ctx context.Context, field gr
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MediathekEntry_series(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MediathekBaseEntry_series(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MediathekEntry",
+		Object:     "MediathekBaseEntry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1845,8 +1981,8 @@ func (ec *executionContext) fieldContext_MediathekEntry_series(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _MediathekEntry_place(ctx context.Context, field graphql.CollectedField, obj *model.MediathekEntry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediathekEntry_place(ctx, field)
+func (ec *executionContext) _MediathekBaseEntry_place(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_place(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1873,9 +2009,9 @@ func (ec *executionContext) _MediathekEntry_place(ctx context.Context, field gra
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MediathekEntry_place(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MediathekBaseEntry_place(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MediathekEntry",
+		Object:     "MediathekBaseEntry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1886,8 +2022,8 @@ func (ec *executionContext) fieldContext_MediathekEntry_place(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _MediathekEntry_date(ctx context.Context, field graphql.CollectedField, obj *model.MediathekEntry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediathekEntry_date(ctx, field)
+func (ec *executionContext) _MediathekBaseEntry_date(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_date(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1914,9 +2050,9 @@ func (ec *executionContext) _MediathekEntry_date(ctx context.Context, field grap
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MediathekEntry_date(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MediathekBaseEntry_date(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MediathekEntry",
+		Object:     "MediathekBaseEntry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1927,8 +2063,137 @@ func (ec *executionContext) fieldContext_MediathekEntry_date(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _MediathekEntry_category(ctx context.Context, field graphql.CollectedField, obj *model.MediathekEntry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediathekEntry_category(ctx, field)
+func (ec *executionContext) _MediathekBaseEntry_collectionTitle(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_collectionTitle(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.CollectionTitle, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MediathekBaseEntry_collectionTitle(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediathekBaseEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediathekBaseEntry_person(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_person(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Person, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Person)
+	fc.Result = res
+	return ec.marshalOPerson2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐPersonᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MediathekBaseEntry_person(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediathekBaseEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_Person_name(ctx, field)
+			case "role":
+				return ec.fieldContext_Person_role(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Person", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediathekBaseEntry_catalog(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_catalog(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Catalog, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MediathekBaseEntry_catalog(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediathekBaseEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediathekBaseEntry_category(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_category(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1955,9 +2220,9 @@ func (ec *executionContext) _MediathekEntry_category(ctx context.Context, field 
 	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MediathekEntry_category(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MediathekBaseEntry_category(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MediathekEntry",
+		Object:     "MediathekBaseEntry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -1968,8 +2233,8 @@ func (ec *executionContext) fieldContext_MediathekEntry_category(ctx context.Con
 	return fc, nil
 }
 
-func (ec *executionContext) _MediathekEntry_tags(ctx context.Context, field graphql.CollectedField, obj *model.MediathekEntry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediathekEntry_tags(ctx, field)
+func (ec *executionContext) _MediathekBaseEntry_tags(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_tags(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -1996,9 +2261,9 @@ func (ec *executionContext) _MediathekEntry_tags(ctx context.Context, field grap
 	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MediathekEntry_tags(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MediathekBaseEntry_tags(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MediathekEntry",
+		Object:     "MediathekBaseEntry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -2009,49 +2274,8 @@ func (ec *executionContext) fieldContext_MediathekEntry_tags(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _MediathekEntry_notes(ctx context.Context, field graphql.CollectedField, obj *model.MediathekEntry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediathekEntry_notes(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Notes, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]string)
-	fc.Result = res
-	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_MediathekEntry_notes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MediathekEntry",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MediathekEntry_url(ctx context.Context, field graphql.CollectedField, obj *model.MediathekEntry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediathekEntry_url(ctx, field)
+func (ec *executionContext) _MediathekBaseEntry_url(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_url(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2078,9 +2302,9 @@ func (ec *executionContext) _MediathekEntry_url(ctx context.Context, field graph
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MediathekEntry_url(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MediathekBaseEntry_url(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MediathekEntry",
+		Object:     "MediathekBaseEntry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -2091,132 +2315,8 @@ func (ec *executionContext) fieldContext_MediathekEntry_url(ctx context.Context,
 	return fc, nil
 }
 
-func (ec *executionContext) _MediathekEntry_abstract(ctx context.Context, field graphql.CollectedField, obj *model.MediathekEntry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediathekEntry_abstract(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return obj.Abstract, nil
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.(*string)
-	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_MediathekEntry_abstract(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MediathekEntry",
-		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MediathekEntry_references(ctx context.Context, field graphql.CollectedField, obj *model.MediathekEntry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediathekEntry_references(ctx, field)
-	if err != nil {
-		return graphql.Null
-	}
-	ctx = graphql.WithFieldContext(ctx, fc)
-	defer func() {
-		if r := recover(); r != nil {
-			ec.Error(ctx, ec.Recover(ctx, r))
-			ret = graphql.Null
-		}
-	}()
-	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
-		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.MediathekEntry().References(rctx, obj)
-	})
-	if err != nil {
-		ec.Error(ctx, err)
-		return graphql.Null
-	}
-	if resTmp == nil {
-		return graphql.Null
-	}
-	res := resTmp.([]*model.MediathekEntry)
-	fc.Result = res
-	return ec.marshalOMediathekEntry2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediathekEntryᚄ(ctx, field.Selections, res)
-}
-
-func (ec *executionContext) fieldContext_MediathekEntry_references(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
-	fc = &graphql.FieldContext{
-		Object:     "MediathekEntry",
-		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
-		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			switch field.Name {
-			case "id":
-				return ec.fieldContext_MediathekEntry_id(ctx, field)
-			case "signature":
-				return ec.fieldContext_MediathekEntry_signature(ctx, field)
-			case "signatureOriginal":
-				return ec.fieldContext_MediathekEntry_signatureOriginal(ctx, field)
-			case "source":
-				return ec.fieldContext_MediathekEntry_source(ctx, field)
-			case "title":
-				return ec.fieldContext_MediathekEntry_title(ctx, field)
-			case "series":
-				return ec.fieldContext_MediathekEntry_series(ctx, field)
-			case "place":
-				return ec.fieldContext_MediathekEntry_place(ctx, field)
-			case "date":
-				return ec.fieldContext_MediathekEntry_date(ctx, field)
-			case "category":
-				return ec.fieldContext_MediathekEntry_category(ctx, field)
-			case "tags":
-				return ec.fieldContext_MediathekEntry_tags(ctx, field)
-			case "notes":
-				return ec.fieldContext_MediathekEntry_notes(ctx, field)
-			case "url":
-				return ec.fieldContext_MediathekEntry_url(ctx, field)
-			case "abstract":
-				return ec.fieldContext_MediathekEntry_abstract(ctx, field)
-			case "references":
-				return ec.fieldContext_MediathekEntry_references(ctx, field)
-			case "publisher":
-				return ec.fieldContext_MediathekEntry_publisher(ctx, field)
-			case "rights":
-				return ec.fieldContext_MediathekEntry_rights(ctx, field)
-			case "license":
-				return ec.fieldContext_MediathekEntry_license(ctx, field)
-			case "type":
-				return ec.fieldContext_MediathekEntry_type(ctx, field)
-			case "extra":
-				return ec.fieldContext_MediathekEntry_extra(ctx, field)
-			case "media":
-				return ec.fieldContext_MediathekEntry_media(ctx, field)
-			}
-			return nil, fmt.Errorf("no field named %q was found under type MediathekEntry", field.Name)
-		},
-	}
-	return fc, nil
-}
-
-func (ec *executionContext) _MediathekEntry_publisher(ctx context.Context, field graphql.CollectedField, obj *model.MediathekEntry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediathekEntry_publisher(ctx, field)
+func (ec *executionContext) _MediathekBaseEntry_publisher(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_publisher(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2243,9 +2343,9 @@ func (ec *executionContext) _MediathekEntry_publisher(ctx context.Context, field
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MediathekEntry_publisher(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MediathekBaseEntry_publisher(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MediathekEntry",
+		Object:     "MediathekBaseEntry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -2256,8 +2356,8 @@ func (ec *executionContext) fieldContext_MediathekEntry_publisher(ctx context.Co
 	return fc, nil
 }
 
-func (ec *executionContext) _MediathekEntry_rights(ctx context.Context, field graphql.CollectedField, obj *model.MediathekEntry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediathekEntry_rights(ctx, field)
+func (ec *executionContext) _MediathekBaseEntry_rights(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_rights(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2284,9 +2384,9 @@ func (ec *executionContext) _MediathekEntry_rights(ctx context.Context, field gr
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MediathekEntry_rights(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MediathekBaseEntry_rights(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MediathekEntry",
+		Object:     "MediathekBaseEntry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -2297,8 +2397,8 @@ func (ec *executionContext) fieldContext_MediathekEntry_rights(ctx context.Conte
 	return fc, nil
 }
 
-func (ec *executionContext) _MediathekEntry_license(ctx context.Context, field graphql.CollectedField, obj *model.MediathekEntry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediathekEntry_license(ctx, field)
+func (ec *executionContext) _MediathekBaseEntry_license(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_license(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2325,9 +2425,9 @@ func (ec *executionContext) _MediathekEntry_license(ctx context.Context, field g
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MediathekEntry_license(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MediathekBaseEntry_license(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MediathekEntry",
+		Object:     "MediathekBaseEntry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -2338,8 +2438,57 @@ func (ec *executionContext) fieldContext_MediathekEntry_license(ctx context.Cont
 	return fc, nil
 }
 
-func (ec *executionContext) _MediathekEntry_type(ctx context.Context, field graphql.CollectedField, obj *model.MediathekEntry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediathekEntry_type(ctx, field)
+func (ec *executionContext) _MediathekBaseEntry_references(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_references(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.References, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Reference)
+	fc.Result = res
+	return ec.marshalOReference2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐReferenceᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MediathekBaseEntry_references(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediathekBaseEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "type":
+				return ec.fieldContext_Reference_type(ctx, field)
+			case "title":
+				return ec.fieldContext_Reference_title(ctx, field)
+			case "signature":
+				return ec.fieldContext_Reference_signature(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Reference", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediathekBaseEntry_type(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_type(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2366,9 +2515,9 @@ func (ec *executionContext) _MediathekEntry_type(ctx context.Context, field grap
 	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MediathekEntry_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MediathekBaseEntry_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MediathekEntry",
+		Object:     "MediathekBaseEntry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -2379,8 +2528,372 @@ func (ec *executionContext) fieldContext_MediathekEntry_type(ctx context.Context
 	return fc, nil
 }
 
-func (ec *executionContext) _MediathekEntry_extra(ctx context.Context, field graphql.CollectedField, obj *model.MediathekEntry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediathekEntry_extra(ctx, field)
+func (ec *executionContext) _MediathekBaseEntry_poster(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_poster(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Poster, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*model.Media)
+	fc.Result = res
+	return ec.marshalOMedia2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMedia(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MediathekBaseEntry_poster(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediathekBaseEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_Media_name(ctx, field)
+			case "mimetype":
+				return ec.fieldContext_Media_mimetype(ctx, field)
+			case "pronom":
+				return ec.fieldContext_Media_pronom(ctx, field)
+			case "type":
+				return ec.fieldContext_Media_type(ctx, field)
+			case "uri":
+				return ec.fieldContext_Media_uri(ctx, field)
+			case "orientation":
+				return ec.fieldContext_Media_orientation(ctx, field)
+			case "fulltext":
+				return ec.fieldContext_Media_fulltext(ctx, field)
+			case "width":
+				return ec.fieldContext_Media_width(ctx, field)
+			case "height":
+				return ec.fieldContext_Media_height(ctx, field)
+			case "length":
+				return ec.fieldContext_Media_length(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Media", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediathekFullEntry_id(ctx context.Context, field graphql.CollectedField, obj *model.MediathekFullEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekFullEntry_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MediathekFullEntry_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediathekFullEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediathekFullEntry_base(ctx context.Context, field graphql.CollectedField, obj *model.MediathekFullEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekFullEntry_base(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Base, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*model.MediathekBaseEntry)
+	fc.Result = res
+	return ec.marshalNMediathekBaseEntry2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediathekBaseEntry(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MediathekFullEntry_base(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediathekFullEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_MediathekBaseEntry_id(ctx, field)
+			case "signature":
+				return ec.fieldContext_MediathekBaseEntry_signature(ctx, field)
+			case "signatureOriginal":
+				return ec.fieldContext_MediathekBaseEntry_signatureOriginal(ctx, field)
+			case "source":
+				return ec.fieldContext_MediathekBaseEntry_source(ctx, field)
+			case "title":
+				return ec.fieldContext_MediathekBaseEntry_title(ctx, field)
+			case "series":
+				return ec.fieldContext_MediathekBaseEntry_series(ctx, field)
+			case "place":
+				return ec.fieldContext_MediathekBaseEntry_place(ctx, field)
+			case "date":
+				return ec.fieldContext_MediathekBaseEntry_date(ctx, field)
+			case "collectionTitle":
+				return ec.fieldContext_MediathekBaseEntry_collectionTitle(ctx, field)
+			case "person":
+				return ec.fieldContext_MediathekBaseEntry_person(ctx, field)
+			case "catalog":
+				return ec.fieldContext_MediathekBaseEntry_catalog(ctx, field)
+			case "category":
+				return ec.fieldContext_MediathekBaseEntry_category(ctx, field)
+			case "tags":
+				return ec.fieldContext_MediathekBaseEntry_tags(ctx, field)
+			case "url":
+				return ec.fieldContext_MediathekBaseEntry_url(ctx, field)
+			case "publisher":
+				return ec.fieldContext_MediathekBaseEntry_publisher(ctx, field)
+			case "rights":
+				return ec.fieldContext_MediathekBaseEntry_rights(ctx, field)
+			case "license":
+				return ec.fieldContext_MediathekBaseEntry_license(ctx, field)
+			case "references":
+				return ec.fieldContext_MediathekBaseEntry_references(ctx, field)
+			case "type":
+				return ec.fieldContext_MediathekBaseEntry_type(ctx, field)
+			case "poster":
+				return ec.fieldContext_MediathekBaseEntry_poster(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MediathekBaseEntry", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediathekFullEntry_notes(ctx context.Context, field graphql.CollectedField, obj *model.MediathekFullEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekFullEntry_notes(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Notes, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.Note)
+	fc.Result = res
+	return ec.marshalONote2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐNoteᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MediathekFullEntry_notes(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediathekFullEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "title":
+				return ec.fieldContext_Note_title(ctx, field)
+			case "text":
+				return ec.fieldContext_Note_text(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Note", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediathekFullEntry_abstract(ctx context.Context, field graphql.CollectedField, obj *model.MediathekFullEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekFullEntry_abstract(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Abstract, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MediathekFullEntry_abstract(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediathekFullEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediathekFullEntry_referencesFull(ctx context.Context, field graphql.CollectedField, obj *model.MediathekFullEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekFullEntry_referencesFull(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.MediathekFullEntry().ReferencesFull(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.MediathekBaseEntry)
+	fc.Result = res
+	return ec.marshalOMediathekBaseEntry2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediathekBaseEntryᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MediathekFullEntry_referencesFull(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediathekFullEntry",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_MediathekBaseEntry_id(ctx, field)
+			case "signature":
+				return ec.fieldContext_MediathekBaseEntry_signature(ctx, field)
+			case "signatureOriginal":
+				return ec.fieldContext_MediathekBaseEntry_signatureOriginal(ctx, field)
+			case "source":
+				return ec.fieldContext_MediathekBaseEntry_source(ctx, field)
+			case "title":
+				return ec.fieldContext_MediathekBaseEntry_title(ctx, field)
+			case "series":
+				return ec.fieldContext_MediathekBaseEntry_series(ctx, field)
+			case "place":
+				return ec.fieldContext_MediathekBaseEntry_place(ctx, field)
+			case "date":
+				return ec.fieldContext_MediathekBaseEntry_date(ctx, field)
+			case "collectionTitle":
+				return ec.fieldContext_MediathekBaseEntry_collectionTitle(ctx, field)
+			case "person":
+				return ec.fieldContext_MediathekBaseEntry_person(ctx, field)
+			case "catalog":
+				return ec.fieldContext_MediathekBaseEntry_catalog(ctx, field)
+			case "category":
+				return ec.fieldContext_MediathekBaseEntry_category(ctx, field)
+			case "tags":
+				return ec.fieldContext_MediathekBaseEntry_tags(ctx, field)
+			case "url":
+				return ec.fieldContext_MediathekBaseEntry_url(ctx, field)
+			case "publisher":
+				return ec.fieldContext_MediathekBaseEntry_publisher(ctx, field)
+			case "rights":
+				return ec.fieldContext_MediathekBaseEntry_rights(ctx, field)
+			case "license":
+				return ec.fieldContext_MediathekBaseEntry_license(ctx, field)
+			case "references":
+				return ec.fieldContext_MediathekBaseEntry_references(ctx, field)
+			case "type":
+				return ec.fieldContext_MediathekBaseEntry_type(ctx, field)
+			case "poster":
+				return ec.fieldContext_MediathekBaseEntry_poster(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MediathekBaseEntry", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediathekFullEntry_extra(ctx context.Context, field graphql.CollectedField, obj *model.MediathekFullEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekFullEntry_extra(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2407,9 +2920,9 @@ func (ec *executionContext) _MediathekEntry_extra(ctx context.Context, field gra
 	return ec.marshalOKeyValue2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐKeyValueᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MediathekEntry_extra(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MediathekFullEntry_extra(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MediathekEntry",
+		Object:     "MediathekFullEntry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -2426,8 +2939,8 @@ func (ec *executionContext) fieldContext_MediathekEntry_extra(ctx context.Contex
 	return fc, nil
 }
 
-func (ec *executionContext) _MediathekEntry_media(ctx context.Context, field graphql.CollectedField, obj *model.MediathekEntry) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediathekEntry_media(ctx, field)
+func (ec *executionContext) _MediathekFullEntry_media(ctx context.Context, field graphql.CollectedField, obj *model.MediathekFullEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekFullEntry_media(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2454,9 +2967,9 @@ func (ec *executionContext) _MediathekEntry_media(ctx context.Context, field gra
 	return ec.marshalOMediaList2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediaListᚄ(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MediathekEntry_media(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MediathekFullEntry_media(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
-		Object:     "MediathekEntry",
+		Object:     "MediathekFullEntry",
 		Field:      field,
 		IsMethod:   false,
 		IsResolver: false,
@@ -2468,6 +2981,91 @@ func (ec *executionContext) fieldContext_MediathekEntry_media(ctx context.Contex
 				return ec.fieldContext_MediaList_items(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type MediaList", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Note_title(ctx context.Context, field graphql.CollectedField, obj *model.Note) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Note_title(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Note_title(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Note",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Note_text(ctx context.Context, field graphql.CollectedField, obj *model.Note) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Note_text(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Text, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Note_text(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Note",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -2649,6 +3247,91 @@ func (ec *executionContext) fieldContext_PageInfo_endCursor(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Person_name(ctx context.Context, field graphql.CollectedField, obj *model.Person) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Person_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Person_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Person",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Person_role(ctx context.Context, field graphql.CollectedField, obj *model.Person) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Person_role(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Role, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Person_role(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Person",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_search(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_search(ctx, field)
 	if err != nil {
@@ -2737,9 +3420,9 @@ func (ec *executionContext) _Query_mediathekEntries(ctx context.Context, field g
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]*model.MediathekEntry)
+	res := resTmp.([]*model.MediathekFullEntry)
 	fc.Result = res
-	return ec.marshalOMediathekEntry2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediathekEntryᚄ(ctx, field.Selections, res)
+	return ec.marshalOMediathekFullEntry2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediathekFullEntryᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Query_mediathekEntries(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2751,47 +3434,21 @@ func (ec *executionContext) fieldContext_Query_mediathekEntries(ctx context.Cont
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_MediathekEntry_id(ctx, field)
-			case "signature":
-				return ec.fieldContext_MediathekEntry_signature(ctx, field)
-			case "signatureOriginal":
-				return ec.fieldContext_MediathekEntry_signatureOriginal(ctx, field)
-			case "source":
-				return ec.fieldContext_MediathekEntry_source(ctx, field)
-			case "title":
-				return ec.fieldContext_MediathekEntry_title(ctx, field)
-			case "series":
-				return ec.fieldContext_MediathekEntry_series(ctx, field)
-			case "place":
-				return ec.fieldContext_MediathekEntry_place(ctx, field)
-			case "date":
-				return ec.fieldContext_MediathekEntry_date(ctx, field)
-			case "category":
-				return ec.fieldContext_MediathekEntry_category(ctx, field)
-			case "tags":
-				return ec.fieldContext_MediathekEntry_tags(ctx, field)
+				return ec.fieldContext_MediathekFullEntry_id(ctx, field)
+			case "base":
+				return ec.fieldContext_MediathekFullEntry_base(ctx, field)
 			case "notes":
-				return ec.fieldContext_MediathekEntry_notes(ctx, field)
-			case "url":
-				return ec.fieldContext_MediathekEntry_url(ctx, field)
+				return ec.fieldContext_MediathekFullEntry_notes(ctx, field)
 			case "abstract":
-				return ec.fieldContext_MediathekEntry_abstract(ctx, field)
-			case "references":
-				return ec.fieldContext_MediathekEntry_references(ctx, field)
-			case "publisher":
-				return ec.fieldContext_MediathekEntry_publisher(ctx, field)
-			case "rights":
-				return ec.fieldContext_MediathekEntry_rights(ctx, field)
-			case "license":
-				return ec.fieldContext_MediathekEntry_license(ctx, field)
-			case "type":
-				return ec.fieldContext_MediathekEntry_type(ctx, field)
+				return ec.fieldContext_MediathekFullEntry_abstract(ctx, field)
+			case "referencesFull":
+				return ec.fieldContext_MediathekFullEntry_referencesFull(ctx, field)
 			case "extra":
-				return ec.fieldContext_MediathekEntry_extra(ctx, field)
+				return ec.fieldContext_MediathekFullEntry_extra(ctx, field)
 			case "media":
-				return ec.fieldContext_MediathekEntry_media(ctx, field)
+				return ec.fieldContext_MediathekFullEntry_media(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type MediathekEntry", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type MediathekFullEntry", field.Name)
 		},
 	}
 	defer func() {
@@ -2937,6 +3594,132 @@ func (ec *executionContext) fieldContext_Query___schema(ctx context.Context, fie
 	return fc, nil
 }
 
+func (ec *executionContext) _Reference_type(ctx context.Context, field graphql.CollectedField, obj *model.Reference) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Reference_type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Reference_type(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Reference",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Reference_title(ctx context.Context, field graphql.CollectedField, obj *model.Reference) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Reference_title(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Title, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Reference_title(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Reference",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Reference_signature(ctx context.Context, field graphql.CollectedField, obj *model.Reference) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Reference_signature(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Signature, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Reference_signature(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Reference",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _SearchResult_totalCount(ctx context.Context, field graphql.CollectedField, obj *model.SearchResult) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_SearchResult_totalCount(ctx, field)
 	if err != nil {
@@ -3061,9 +3844,9 @@ func (ec *executionContext) _SearchResult_edges(ctx context.Context, field graph
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]*model.MediathekEntry)
+	res := resTmp.([]*model.MediathekFullEntry)
 	fc.Result = res
-	return ec.marshalNMediathekEntry2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediathekEntryᚄ(ctx, field.Selections, res)
+	return ec.marshalNMediathekFullEntry2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediathekFullEntryᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_SearchResult_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -3075,47 +3858,21 @@ func (ec *executionContext) fieldContext_SearchResult_edges(ctx context.Context,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
-				return ec.fieldContext_MediathekEntry_id(ctx, field)
-			case "signature":
-				return ec.fieldContext_MediathekEntry_signature(ctx, field)
-			case "signatureOriginal":
-				return ec.fieldContext_MediathekEntry_signatureOriginal(ctx, field)
-			case "source":
-				return ec.fieldContext_MediathekEntry_source(ctx, field)
-			case "title":
-				return ec.fieldContext_MediathekEntry_title(ctx, field)
-			case "series":
-				return ec.fieldContext_MediathekEntry_series(ctx, field)
-			case "place":
-				return ec.fieldContext_MediathekEntry_place(ctx, field)
-			case "date":
-				return ec.fieldContext_MediathekEntry_date(ctx, field)
-			case "category":
-				return ec.fieldContext_MediathekEntry_category(ctx, field)
-			case "tags":
-				return ec.fieldContext_MediathekEntry_tags(ctx, field)
+				return ec.fieldContext_MediathekFullEntry_id(ctx, field)
+			case "base":
+				return ec.fieldContext_MediathekFullEntry_base(ctx, field)
 			case "notes":
-				return ec.fieldContext_MediathekEntry_notes(ctx, field)
-			case "url":
-				return ec.fieldContext_MediathekEntry_url(ctx, field)
+				return ec.fieldContext_MediathekFullEntry_notes(ctx, field)
 			case "abstract":
-				return ec.fieldContext_MediathekEntry_abstract(ctx, field)
-			case "references":
-				return ec.fieldContext_MediathekEntry_references(ctx, field)
-			case "publisher":
-				return ec.fieldContext_MediathekEntry_publisher(ctx, field)
-			case "rights":
-				return ec.fieldContext_MediathekEntry_rights(ctx, field)
-			case "license":
-				return ec.fieldContext_MediathekEntry_license(ctx, field)
-			case "type":
-				return ec.fieldContext_MediathekEntry_type(ctx, field)
+				return ec.fieldContext_MediathekFullEntry_abstract(ctx, field)
+			case "referencesFull":
+				return ec.fieldContext_MediathekFullEntry_referencesFull(ctx, field)
 			case "extra":
-				return ec.fieldContext_MediathekEntry_extra(ctx, field)
+				return ec.fieldContext_MediathekFullEntry_extra(ctx, field)
 			case "media":
-				return ec.fieldContext_MediathekEntry_media(ctx, field)
+				return ec.fieldContext_MediathekFullEntry_media(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type MediathekEntry", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type MediathekFullEntry", field.Name)
 		},
 	}
 	return fc, nil
@@ -5165,14 +5922,26 @@ func (ec *executionContext) _Media(ctx context.Context, sel ast.SelectionSet, ob
 			}
 		case "orientation":
 			out.Values[i] = ec._Media_orientation(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "fulltext":
 			out.Values[i] = ec._Media_fulltext(ctx, field, obj)
 		case "width":
 			out.Values[i] = ec._Media_width(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "height":
 			out.Values[i] = ec._Media_height(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		case "length":
 			out.Values[i] = ec._Media_length(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5240,59 +6009,121 @@ func (ec *executionContext) _MediaList(ctx context.Context, sel ast.SelectionSet
 	return out
 }
 
-var mediathekEntryImplementors = []string{"MediathekEntry"}
+var mediathekBaseEntryImplementors = []string{"MediathekBaseEntry"}
 
-func (ec *executionContext) _MediathekEntry(ctx context.Context, sel ast.SelectionSet, obj *model.MediathekEntry) graphql.Marshaler {
-	fields := graphql.CollectFields(ec.OperationContext, sel, mediathekEntryImplementors)
+func (ec *executionContext) _MediathekBaseEntry(ctx context.Context, sel ast.SelectionSet, obj *model.MediathekBaseEntry) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mediathekBaseEntryImplementors)
 
 	out := graphql.NewFieldSet(fields)
 	deferred := make(map[string]*graphql.FieldSet)
 	for i, field := range fields {
 		switch field.Name {
 		case "__typename":
-			out.Values[i] = graphql.MarshalString("MediathekEntry")
+			out.Values[i] = graphql.MarshalString("MediathekBaseEntry")
 		case "id":
-			out.Values[i] = ec._MediathekEntry_id(ctx, field, obj)
+			out.Values[i] = ec._MediathekBaseEntry_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "signature":
-			out.Values[i] = ec._MediathekEntry_signature(ctx, field, obj)
+			out.Values[i] = ec._MediathekBaseEntry_signature(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "signatureOriginal":
-			out.Values[i] = ec._MediathekEntry_signatureOriginal(ctx, field, obj)
+			out.Values[i] = ec._MediathekBaseEntry_signatureOriginal(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "source":
-			out.Values[i] = ec._MediathekEntry_source(ctx, field, obj)
+			out.Values[i] = ec._MediathekBaseEntry_source(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
-				atomic.AddUint32(&out.Invalids, 1)
+				out.Invalids++
 			}
 		case "title":
-			out.Values[i] = ec._MediathekEntry_title(ctx, field, obj)
+			out.Values[i] = ec._MediathekBaseEntry_title(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "series":
+			out.Values[i] = ec._MediathekBaseEntry_series(ctx, field, obj)
+		case "place":
+			out.Values[i] = ec._MediathekBaseEntry_place(ctx, field, obj)
+		case "date":
+			out.Values[i] = ec._MediathekBaseEntry_date(ctx, field, obj)
+		case "collectionTitle":
+			out.Values[i] = ec._MediathekBaseEntry_collectionTitle(ctx, field, obj)
+		case "person":
+			out.Values[i] = ec._MediathekBaseEntry_person(ctx, field, obj)
+		case "catalog":
+			out.Values[i] = ec._MediathekBaseEntry_catalog(ctx, field, obj)
+		case "category":
+			out.Values[i] = ec._MediathekBaseEntry_category(ctx, field, obj)
+		case "tags":
+			out.Values[i] = ec._MediathekBaseEntry_tags(ctx, field, obj)
+		case "url":
+			out.Values[i] = ec._MediathekBaseEntry_url(ctx, field, obj)
+		case "publisher":
+			out.Values[i] = ec._MediathekBaseEntry_publisher(ctx, field, obj)
+		case "rights":
+			out.Values[i] = ec._MediathekBaseEntry_rights(ctx, field, obj)
+		case "license":
+			out.Values[i] = ec._MediathekBaseEntry_license(ctx, field, obj)
+		case "references":
+			out.Values[i] = ec._MediathekBaseEntry_references(ctx, field, obj)
+		case "type":
+			out.Values[i] = ec._MediathekBaseEntry_type(ctx, field, obj)
+		case "poster":
+			out.Values[i] = ec._MediathekBaseEntry_poster(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var mediathekFullEntryImplementors = []string{"MediathekFullEntry"}
+
+func (ec *executionContext) _MediathekFullEntry(ctx context.Context, sel ast.SelectionSet, obj *model.MediathekFullEntry) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mediathekFullEntryImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MediathekFullEntry")
+		case "id":
+			out.Values[i] = ec._MediathekFullEntry_id(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
-		case "series":
-			out.Values[i] = ec._MediathekEntry_series(ctx, field, obj)
-		case "place":
-			out.Values[i] = ec._MediathekEntry_place(ctx, field, obj)
-		case "date":
-			out.Values[i] = ec._MediathekEntry_date(ctx, field, obj)
-		case "category":
-			out.Values[i] = ec._MediathekEntry_category(ctx, field, obj)
-		case "tags":
-			out.Values[i] = ec._MediathekEntry_tags(ctx, field, obj)
+		case "base":
+			out.Values[i] = ec._MediathekFullEntry_base(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
 		case "notes":
-			out.Values[i] = ec._MediathekEntry_notes(ctx, field, obj)
-		case "url":
-			out.Values[i] = ec._MediathekEntry_url(ctx, field, obj)
+			out.Values[i] = ec._MediathekFullEntry_notes(ctx, field, obj)
 		case "abstract":
-			out.Values[i] = ec._MediathekEntry_abstract(ctx, field, obj)
-		case "references":
+			out.Values[i] = ec._MediathekFullEntry_abstract(ctx, field, obj)
+		case "referencesFull":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -5301,7 +6132,7 @@ func (ec *executionContext) _MediathekEntry(ctx context.Context, sel ast.Selecti
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._MediathekEntry_references(ctx, field, obj)
+				res = ec._MediathekFullEntry_referencesFull(ctx, field, obj)
 				return res
 			}
 
@@ -5325,18 +6156,51 @@ func (ec *executionContext) _MediathekEntry(ctx context.Context, sel ast.Selecti
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return innerFunc(ctx, out) })
-		case "publisher":
-			out.Values[i] = ec._MediathekEntry_publisher(ctx, field, obj)
-		case "rights":
-			out.Values[i] = ec._MediathekEntry_rights(ctx, field, obj)
-		case "license":
-			out.Values[i] = ec._MediathekEntry_license(ctx, field, obj)
-		case "type":
-			out.Values[i] = ec._MediathekEntry_type(ctx, field, obj)
 		case "extra":
-			out.Values[i] = ec._MediathekEntry_extra(ctx, field, obj)
+			out.Values[i] = ec._MediathekFullEntry_extra(ctx, field, obj)
 		case "media":
-			out.Values[i] = ec._MediathekEntry_media(ctx, field, obj)
+			out.Values[i] = ec._MediathekFullEntry_media(ctx, field, obj)
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var noteImplementors = []string{"Note"}
+
+func (ec *executionContext) _Note(ctx context.Context, sel ast.SelectionSet, obj *model.Note) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, noteImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Note")
+		case "title":
+			out.Values[i] = ec._Note_title(ctx, field, obj)
+		case "text":
+			out.Values[i] = ec._Note_text(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5391,6 +6255,47 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var personImplementors = []string{"Person"}
+
+func (ec *executionContext) _Person(ctx context.Context, sel ast.SelectionSet, obj *model.Person) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, personImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Person")
+		case "name":
+			out.Values[i] = ec._Person_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "role":
+			out.Values[i] = ec._Person_role(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5482,6 +6387,49 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Query___schema(ctx, field)
 			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
+var referenceImplementors = []string{"Reference"}
+
+func (ec *executionContext) _Reference(ctx context.Context, sel ast.SelectionSet, obj *model.Reference) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, referenceImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Reference")
+		case "type":
+			out.Values[i] = ec._Reference_type(ctx, field, obj)
+		case "title":
+			out.Values[i] = ec._Reference_title(ctx, field, obj)
+		case "signature":
+			out.Values[i] = ec._Reference_signature(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -6117,7 +7065,17 @@ func (ec *executionContext) marshalNMediaList2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv
 	return ec._MediaList(ctx, sel, v)
 }
 
-func (ec *executionContext) marshalNMediathekEntry2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediathekEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MediathekEntry) graphql.Marshaler {
+func (ec *executionContext) marshalNMediathekBaseEntry2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediathekBaseEntry(ctx context.Context, sel ast.SelectionSet, v *model.MediathekBaseEntry) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MediathekBaseEntry(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNMediathekFullEntry2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediathekFullEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MediathekFullEntry) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
 	isLen1 := len(v) == 1
@@ -6141,7 +7099,7 @@ func (ec *executionContext) marshalNMediathekEntry2ᚕᚖgithubᚗcomᚋje4ᚋre
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNMediathekEntry2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediathekEntry(ctx, sel, v[i])
+			ret[i] = ec.marshalNMediathekFullEntry2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediathekFullEntry(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -6161,14 +7119,24 @@ func (ec *executionContext) marshalNMediathekEntry2ᚕᚖgithubᚗcomᚋje4ᚋre
 	return ret
 }
 
-func (ec *executionContext) marshalNMediathekEntry2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediathekEntry(ctx context.Context, sel ast.SelectionSet, v *model.MediathekEntry) graphql.Marshaler {
+func (ec *executionContext) marshalNMediathekFullEntry2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediathekFullEntry(ctx context.Context, sel ast.SelectionSet, v *model.MediathekFullEntry) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 		return graphql.Null
 	}
-	return ec._MediathekEntry(ctx, sel, v)
+	return ec._MediathekFullEntry(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNNote2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐNote(ctx context.Context, sel ast.SelectionSet, v *model.Note) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Note(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐPageInfo(ctx context.Context, sel ast.SelectionSet, v *model.PageInfo) graphql.Marshaler {
@@ -6179,6 +7147,26 @@ func (ec *executionContext) marshalNPageInfo2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2
 		return graphql.Null
 	}
 	return ec._PageInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNPerson2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐPerson(ctx context.Context, sel ast.SelectionSet, v *model.Person) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Person(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNReference2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐReference(ctx context.Context, sel ast.SelectionSet, v *model.Reference) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Reference(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNSearchResult2githubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐSearchResult(ctx context.Context, sel ast.SelectionSet, v model.SearchResult) graphql.Marshaler {
@@ -6642,6 +7630,13 @@ func (ec *executionContext) marshalOKeyValue2ᚕᚖgithubᚗcomᚋje4ᚋrevcat�
 	return ret
 }
 
+func (ec *executionContext) marshalOMedia2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMedia(ctx context.Context, sel ast.SelectionSet, v *model.Media) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	return ec._Media(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalOMediaList2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediaListᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MediaList) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
@@ -6689,7 +7684,7 @@ func (ec *executionContext) marshalOMediaList2ᚕᚖgithubᚗcomᚋje4ᚋrevcat�
 	return ret
 }
 
-func (ec *executionContext) marshalOMediathekEntry2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediathekEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MediathekEntry) graphql.Marshaler {
+func (ec *executionContext) marshalOMediathekBaseEntry2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediathekBaseEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MediathekBaseEntry) graphql.Marshaler {
 	if v == nil {
 		return graphql.Null
 	}
@@ -6716,7 +7711,195 @@ func (ec *executionContext) marshalOMediathekEntry2ᚕᚖgithubᚗcomᚋje4ᚋre
 			if !isLen1 {
 				defer wg.Done()
 			}
-			ret[i] = ec.marshalNMediathekEntry2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediathekEntry(ctx, sel, v[i])
+			ret[i] = ec.marshalNMediathekBaseEntry2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediathekBaseEntry(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalOMediathekFullEntry2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediathekFullEntryᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MediathekFullEntry) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNMediathekFullEntry2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediathekFullEntry(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalONote2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐNoteᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Note) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNNote2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐNote(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalOPerson2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐPersonᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Person) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNPerson2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐPerson(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalOReference2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐReferenceᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.Reference) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNReference2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐReference(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
