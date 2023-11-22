@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"emperror.dev/errors"
@@ -7,6 +7,13 @@ import (
 	"io/fs"
 	"os"
 )
+
+type Client struct {
+	Name      string   `toml:"name"`
+	Apikey    string   `toml:"apikey"`
+	JWTSecret string   `toml:"jwtsecret"`
+	Groups    []string `toml:"groups"`
+}
 
 type ElasticSearchConfig struct {
 	Endpoint []string         `toml:"endpoint"`
@@ -24,6 +31,8 @@ type RevCatConfig struct {
 	LogLevel string `toml:"loglevel"`
 
 	ElasticSearch ElasticSearchConfig `toml:"elasticsearch"`
+
+	Client []Client `toml:"client"`
 }
 
 func LoadRevCatConfig(fSys fs.FS, fp string, conf *RevCatConfig) error {

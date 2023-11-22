@@ -7,9 +7,12 @@ require (
 	github.com/99designs/gqlgen v0.17.40
 	github.com/BurntSushi/toml v1.3.2
 	github.com/Yamashou/gqlgenc v0.16.0
+	github.com/bluele/gcache v0.0.2
 	github.com/elastic/elastic-transport-go/v8 v8.3.0
 	github.com/elastic/go-elasticsearch/v8 v8.9.0
+	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.1
+	github.com/golang-jwt/jwt/v5 v5.1.0
 	github.com/je4/utils/v2 v2.0.17
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.31.0
@@ -18,7 +21,6 @@ require (
 
 require (
 	github.com/agnivade/levenshtein v1.1.1 // indirect
-	github.com/bluele/gcache v0.0.2 // indirect
 	github.com/bytedance/sonic v1.9.1 // indirect
 	github.com/chenzhuoyu/base64x v0.0.0-20221115062448-fe3a3abad311 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.2 // indirect
@@ -49,6 +51,5 @@ require (
 	golang.org/x/sys v0.12.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	google.golang.org/protobuf v1.30.0 // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

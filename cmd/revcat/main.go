@@ -37,14 +37,14 @@ func main() {
 		cfgFile = "revcat.toml"
 	}
 
-	conf := &RevCatConfig{
+	conf := &config.RevCatConfig{
 		LogFile:      "",
 		LogLevel:     "DEBUG",
 		LocalAddr:    "localhost:81",
 		ExternalAddr: "http://localhost:81/graphql",
 	}
 
-	if err := LoadRevCatConfig(cfgFS, cfgFile, conf); err != nil {
+	if err := config.LoadRevCatConfig(cfgFS, cfgFile, conf); err != nil {
 		log.Fatalf("cannot load toml from [%v] %s: %v", cfgFS, cfgFile, err)
 	}
 
@@ -121,7 +121,7 @@ func main() {
 		cert = &c
 	}
 
-	ctrl := server.NewController(conf.LocalAddr, conf.ExternalAddr, cert, elastic, conf.ElasticSearch.Index, logger)
+	ctrl := server.NewController(conf.LocalAddr, conf.ExternalAddr, cert, elastic, conf.ElasticSearch.Index, conf.Client, logger)
 	ctrl.Start()
 
 	done := make(chan os.Signal, 1)

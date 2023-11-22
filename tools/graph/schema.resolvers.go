@@ -7,6 +7,8 @@ package graph
 import (
 	"context"
 	"fmt"
+	"slices"
+	"strings"
 
 	emperror "emperror.dev/errors"
 	"github.com/je4/revcat/v2/tools/graph/model"
@@ -26,8 +28,25 @@ func (r *mediathekFullEntryResolver) ReferencesFull(ctx context.Context, obj *mo
 	if err != nil {
 		return nil, emperror.Wrapf(err, "cannot load entries %v", signatures)
 	}
+	groups, err := groupsFromContext(ctx)
+	if err != nil {
+		return nil, emperror.Wrap(err, "cannot get groups from context")
+	}
+	var access = make(map[string]bool)
 	for _, doc := range docs {
-		result = append(result, sourceToMediathekBaseEntry(&doc))
+		for t, acls := range doc.ACL {
+			for _, group := range groups {
+				if slices.Contains(acls, group) {
+					access[strings.ToLower(t)] = true
+					break
+				}
+			}
+		}
+		if ok, found := access["meta"]; ok && found {
+			entry := sourceToMediathekBaseEntry(&doc)
+			entry.Access = access
+			result = append(result, entry)
+		}
 	}
 	return result, nil
 }
@@ -45,9 +64,25 @@ func (r *queryResolver) MediathekEntries(ctx context.Context, signatures []strin
 	}
 
 	entries := make([]*model.MediathekFullEntry, 0)
-	for _, source := range docs {
-		entry := sourceToMediathekFullEntry(&source)
-		entries = append(entries, entry)
+	var access = make(map[string]bool)
+	groups, err := groupsFromContext(ctx)
+	if err != nil {
+		return nil, emperror.Wrap(err, "cannot get groups from context")
+	}
+	for _, doc := range docs {
+		for t, acls := range doc.ACL {
+			for _, group := range groups {
+				if slices.Contains(acls, group) {
+					access[strings.ToLower(t)] = true
+					break
+				}
+			}
+		}
+		if ok, found := access["meta"]; ok && found {
+			entry := sourceToMediathekFullEntry(&doc)
+			entry.Base.Access = access
+			entries = append(entries, entry)
+		}
 	}
 	return entries, nil
 }

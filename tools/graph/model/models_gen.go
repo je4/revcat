@@ -63,6 +63,7 @@ type MediathekBaseEntry struct {
 	References        []*Reference `json:"references,omitempty"`
 	Type              *string      `json:"type,omitempty"`
 	Poster            *Media       `json:"poster,omitempty"`
+	Access            map[string]bool
 }
 
 type MediathekFullEntry struct {

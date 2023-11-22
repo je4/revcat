@@ -9,3 +9,8 @@ externaladdr = "https://localhost:8443/graphql"
 endpoint = ["https://elastic.med.campusderkuenste.ch/"]
 index = "fhnw_ink"
 apikey = "%%ELASTIC_APIKEY%%"
+
+[[client]]
+name = "test"
+apikey = "laksedjpwo43iucn45i"
+groups = ["global/guest"]

@@ -1,9 +1,44 @@
 package graph
 
 import (
+	"context"
+	"emperror.dev/errors"
+	"github.com/gin-gonic/gin"
 	"github.com/je4/revcat/v2/pkg/sourcetype"
 	"github.com/je4/revcat/v2/tools/graph/model"
+	"strings"
 )
+
+func groupsFromContext(ctx context.Context) ([]string, error) {
+	groupsAny := ctx.Value("groups")
+	if groupsAny == nil {
+		return nil, errors.Errorf("no value for groups found in context")
+	}
+	if groups, ok := groupsAny.([]string); !ok {
+		return nil, errors.Errorf("invalid value type for groups found in context")
+	} else {
+		newGroups := make([]string, 0)
+		for _, group := range groups {
+			newGroups = append(newGroups, strings.ToLower(group))
+		}
+		return newGroups, nil
+	}
+}
+
+func ginContextFromContext(ctx context.Context) (*gin.Context, error) {
+	ginContext := ctx.Value("GinContextKey")
+	if ginContext == nil {
+		err := errors.Errorf("could not retrieve gin.Context")
+		return nil, err
+	}
+
+	gc, ok := ginContext.(*gin.Context)
+	if !ok {
+		err := errors.Errorf("gin.Context has wrong type")
+		return nil, err
+	}
+	return gc, nil
+}
 
 func sourceMediaToMedia(m *sourcetype.Media) *model.Media {
 	if m == nil {

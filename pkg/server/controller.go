@@ -8,10 +8,15 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	elasticsearch "github.com/elastic/go-elasticsearch/v8"
+	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/je4/revcat/v2/config"
 	"github.com/je4/revcat/v2/tools/graph"
 	"github.com/je4/utils/v2/pkg/zLogger"
 	"net/http"
+	"strings"
+	"time"
 )
 
 func graphqlHandler(elastic *elasticsearch.TypedClient, index string, logger zLogger.ZLogger) gin.HandlerFunc {
@@ -33,7 +38,13 @@ func playgroundHandler() gin.HandlerFunc {
 	}
 }
 
-func NewController(localAddr, externalAddr string, cert *tls.Certificate, elastic *elasticsearch.TypedClient, index string, logger zLogger.ZLogger) *Controller {
+func NewController(localAddr, externalAddr string, cert *tls.Certificate, elastic *elasticsearch.TypedClient, index string, clients []config.Client, logger zLogger.ZLogger) *Controller {
+	// for faster access
+	clientByApiKey := make(map[string]config.Client)
+	for _, client := range clients {
+		clientByApiKey[client.Apikey] = client
+	}
+
 	ctrl := &Controller{
 		localAddr:    localAddr,
 		externalAddr: externalAddr,
@@ -41,26 +52,84 @@ func NewController(localAddr, externalAddr string, cert *tls.Certificate, elasti
 		cert:         cert,
 		logger:       logger,
 	}
-	/*
-		u, err := url.Parse(ctrl.externalAddr)
-		if err != nil {
-			return errors.Wrapf(err, "invalid external address '%ctrl'", ctrl.externalAddr)
-		}
-		subpath := "/" + strings.Trim(u.Path, "/")
-
-			// programmatically set swagger info
-			docs.SwaggerInfo.Host = fmt.Sprintf("%ctrl:%ctrl", u.Hostname(), u.Port())
-			docs.SwaggerInfo.BasePath = "/" + strings.Trim(subpath+BASEPATH, "/")
-
-			if ctrl.cert == nil {
-				docs.SwaggerInfo.Schemes = []string{"http"}
-			} else {
-				docs.SwaggerInfo.Schemes = []string{"https"}
-			}
-	*/
 	router := gin.Default()
 
 	subRouter := router.Group("/graphql")
+
+	corsConfig := cors.DefaultConfig()
+	corsConfig.AllowAllOrigins = true
+	subRouter.Use(cors.New(corsConfig))
+
+	/*
+		// add the gin context to the request context
+		GinContextToContextMiddleware := func() gin.HandlerFunc {
+			return func(c *gin.Context) {
+				ctx := context.WithValue(c.Request.Context(), "GinContextKey", c)
+				c.Request = c.Request.WithContext(ctx)
+				c.Next()
+			}
+		}
+	*/
+	checkAuthMiddleware := func() gin.HandlerFunc {
+		type groupClaims struct {
+			Groups []string `json:"groups"`
+			jwt.RegisteredClaims
+		}
+		return func(c *gin.Context) {
+			authString := c.Request.Header.Get("Authorization")
+			if authString == "" {
+				logger.Info().Msg("no authorization header")
+				c.AbortWithStatusJSON(http.StatusUnauthorized, "no authorization header")
+				return
+			}
+			if !strings.HasPrefix(authString, "Bearer ") {
+				logger.Info().Msgf("authorization '%s' header has wrong type", authString)
+				c.AbortWithStatusJSON(http.StatusUnauthorized, "no bearer token")
+				return
+			}
+			tokenString := authString[7:]
+			parts := strings.SplitN(tokenString, ".", 2)
+			client, ok := clientByApiKey[parts[0]]
+			if !ok {
+				logger.Info().Msgf("invalid application key '%s'", parts[0])
+				c.AbortWithStatusJSON(http.StatusUnauthorized, "invalid application key")
+				return
+
+			}
+			if len(parts) != 2 {
+				// we only have an application key
+				ctx := context.WithValue(c.Request.Context(), "groups", client.Groups)
+				c.Request = c.Request.WithContext(ctx)
+				c.Next()
+				return
+			}
+
+			token, err := jwt.ParseWithClaims(tokenString, &groupClaims{}, func(token *jwt.Token) (interface{}, error) {
+				return []byte(client.JWTSecret), nil
+			}, jwt.WithLeeway(5*time.Second))
+			if err != nil {
+				logger.Info().Err(err).Msgf("cannot parse token '%s'", tokenString)
+				c.AbortWithStatusJSON(http.StatusUnauthorized, fmt.Sprintf("cannot parse token '%s': %v", tokenString, err))
+				return
+			}
+			if !token.Valid {
+				logger.Info().Msgf("invalid token '%s'", tokenString)
+				c.AbortWithStatusJSON(http.StatusUnauthorized, "invalid token")
+				return
+			}
+			claims, ok := token.Claims.(*groupClaims)
+			if !ok {
+				logger.Info().Msgf("invalid claims '%s'", tokenString)
+				c.AbortWithStatusJSON(http.StatusUnauthorized, "invalid claims")
+				return
+			}
+			ctx := context.WithValue(c.Request.Context(), "groups", claims.Groups)
+			c.Request = c.Request.WithContext(ctx)
+			c.Next()
+		}
+	}
+	subRouter.Use(checkAuthMiddleware())
+
 	subRouter.POST("/", graphqlHandler(elastic, index, logger))
 	subRouter.GET("/", playgroundHandler())
 
