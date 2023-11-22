@@ -22,7 +22,7 @@ func (r *mediathekFullEntryResolver) ReferencesFull(ctx context.Context, obj *mo
 	if len(signatures) == 0 {
 		return result, nil
 	}
-	docs, err := loadEntries(ctx, r.elastic, r.index, signatures)
+	docs, err := r.loadEntries(ctx, signatures)
 	if err != nil {
 		return nil, emperror.Wrapf(err, "cannot load entries %v", signatures)
 	}
@@ -39,7 +39,7 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 
 // MediathekEntries is the resolver for the mediathekEntries field.
 func (r *queryResolver) MediathekEntries(ctx context.Context, signatures []string) ([]*model.MediathekFullEntry, error) {
-	docs, err := loadEntries(ctx, r.elastic, r.index, signatures)
+	docs, err := r.loadEntries(ctx, signatures)
 	if err != nil {
 		return nil, emperror.Wrapf(err, "cannot load entries %v", signatures)
 	}
