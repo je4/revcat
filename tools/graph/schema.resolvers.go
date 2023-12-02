@@ -6,11 +6,14 @@ package graph
 
 import (
 	"context"
-	"fmt"
+	"encoding/json"
 	"slices"
 	"strings"
 
 	emperror "emperror.dev/errors"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/je4/revcat/v2/pkg/sourcetype"
 	"github.com/je4/revcat/v2/tools/graph/model"
 )
 
@@ -44,7 +47,6 @@ func (r *mediathekFullEntryResolver) ReferencesFull(ctx context.Context, obj *mo
 		}
 		if ok, found := access["meta"]; ok && found {
 			entry := sourceToMediathekBaseEntry(&doc)
-			entry.Access = access
 			result = append(result, entry)
 		}
 	}
@@ -52,8 +54,53 @@ func (r *mediathekFullEntryResolver) ReferencesFull(ctx context.Context, obj *mo
 }
 
 // Search is the resolver for the search field.
-func (r *queryResolver) Search(ctx context.Context, query string, facets []*model.FacetInput, first *int, after *string, last *int, before *string) (*model.SearchResult, error) {
-	panic(fmt.Errorf("xxxnot implemented: Search - search"))
+func (r *queryResolver) Search(ctx context.Context, query string, facets []*model.FacetInput, filter []*model.FilterInput, first *int, after *string, last *int, before *string) (*model.SearchResult, error) {
+	var esFilter = []types.Query{
+		createFilterQuery("category", "zotero2!!PCB_Basel"),
+		createFilterQuery("acl.meta", "public/guest"),
+	}
+	for _, f := range filter {
+		for _, val := range f.ValuesString {
+			esFilter = append(esFilter, createFilterQuery(f.Field, val))
+		}
+	}
+
+	resp, err := r.elastic.Search().
+		Index(r.index).
+		Request(&search.Request{
+			Query: &types.Query{
+				Bool: &types.BoolQuery{
+					Filter: esFilter,
+					Must: []types.Query{
+						{
+							SimpleQueryString: &types.SimpleQueryStringQuery{
+								Query: query,
+							},
+						},
+					},
+				},
+			},
+		}).
+		Size(25).
+		Do(ctx)
+	if err != nil {
+		return nil, emperror.Wrapf(err, "cannot search for '%s'", query)
+	}
+	var result = &model.SearchResult{
+		TotalCount: int(resp.Hits.Total.Value),
+		Edges:      make([]*model.MediathekFullEntry, 0),
+		Facets:     make([]*model.Facet, 0),
+		PageInfo:   &model.PageInfo{},
+	}
+	for _, hit := range resp.Hits.Hits {
+		source := &sourcetype.SourceData{}
+		if err := json.Unmarshal(hit.Source_, source); err != nil {
+			return nil, emperror.Wrapf(err, "cannot unmarshal hit %v", hit)
+		}
+		entry := sourceToMediathekFullEntry(source)
+		result.Edges = append(result.Edges, entry)
+	}
+	return result, nil
 }
 
 // MediathekEntries is the resolver for the mediathekEntries field.
@@ -80,7 +127,6 @@ func (r *queryResolver) MediathekEntries(ctx context.Context, signatures []strin
 		}
 		if ok, found := access["meta"]; ok && found {
 			entry := sourceToMediathekFullEntry(&doc)
-			entry.Base.Access = access
 			entries = append(entries, entry)
 		}
 	}

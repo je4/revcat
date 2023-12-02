@@ -11,6 +11,7 @@ import (
 
 type RevCatGraphQLClient interface {
 	MediathekEntries(ctx context.Context, signatures []string, interceptors ...clientv2.RequestInterceptor) (*MediathekEntries, error)
+	Search(ctx context.Context, query string, facets []*FacetInput, filter []*FilterInput, first *int64, after *string, last *int64, before *string, interceptors ...clientv2.RequestInterceptor) (*Search, error)
 }
 
 type Client struct {
@@ -259,6 +260,81 @@ func (t *KeyValueFragment) GetValue() string {
 	return t.Value
 }
 
+type PageInfoFragment struct {
+	HasNextPage     bool   "json:\"hasNextPage\" graphql:\"hasNextPage\""
+	HasPreviousPage bool   "json:\"hasPreviousPage\" graphql:\"hasPreviousPage\""
+	StartCursor     string "json:\"startCursor\" graphql:\"startCursor\""
+	EndCursor       string "json:\"endCursor\" graphql:\"endCursor\""
+}
+
+func (t *PageInfoFragment) GetHasNextPage() bool {
+	if t == nil {
+		t = &PageInfoFragment{}
+	}
+	return t.HasNextPage
+}
+func (t *PageInfoFragment) GetHasPreviousPage() bool {
+	if t == nil {
+		t = &PageInfoFragment{}
+	}
+	return t.HasPreviousPage
+}
+func (t *PageInfoFragment) GetStartCursor() string {
+	if t == nil {
+		t = &PageInfoFragment{}
+	}
+	return t.StartCursor
+}
+func (t *PageInfoFragment) GetEndCursor() string {
+	if t == nil {
+		t = &PageInfoFragment{}
+	}
+	return t.EndCursor
+}
+
+type FacetValueFragment struct {
+	ValStr *string "json:\"valStr,omitempty\" graphql:\"valStr\""
+	ValInt *int64  "json:\"valInt,omitempty\" graphql:\"valInt\""
+	Count  int64   "json:\"count\" graphql:\"count\""
+}
+
+func (t *FacetValueFragment) GetValStr() *string {
+	if t == nil {
+		t = &FacetValueFragment{}
+	}
+	return t.ValStr
+}
+func (t *FacetValueFragment) GetValInt() *int64 {
+	if t == nil {
+		t = &FacetValueFragment{}
+	}
+	return t.ValInt
+}
+func (t *FacetValueFragment) GetCount() int64 {
+	if t == nil {
+		t = &FacetValueFragment{}
+	}
+	return t.Count
+}
+
+type FacetFragment struct {
+	Field  string                "json:\"field\" graphql:\"field\""
+	Values []*FacetValueFragment "json:\"values\" graphql:\"values\""
+}
+
+func (t *FacetFragment) GetField() string {
+	if t == nil {
+		t = &FacetFragment{}
+	}
+	return t.Field
+}
+func (t *FacetFragment) GetValues() []*FacetValueFragment {
+	if t == nil {
+		t = &FacetFragment{}
+	}
+	return t.Values
+}
+
 type MediathekEntries_MediathekEntries struct {
 	ID             string                   "json:\"id\" graphql:\"id\""
 	Base           *MediathekBaseFragment   "json:\"base\" graphql:\"base\""
@@ -319,6 +395,105 @@ func (t *MediathekEntries_MediathekEntries) GetTypename() *string {
 	return t.Typename
 }
 
+type Search_Search_Edges struct {
+	ID             string                   "json:\"id\" graphql:\"id\""
+	Base           *MediathekBaseFragment   "json:\"base\" graphql:\"base\""
+	Notes          []*NoteFragment          "json:\"notes,omitempty\" graphql:\"notes\""
+	Abstract       *string                  "json:\"abstract,omitempty\" graphql:\"abstract\""
+	Extra          []*KeyValueFragment      "json:\"extra,omitempty\" graphql:\"extra\""
+	Media          []*MediaListFragment     "json:\"media,omitempty\" graphql:\"media\""
+	ReferencesFull []*MediathekBaseFragment "json:\"referencesFull,omitempty\" graphql:\"referencesFull\""
+	Typename       *string                  "json:\"__typename,omitempty\" graphql:\"__typename\""
+}
+
+func (t *Search_Search_Edges) GetID() string {
+	if t == nil {
+		t = &Search_Search_Edges{}
+	}
+	return t.ID
+}
+func (t *Search_Search_Edges) GetBase() *MediathekBaseFragment {
+	if t == nil {
+		t = &Search_Search_Edges{}
+	}
+	return t.Base
+}
+func (t *Search_Search_Edges) GetNotes() []*NoteFragment {
+	if t == nil {
+		t = &Search_Search_Edges{}
+	}
+	return t.Notes
+}
+func (t *Search_Search_Edges) GetAbstract() *string {
+	if t == nil {
+		t = &Search_Search_Edges{}
+	}
+	return t.Abstract
+}
+func (t *Search_Search_Edges) GetExtra() []*KeyValueFragment {
+	if t == nil {
+		t = &Search_Search_Edges{}
+	}
+	return t.Extra
+}
+func (t *Search_Search_Edges) GetMedia() []*MediaListFragment {
+	if t == nil {
+		t = &Search_Search_Edges{}
+	}
+	return t.Media
+}
+func (t *Search_Search_Edges) GetReferencesFull() []*MediathekBaseFragment {
+	if t == nil {
+		t = &Search_Search_Edges{}
+	}
+	return t.ReferencesFull
+}
+func (t *Search_Search_Edges) GetTypename() *string {
+	if t == nil {
+		t = &Search_Search_Edges{}
+	}
+	return t.Typename
+}
+
+type Search_Search struct {
+	TotalCount int64                  "json:\"totalCount\" graphql:\"totalCount\""
+	PageInfo   *PageInfoFragment      "json:\"pageInfo\" graphql:\"pageInfo\""
+	Edges      []*Search_Search_Edges "json:\"edges\" graphql:\"edges\""
+	Facets     []*FacetFragment       "json:\"facets\" graphql:\"facets\""
+	Typename   *string                "json:\"__typename,omitempty\" graphql:\"__typename\""
+}
+
+func (t *Search_Search) GetTotalCount() int64 {
+	if t == nil {
+		t = &Search_Search{}
+	}
+	return t.TotalCount
+}
+func (t *Search_Search) GetPageInfo() *PageInfoFragment {
+	if t == nil {
+		t = &Search_Search{}
+	}
+	return t.PageInfo
+}
+func (t *Search_Search) GetEdges() []*Search_Search_Edges {
+	if t == nil {
+		t = &Search_Search{}
+	}
+	return t.Edges
+}
+func (t *Search_Search) GetFacets() []*FacetFragment {
+	if t == nil {
+		t = &Search_Search{}
+	}
+	return t.Facets
+}
+func (t *Search_Search) GetTypename() *string {
+	if t == nil {
+		t = &Search_Search{}
+	}
+	return t.Typename
+}
+
 type MediathekEntries struct {
 	MediathekEntries []*MediathekEntries_MediathekEntries "json:\"mediathekEntries,omitempty\" graphql:\"mediathekEntries\""
 }
@@ -328,6 +503,17 @@ func (t *MediathekEntries) GetMediathekEntries() []*MediathekEntries_MediathekEn
 		t = &MediathekEntries{}
 	}
 	return t.MediathekEntries
+}
+
+type Search struct {
+	Search Search_Search "json:\"search\" graphql:\"search\""
+}
+
+func (t *Search) GetSearch() *Search_Search {
+	if t == nil {
+		t = &Search{}
+	}
+	return &t.Search
 }
 
 const MediathekEntriesDocument = `query MediathekEntries ($signatures: [String!]!) {
@@ -419,6 +605,129 @@ func (c *Client) MediathekEntries(ctx context.Context, signatures []string, inte
 	return &res, nil
 }
 
+const SearchDocument = `query search ($query: String!, $facets: [FacetInput!], $filter: [FilterInput!], $first: Int, $after: String, $last: Int, $before: String) {
+	search(query: $query, facets: $facets, filter: $filter, first: $first, after: $after, last: $last, before: $before) {
+		totalCount
+		pageInfo {
+			... PageInfoFragment
+		}
+		edges {
+			id
+			base {
+				... MediathekBaseFragment
+			}
+			notes {
+				... NoteFragment
+			}
+			abstract
+			extra {
+				... KeyValueFragment
+			}
+			media {
+				... MediaListFragment
+			}
+			referencesFull {
+				... MediathekBaseFragment
+			}
+			__typename
+		}
+		facets {
+			... FacetFragment
+		}
+		__typename
+	}
+}
+fragment PageInfoFragment on PageInfo {
+	hasNextPage
+	hasPreviousPage
+	startCursor
+	endCursor
+}
+fragment MediathekBaseFragment on MediathekBaseEntry {
+	signature
+	source
+	title
+	series
+	place
+	date
+	category
+	tags
+	url
+	publisher
+	rights
+	license
+	type
+	poster {
+		... MediaItemFragment
+	}
+	references {
+		... ReferenceFragment
+	}
+}
+fragment MediaItemFragment on Media {
+	name
+	mimetype
+	pronom
+	type
+	uri
+	orientation
+}
+fragment ReferenceFragment on Reference {
+	type
+	title
+	signature
+}
+fragment NoteFragment on Note {
+	title
+	text
+}
+fragment KeyValueFragment on KeyValue {
+	key
+	value
+}
+fragment MediaListFragment on MediaList {
+	name
+	items {
+		... MediaItemFragment
+	}
+}
+fragment FacetFragment on Facet {
+	field
+	values {
+		... FacetValueFragment
+	}
+}
+fragment FacetValueFragment on FacetValue {
+	valStr
+	valInt
+	count
+}
+`
+
+func (c *Client) Search(ctx context.Context, query string, facets []*FacetInput, filter []*FilterInput, first *int64, after *string, last *int64, before *string, interceptors ...clientv2.RequestInterceptor) (*Search, error) {
+	vars := map[string]interface{}{
+		"query":  query,
+		"facets": facets,
+		"filter": filter,
+		"first":  first,
+		"after":  after,
+		"last":   last,
+		"before": before,
+	}
+
+	var res Search
+	if err := c.Client.Post(ctx, "search", SearchDocument, &res, vars, interceptors...); err != nil {
+		if c.Client.ParseDataWhenErrors {
+			return &res, err
+		}
+
+		return nil, err
+	}
+
+	return &res, nil
+}
+
 var DocumentOperationNames = map[string]string{
 	MediathekEntriesDocument: "MediathekEntries",
+	SearchDocument:           "search",
 }

@@ -81,7 +81,7 @@ type FacetValue {
 }
 
 type Facet {
-  key: String!
+  field: String!
   values: [FacetValue!]!
 }
 
@@ -100,12 +100,18 @@ type SearchResult {
 }
 
 input FacetInput {
-  key: String!
+  name: String!
+  field: String!
   valuesString: [String!]
   ValuesInt: [Int!]
 }
 
+input FilterInput {
+    field: String!
+    valuesString: [String!]
+}
+
 type Query {
-  search(query: String!, facets: [FacetInput!], first: Int, after: String, last: Int, before: String): SearchResult!
+  search(query: String!, facets: [FacetInput!], filter: [FilterInput!], first: Int, after: String, last: Int, before: String): SearchResult!
   mediathekEntries(signatures: [String!]!): [MediathekFullEntry!]
 }

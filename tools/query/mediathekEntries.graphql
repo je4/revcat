@@ -1,0 +1,22 @@
+query MediathekEntries($signatures: [String!]!) {
+    mediathekEntries(signatures: $signatures) {
+        id
+        base {
+            ...MediathekBaseFragment
+        }
+        notes {
+            ...NoteFragment
+        }
+        abstract
+        extra {
+            ...KeyValueFragment
+        }
+        media {
+            ...MediaListFragment
+        }
+        referencesFull {
+            ...MediathekBaseFragment
+        }
+        __typename
+    }
+}

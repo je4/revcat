@@ -3,12 +3,13 @@
 package model
 
 type Facet struct {
-	Key    string        `json:"key"`
+	Field  string        `json:"field"`
 	Values []*FacetValue `json:"values"`
 }
 
 type FacetInput struct {
-	Key          string   `json:"key"`
+	Name         string   `json:"name"`
+	Field        string   `json:"field"`
 	ValuesString []string `json:"valuesString,omitempty"`
 	ValuesInt    []int    `json:"ValuesInt,omitempty"`
 }
@@ -17,6 +18,11 @@ type FacetValue struct {
 	ValStr *string `json:"valStr,omitempty"`
 	ValInt *int    `json:"valInt,omitempty"`
 	Count  int     `json:"count"`
+}
+
+type FilterInput struct {
+	Field        string   `json:"field"`
+	ValuesString []string `json:"valuesString,omitempty"`
 }
 
 type KeyValue struct {
@@ -63,7 +69,6 @@ type MediathekBaseEntry struct {
 	References        []*Reference `json:"references,omitempty"`
 	Type              *string      `json:"type,omitempty"`
 	Poster            *Media       `json:"poster,omitempty"`
-	Access            map[string]bool
 }
 
 type MediathekFullEntry struct {

@@ -1,0 +1,32 @@
+query search($query: String!, $facets: [FacetInput!], $filter: [FilterInput!], $first: Int, $after: String, $last: Int, $before: String) {
+    search(query: $query, facets: $facets, filter: $filter, first: $first, after: $after, last: $last, before: $before) {
+        totalCount
+        pageInfo {
+            ...PageInfoFragment
+        }
+        edges {
+            id
+            base {
+                ...MediathekBaseFragment
+            }
+            notes {
+                ...NoteFragment
+            }
+            abstract
+            extra {
+                ...KeyValueFragment
+            }
+            media {
+                ...MediaListFragment
+            }
+            referencesFull {
+                ...MediathekBaseFragment
+            }
+            __typename
+        }
+        facets {
+            ...FacetFragment
+        }
+        __typename
+    }
+}

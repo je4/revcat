@@ -3,11 +3,22 @@ package graph
 import (
 	"context"
 	"emperror.dev/errors"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"github.com/gin-gonic/gin"
 	"github.com/je4/revcat/v2/pkg/sourcetype"
 	"github.com/je4/revcat/v2/tools/graph/model"
 	"strings"
 )
+
+func createFilterQuery(field string, value string) types.Query {
+	var query = types.Query{}
+	query.Match = map[string]types.MatchQuery{
+		field: {
+			Query: value,
+		},
+	}
+	return query
+}
 
 func groupsFromContext(ctx context.Context) ([]string, error) {
 	groupsAny := ctx.Value("groups")

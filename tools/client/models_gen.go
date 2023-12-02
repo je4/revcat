@@ -3,12 +3,13 @@
 package client
 
 type Facet struct {
-	Key    string        `json:"key"`
+	Field  string        `json:"field"`
 	Values []*FacetValue `json:"values"`
 }
 
 type FacetInput struct {
-	Key          string   `json:"key"`
+	Name         string   `json:"name"`
+	Field        string   `json:"field"`
 	ValuesString []string `json:"valuesString,omitempty"`
 	ValuesInt    []int64  `json:"ValuesInt,omitempty"`
 }
@@ -17,6 +18,11 @@ type FacetValue struct {
 	ValStr *string `json:"valStr,omitempty"`
 	ValInt *int64  `json:"valInt,omitempty"`
 	Count  int64   `json:"count"`
+}
+
+type FilterInput struct {
+	Field        string   `json:"field"`
+	ValuesString []string `json:"valuesString,omitempty"`
 }
 
 type KeyValue struct {

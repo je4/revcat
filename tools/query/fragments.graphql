@@ -1,25 +1,3 @@
-query MediathekEntries($signatures: [String!]!) {
-    mediathekEntries(signatures: $signatures) {
-        id
-        base {
-            ...MediathekBaseFragment
-        }
-        notes {
-            ...NoteFragment
-        }
-        abstract
-        extra {
-            ...KeyValueFragment
-        }
-        media {
-            ...MediaListFragment
-        }
-        referencesFull {
-            ...MediathekBaseFragment
-        }
-        __typename
-    }
-}
 
 fragment MediathekBaseFragment on MediathekBaseEntry {
     signature
@@ -56,12 +34,12 @@ fragment ReferenceFragment on Reference {
 
 
 fragment MediaItemFragment on Media {
-        name
-        mimetype
-        pronom
-        type
-        uri
-        orientation
+    name
+    mimetype
+    pronom
+    type
+    uri
+    orientation
 }
 fragment MediaListFragment on MediaList {
     name
@@ -74,3 +52,25 @@ fragment KeyValueFragment on KeyValue {
     key
     value
 }
+
+
+fragment PageInfoFragment on PageInfo {
+    hasNextPage
+    hasPreviousPage
+    startCursor
+    endCursor
+}
+
+fragment FacetValueFragment on FacetValue {
+    valStr
+    valInt
+    count
+}
+
+fragment FacetFragment on Facet {
+    field
+    values {
+        ...FacetValueFragment
+    }
+}
+
