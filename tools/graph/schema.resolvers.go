@@ -31,7 +31,7 @@ func (r *mediathekFullEntryResolver) ReferencesFull(ctx context.Context, obj *mo
 	if err != nil {
 		return nil, emperror.Wrapf(err, "cannot load entries %v", signatures)
 	}
-	groups, err := groupsFromContext(ctx)
+	groups, err := stringsFromContext(ctx, "groups")
 	if err != nil {
 		return nil, emperror.Wrap(err, "cannot get groups from context")
 	}
@@ -55,10 +55,90 @@ func (r *mediathekFullEntryResolver) ReferencesFull(ctx context.Context, obj *mo
 
 // Search is the resolver for the search field.
 func (r *queryResolver) Search(ctx context.Context, query string, facets []*model.FacetInput, filter []*model.FilterInput, first *int, after *string, last *int, before *string) (*model.SearchResult, error) {
-	var esFilter = []types.Query{
-		createFilterQuery("category", "zotero2!!PCB_Basel"),
-		createFilterQuery("acl.meta", "public/guest"),
+	groups, err := stringsFromContext(ctx, "groups")
+	if err != nil {
+		return nil, emperror.Wrap(err, "cannot get groups from context")
 	}
+	clientName, err := stringFromContext(ctx, "client")
+	if err != nil || clientName == "" {
+		return nil, emperror.Wrap(err, "cannot get client from context")
+	}
+	client, ok := r.client[clientName]
+	if !ok {
+		return nil, emperror.Errorf("client '%s' not found", clientName)
+	}
+
+	baseQuery := types.BoolQuery{
+		Must:               []types.Query{},
+		Should:             []types.Query{},
+		MinimumShouldMatch: 1,
+	}
+	for _, q := range client.AND {
+		if q.Field == "" {
+			continue
+		}
+		for _, val := range q.Values {
+			baseQuery.Must = append(baseQuery.Must, types.Query{
+				Term: map[string]types.TermQuery{
+					q.Field: {
+						Value: val,
+					},
+				},
+			})
+			// baseQuery.Must = append(baseQuery.Must, createFilterQuery(q.Field, val))
+		}
+	}
+	for _, q := range client.OR {
+		if q.Field == "" {
+			continue
+		}
+		for _, val := range q.Values {
+			baseQuery.Should = append(baseQuery.Should, types.Query{
+				Term: map[string]types.TermQuery{
+					q.Field: {
+						Value: val,
+					},
+				},
+			})
+			//			baseQuery.Should = append(baseQuery.Should, createFilterQuery(q.Field, val))
+		}
+	}
+	if len(baseQuery.Should) == 0 {
+		baseQuery.MinimumShouldMatch = 0
+	}
+	aclQuery := types.BoolQuery{
+		Must:               []types.Query{},
+		Should:             []types.Query{},
+		MinimumShouldMatch: 1,
+	}
+	grps := []string{}
+	for _, grp := range client.Groups {
+		grps = append(grps, strings.ToLower(grp))
+	}
+	for _, grp := range groups {
+		grps = append(grps, strings.ToLower(grp))
+	}
+	slices.Sort(grps)
+	grps = slices.Compact(grps)
+	for _, grp := range grps {
+		aclQuery.Must = append(aclQuery.Must, types.Query{
+			Term: map[string]types.TermQuery{
+				"acl.meta.keyword": {
+					Value: grp,
+				},
+			},
+		})
+		//		aclQuery.Must = append(aclQuery.Must, createFilterQuery("acl.meta", grp))
+	}
+	if len(aclQuery.Should) == 0 {
+		aclQuery.MinimumShouldMatch = 0
+	}
+
+	var esFilter = []types.Query{
+		types.Query{Bool: &baseQuery},
+		types.Query{Bool: &aclQuery},
+	}
+
 	for _, f := range filter {
 		for _, val := range f.ValuesString {
 			esFilter = append(esFilter, createFilterQuery(f.Field, val))
@@ -112,7 +192,7 @@ func (r *queryResolver) MediathekEntries(ctx context.Context, signatures []strin
 
 	entries := make([]*model.MediathekFullEntry, 0)
 	var access = make(map[string]bool)
-	groups, err := groupsFromContext(ctx)
+	groups, err := stringsFromContext(ctx, "groups")
 	if err != nil {
 		return nil, emperror.Wrap(err, "cannot get groups from context")
 	}

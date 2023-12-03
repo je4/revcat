@@ -8,17 +8,25 @@ import (
 	"os"
 )
 
+type ClientBaseQuery struct {
+	Field  string   `toml:"field"`
+	Values []string `toml:"values"`
+}
+
 type Client struct {
-	Name      string   `toml:"name"`
-	Apikey    string   `toml:"apikey"`
-	JWTSecret string   `toml:"jwtsecret"`
-	Groups    []string `toml:"groups"`
+	Name      string            `toml:"name"`
+	Apikey    string            `toml:"apikey"`
+	JWTSecret string            `toml:"jwtsecret"`
+	Groups    []string          `toml:"groups"`
+	OR        []ClientBaseQuery `toml:"or"`
+	AND       []ClientBaseQuery `toml:"and"`
 }
 
 type ElasticSearchConfig struct {
 	Endpoint []string         `toml:"endpoint"`
 	Index    string           `toml:"index"`
 	ApiKey   config.EnvString `toml:"apikey"`
+	Debug    bool             `toml:"debug"`
 }
 
 type RevCatConfig struct {
@@ -32,7 +40,7 @@ type RevCatConfig struct {
 
 	ElasticSearch ElasticSearchConfig `toml:"elasticsearch"`
 
-	Client []Client `toml:"client"`
+	Client []*Client `toml:"client"`
 }
 
 func LoadRevCatConfig(fSys fs.FS, fp string, conf *RevCatConfig) error {

@@ -19,11 +19,11 @@ import (
 	"time"
 )
 
-func graphqlHandler(elastic *elasticsearch.TypedClient, index string, logger zLogger.ZLogger) gin.HandlerFunc {
+func graphqlHandler(elastic *elasticsearch.TypedClient, index string, clients []*config.Client, logger zLogger.ZLogger) gin.HandlerFunc {
 	h := handler.NewDefaultServer(
 		graph.NewExecutableSchema(
 			graph.Config{
-				Resolvers: graph.NewResolver(elastic, index, logger),
+				Resolvers: graph.NewResolver(elastic, index, clients, logger),
 			}))
 	return func(c *gin.Context) {
 		h.ServeHTTP(c.Writer, c.Request)
@@ -38,9 +38,9 @@ func playgroundHandler() gin.HandlerFunc {
 	}
 }
 
-func NewController(localAddr, externalAddr string, cert *tls.Certificate, elastic *elasticsearch.TypedClient, index string, clients []config.Client, logger zLogger.ZLogger) *Controller {
+func NewController(localAddr, externalAddr string, cert *tls.Certificate, elastic *elasticsearch.TypedClient, index string, clients []*config.Client, logger zLogger.ZLogger) *Controller {
 	// for faster access
-	clientByApiKey := make(map[string]config.Client)
+	clientByApiKey := make(map[string]*config.Client)
 	for _, client := range clients {
 		clientByApiKey[client.Apikey] = client
 	}
@@ -60,16 +60,6 @@ func NewController(localAddr, externalAddr string, cert *tls.Certificate, elasti
 	corsConfig.AllowAllOrigins = true
 	subRouter.Use(cors.New(corsConfig))
 
-	/*
-		// add the gin context to the request context
-		GinContextToContextMiddleware := func() gin.HandlerFunc {
-			return func(c *gin.Context) {
-				ctx := context.WithValue(c.Request.Context(), "GinContextKey", c)
-				c.Request = c.Request.WithContext(ctx)
-				c.Next()
-			}
-		}
-	*/
 	checkAuthMiddleware := func() gin.HandlerFunc {
 		type groupClaims struct {
 			Groups []string `json:"groups"`
@@ -89,6 +79,7 @@ func NewController(localAddr, externalAddr string, cert *tls.Certificate, elasti
 			}
 			tokenString := authString[7:]
 			parts := strings.SplitN(tokenString, ".", 2)
+
 			client, ok := clientByApiKey[parts[0]]
 			if !ok {
 				logger.Info().Msgf("invalid application key '%s'", parts[0])
@@ -99,6 +90,7 @@ func NewController(localAddr, externalAddr string, cert *tls.Certificate, elasti
 			if len(parts) != 2 {
 				// we only have an application key
 				ctx := context.WithValue(c.Request.Context(), "groups", client.Groups)
+				ctx = context.WithValue(ctx, "client", client.Name)
 				c.Request = c.Request.WithContext(ctx)
 				c.Next()
 				return
@@ -124,13 +116,14 @@ func NewController(localAddr, externalAddr string, cert *tls.Certificate, elasti
 				return
 			}
 			ctx := context.WithValue(c.Request.Context(), "groups", claims.Groups)
+			ctx = context.WithValue(ctx, "client", client.Name)
 			c.Request = c.Request.WithContext(ctx)
 			c.Next()
 		}
 	}
 	subRouter.Use(checkAuthMiddleware())
 
-	subRouter.POST("/", graphqlHandler(elastic, index, logger))
+	subRouter.POST("/", graphqlHandler(elastic, index, clients, logger))
 	subRouter.GET("/", playgroundHandler())
 
 	var tlsConfig *tls.Config

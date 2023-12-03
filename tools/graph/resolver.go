@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"github.com/bluele/gcache"
 	elasticsearch "github.com/elastic/go-elasticsearch/v8"
+	"github.com/je4/revcat/v2/config"
 	"github.com/je4/revcat/v2/pkg/sourcetype"
 	"github.com/je4/utils/v2/pkg/zLogger"
 	"time"
@@ -15,13 +16,18 @@ import (
 //
 // It serves as dependency injection for your app, add any dependencies you require here.
 
-func NewResolver(elastic *elasticsearch.TypedClient, index string, logger zLogger.ZLogger) *Resolver {
-	return &Resolver{
+func NewResolver(elastic *elasticsearch.TypedClient, index string, clients []*config.Client, logger zLogger.ZLogger) *Resolver {
+	r := &Resolver{
 		elastic:     elastic,
 		index:       index,
 		logger:      logger,
 		objectCache: gcache.New(800).LRU().Expiration(time.Minute).Build(),
+		client:      make(map[string]*config.Client),
 	}
+	for _, client := range clients {
+		r.client[client.Name] = client
+	}
+	return r
 }
 
 type Resolver struct {
@@ -29,6 +35,7 @@ type Resolver struct {
 	logger      zLogger.ZLogger
 	index       string
 	objectCache gcache.Cache
+	client      map[string]*config.Client
 }
 
 func (r *Resolver) loadEntries(ctx context.Context, signatures []string) ([]sourcetype.SourceData, error) {

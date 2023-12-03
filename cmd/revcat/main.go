@@ -14,6 +14,8 @@ import (
 	"io"
 	"io/fs"
 	"log"
+	"net/http"
+	"net/http/httputil"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -22,6 +24,20 @@ import (
 )
 
 var configfile = flag.String("config", "", "location of toml configuration file")
+
+type LoggingHttpElasticClient struct {
+	c http.Client
+}
+
+func (l LoggingHttpElasticClient) RoundTrip(request *http.Request) (*http.Response, error) {
+	// Log the http request dump
+	requestDump, err := httputil.DumpRequest(request, true)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("reqDump: " + string(requestDump))
+	return l.c.Do(request)
+}
 
 func main() {
 
@@ -42,6 +58,10 @@ func main() {
 		LogLevel:     "DEBUG",
 		LocalAddr:    "localhost:81",
 		ExternalAddr: "http://localhost:81/graphql",
+		Client:       []*config.Client{},
+		ElasticSearch: config.ElasticSearchConfig{
+			Debug: false,
+		},
 	}
 
 	if err := config.LoadRevCatConfig(cfgFS, cfgFile, conf); err != nil {
@@ -92,6 +112,18 @@ func main() {
 		MaxRetries: 5,
 
 		Logger: &elastictransport.ColorLogger{Output: os.Stdout},
+		//		Transport: doer,
+	}
+	if conf.ElasticSearch.Debug {
+		doer := LoggingHttpElasticClient{
+			c: http.Client{
+				// Load a trusted CA here, if running in production
+				Transport: &http.Transport{
+					TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+				},
+			},
+		}
+		elasticConfig.Transport = doer
 	}
 	elastic, err := elasticsearch.NewTypedClient(elasticConfig)
 	if err != nil {
