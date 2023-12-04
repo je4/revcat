@@ -17,7 +17,7 @@ apikey = "laksedjpwo43iucn45i"
 groups = ["global/guest"]
 [[client.and]]
 [[client.or]]
-field = "category"
+field = "category.keyword"
 values = [
     "zotero2!!PCB_Basel",
     "zotero2!!ACT_2020",

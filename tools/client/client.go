@@ -185,6 +185,8 @@ type MediaItemFragment struct {
 	Type        string  "json:\"type\" graphql:\"type\""
 	URI         string  "json:\"uri\" graphql:\"uri\""
 	Orientation int64   "json:\"orientation\" graphql:\"orientation\""
+	Width       int64   "json:\"width\" graphql:\"width\""
+	Height      int64   "json:\"height\" graphql:\"height\""
 }
 
 func (t *MediaItemFragment) GetName() string {
@@ -222,6 +224,18 @@ func (t *MediaItemFragment) GetOrientation() int64 {
 		t = &MediaItemFragment{}
 	}
 	return t.Orientation
+}
+func (t *MediaItemFragment) GetWidth() int64 {
+	if t == nil {
+		t = &MediaItemFragment{}
+	}
+	return t.Width
+}
+func (t *MediaItemFragment) GetHeight() int64 {
+	if t == nil {
+		t = &MediaItemFragment{}
+	}
+	return t.Height
 }
 
 type MediaListFragment struct {
@@ -566,6 +580,8 @@ fragment MediaItemFragment on Media {
 	type
 	uri
 	orientation
+	width
+	height
 }
 fragment ReferenceFragment on Reference {
 	type
@@ -671,6 +687,8 @@ fragment MediaItemFragment on Media {
 	type
 	uri
 	orientation
+	width
+	height
 }
 fragment ReferenceFragment on Reference {
 	type

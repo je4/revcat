@@ -145,19 +145,22 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 		}
 	}
 
+	esMust := []types.Query{}
+	if query != "" {
+		esMust = append(esMust, types.Query{
+			SimpleQueryString: &types.SimpleQueryStringQuery{
+				Query: query,
+			},
+		})
+	}
+
 	resp, err := r.elastic.Search().
 		Index(r.index).
 		Request(&search.Request{
 			Query: &types.Query{
 				Bool: &types.BoolQuery{
 					Filter: esFilter,
-					Must: []types.Query{
-						{
-							SimpleQueryString: &types.SimpleQueryStringQuery{
-								Query: query,
-							},
-						},
-					},
+					Must:   esMust,
 				},
 			},
 		}).

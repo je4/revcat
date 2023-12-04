@@ -40,6 +40,8 @@ fragment MediaItemFragment on Media {
     type
     uri
     orientation
+    width
+    height
 }
 fragment MediaListFragment on MediaList {
     name
