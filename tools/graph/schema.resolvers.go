@@ -6,7 +6,9 @@ package graph
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
+	"net/url"
 	"slices"
 	"strings"
 
@@ -55,6 +57,53 @@ func (r *mediathekFullEntryResolver) ReferencesFull(ctx context.Context, obj *mo
 
 // Search is the resolver for the search field.
 func (r *queryResolver) Search(ctx context.Context, query string, facets []*model.FacetInput, filter []*model.FilterInput, first *int, after *string, last *int, before *string) (*model.SearchResult, error) {
+	var from = 0
+	var size = 25
+
+	if first != nil && last != nil {
+		if *first > *last {
+			return nil, emperror.Errorf("first cannot be greater than last")
+		}
+		from = *first
+		size = *last - *first
+		if size == 0 {
+			size = 25
+		}
+	}
+	if after != nil && before != nil && *after != "" && *before != "" {
+		return nil, emperror.Errorf("after and before cannot be used together")
+	}
+	if after != nil {
+		if *after != "" {
+			crs := &cursor{}
+			afterJson, err := base64.StdEncoding.DecodeString(*after)
+			if err != nil {
+				return nil, emperror.Wrapf(err, "cannot decode after cursor '%s'", *after)
+			}
+			if err := json.Unmarshal(afterJson, crs); err != nil {
+				return nil, emperror.Wrapf(err, "cannot unmarshal after cursor '%s'", afterJson)
+			}
+			from = crs.From + 1
+			size = crs.Size
+		}
+	}
+	if before != nil {
+		if *before != "" {
+			crs := &cursor{}
+			beforeJson, err := base64.StdEncoding.DecodeString(*before)
+			if err != nil {
+				return nil, emperror.Wrapf(err, "cannot decode before cursor '%s'", *before)
+			}
+			if err := json.Unmarshal(beforeJson, crs); err != nil {
+				return nil, emperror.Wrapf(err, "cannot unmarshal before cursor '%s'", beforeJson)
+			}
+			from = crs.From - size
+			if from < 0 {
+				from = 0
+			}
+			size = crs.Size
+		}
+	}
 	groups, err := stringsFromContext(ctx, "groups")
 	if err != nil {
 		return nil, emperror.Wrap(err, "cannot get groups from context")
@@ -164,7 +213,8 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 				},
 			},
 		}).
-		Size(25).
+		From(from).
+		Size(size).
 		Do(ctx)
 	if err != nil {
 		return nil, emperror.Wrapf(err, "cannot search for '%s'", query)
@@ -174,6 +224,33 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 		Edges:      make([]*model.MediathekFullEntry, 0),
 		Facets:     make([]*model.Facet, 0),
 		PageInfo:   &model.PageInfo{},
+	}
+	if result.TotalCount > from+size {
+		result.PageInfo.HasNextPage = true
+
+		cFrom := from + size - 1
+		if cFrom >= result.TotalCount {
+			cFrom = result.TotalCount - 1
+		}
+		endCursor, err := json.Marshal(cursor{
+			From: cFrom,
+			Size: size,
+		})
+		if err != nil {
+			return nil, emperror.Wrap(err, "cannot marshal end cursor")
+		}
+		result.PageInfo.EndCursor = base64.StdEncoding.EncodeToString(endCursor)
+	}
+	if from > 0 {
+		result.PageInfo.HasPreviousPage = true
+		startCursor, err := json.Marshal(cursor{
+			From: from,
+			Size: size,
+		})
+		if err != nil {
+			return nil, emperror.Wrap(err, "cannot marshal start cursor")
+		}
+		result.PageInfo.StartCursor = url.QueryEscape(base64.StdEncoding.EncodeToString(startCursor))
 	}
 	for _, hit := range resp.Hits.Hits {
 		source := &sourcetype.SourceData{}
@@ -226,3 +303,14 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type mediathekFullEntryResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+type cursor struct {
+	From int `json:"from"`
+	Size int `json:"size"`
+}

@@ -5774,7 +5774,7 @@ func (ec *executionContext) unmarshalInputFilterInput(ctx context.Context, obj i
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"field", "valuesString"}
+	fieldsInOrder := [...]string{"field", "and", "valuesString"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5790,6 +5790,15 @@ func (ec *executionContext) unmarshalInputFilterInput(ctx context.Context, obj i
 				return it, err
 			}
 			it.Field = data
+		case "and":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("and"))
+			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.And = data
 		case "valuesString":
 			var err error
 

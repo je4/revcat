@@ -22,6 +22,7 @@ type FacetValue struct {
 
 type FilterInput struct {
 	Field        string   `json:"field"`
+	And          *bool    `json:"and,omitempty"`
 	ValuesString []string `json:"valuesString,omitempty"`
 }
 
