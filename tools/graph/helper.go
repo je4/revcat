@@ -9,14 +9,27 @@ import (
 	"github.com/je4/revcat/v2/tools/graph/model"
 )
 
-func createFilterQuery(field string, value string) types.Query {
-	var query = types.Query{}
-	query.Match = map[string]types.MatchQuery{
-		field: {
-			Query: value,
-		},
+func createFilterQuery(filter *model.InFilter) (types.Query, error) {
+	if filter.BoolTerm != nil {
+		var query = types.Query{Bool: &types.BoolQuery{}}
+		qList := []types.Query{}
+		for _, val := range filter.BoolTerm.Values {
+			qList = append(qList, types.Query{Term: map[string]types.TermQuery{
+				filter.BoolTerm.Field: types.TermQuery{
+					Value: val,
+				},
+			},
+			})
+		}
+		if filter.BoolTerm.And {
+			query.Bool.Must = qList
+		} else {
+			query.Bool.Should = qList
+			query.Bool.MinimumShouldMatch = 1
+		}
+		return query, nil
 	}
-	return query
+	return types.Query{}, errors.Errorf("unknown filter type")
 }
 
 func stringsFromContext(ctx context.Context, key string) ([]string, error) {

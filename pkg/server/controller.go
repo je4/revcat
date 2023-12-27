@@ -69,12 +69,16 @@ func NewController(localAddr, externalAddr string, cert *tls.Certificate, elasti
 			authString := c.Request.Header.Get("Authorization")
 			if authString == "" {
 				logger.Info().Msg("no authorization header")
-				c.AbortWithStatusJSON(http.StatusUnauthorized, "no authorization header")
+				ctx := context.WithValue(c.Request.Context(), "error", "no authorization header")
+				c.Request = c.Request.WithContext(ctx)
+				//c.AbortWithStatusJSON(http.StatusUnauthorized, "no authorization header")
 				return
 			}
 			if !strings.HasPrefix(authString, "Bearer ") {
 				logger.Info().Msgf("authorization '%s' header has wrong type", authString)
-				c.AbortWithStatusJSON(http.StatusUnauthorized, "no bearer token")
+				ctx := context.WithValue(c.Request.Context(), "error", fmt.Sprintf("authorization '%s' header has wrong type", authString))
+				c.Request = c.Request.WithContext(ctx)
+				//c.AbortWithStatusJSON(http.StatusUnauthorized, "no bearer token")
 				return
 			}
 			tokenString := authString[7:]
@@ -83,7 +87,9 @@ func NewController(localAddr, externalAddr string, cert *tls.Certificate, elasti
 			client, ok := clientByApiKey[parts[0]]
 			if !ok {
 				logger.Info().Msgf("invalid application key '%s'", parts[0])
-				c.AbortWithStatusJSON(http.StatusUnauthorized, "invalid application key")
+				ctx := context.WithValue(c.Request.Context(), "error", fmt.Sprintf("invalid application key '%s'", parts[0]))
+				c.Request = c.Request.WithContext(ctx)
+				//c.AbortWithStatusJSON(http.StatusUnauthorized, "invalid application key")
 				return
 
 			}
@@ -101,26 +107,37 @@ func NewController(localAddr, externalAddr string, cert *tls.Certificate, elasti
 			}, jwt.WithLeeway(5*time.Second))
 			if err != nil {
 				logger.Info().Err(err).Msgf("cannot parse token '%s'", tokenString)
-				c.AbortWithStatusJSON(http.StatusUnauthorized, fmt.Sprintf("cannot parse token '%s': %v", tokenString, err))
+				//c.AbortWithStatusJSON(http.StatusUnauthorized, fmt.Sprintf("cannot parse token '%s': %v", tokenString, err))
+				ctx := context.WithValue(c.Request.Context(), "error", fmt.Sprintf("cannot parse token '%s': %v", tokenString, err))
+				c.Request = c.Request.WithContext(ctx)
+				c.Next()
 				return
 			}
 			if !token.Valid {
 				logger.Info().Msgf("invalid token '%s'", tokenString)
-				c.AbortWithStatusJSON(http.StatusUnauthorized, "invalid token")
+				//c.AbortWithStatusJSON(http.StatusUnauthorized, "invalid token")
+				ctx := context.WithValue(c.Request.Context(), "error", fmt.Sprintf("invalid token '%s'", tokenString))
+				c.Request = c.Request.WithContext(ctx)
+				c.Next()
 				return
 			}
 			claims, ok := token.Claims.(*groupClaims)
 			if !ok {
 				logger.Info().Msgf("invalid claims '%s'", tokenString)
-				c.AbortWithStatusJSON(http.StatusUnauthorized, "invalid claims")
+				//c.AbortWithStatusJSON(http.StatusUnauthorized, "invalid claims")
+				ctx := context.WithValue(c.Request.Context(), "error", fmt.Sprintf("invalid claims '%s'", tokenString))
+				c.Request = c.Request.WithContext(ctx)
+				c.Next()
 				return
 			}
 			ctx := context.WithValue(c.Request.Context(), "groups", claims.Groups)
 			ctx = context.WithValue(ctx, "client", client.Name)
 			c.Request = c.Request.WithContext(ctx)
 			c.Next()
+			return
 		}
 	}
+
 	subRouter.Use(checkAuthMiddleware())
 
 	subRouter.POST("/", graphqlHandler(elastic, index, clients, logger))

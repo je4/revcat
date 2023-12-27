@@ -80,10 +80,12 @@ type FacetValue {
   count: Int!
 }
 
+
 type Facet {
-  field: String!
-  values: [FacetValue!]!
+    field: String!
+    values: [FacetValue!]!
 }
+
 
 type PageInfo {
   hasNextPage: Boolean!
@@ -99,20 +101,31 @@ type SearchResult {
   facets: [Facet!]!
 }
 
-input FacetInput {
-  name: String!
-  field: String!
-  valuesString: [String!]
-  ValuesInt: [Int!]
+input InFilterBoolTerm {
+    field: String!
+    and: Boolean! = true
+    values: [String!]
 }
 
-input FilterInput {
-    field: String!
-    and: Boolean
-    valuesString: [String!]
+input InFilter {
+    boolTerm: InFilterBoolTerm
 }
+
+input InFacetTerm {
+    field: String!
+    name: String!
+    include: [String!]
+    exclude: [String!]
+}
+
+input InFacet {
+    term: InFacetTerm
+    query: InFilter!
+}
+
+
 
 type Query {
-  search(query: String!, facets: [FacetInput!], filter: [FilterInput!], first: Int, after: String, last: Int, before: String): SearchResult!
+  search(query: String!, facets: [InFacet!], filter: [InFilter!], first: Int, after: String, last: Int, before: String): SearchResult!
   mediathekEntries(signatures: [String!]!): [MediathekFullEntry!]
 }

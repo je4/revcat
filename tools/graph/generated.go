@@ -133,7 +133,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		MediathekEntries func(childComplexity int, signatures []string) int
-		Search           func(childComplexity int, query string, facets []*model.FacetInput, filter []*model.FilterInput, first *int, after *string, last *int, before *string) int
+		Search           func(childComplexity int, query string, facets []*model.InFacet, filter []*model.InFilter, first *int, after *string, last *int, before *string) int
 	}
 
 	Reference struct {
@@ -154,7 +154,7 @@ type MediathekFullEntryResolver interface {
 	ReferencesFull(ctx context.Context, obj *model.MediathekFullEntry) ([]*model.MediathekBaseEntry, error)
 }
 type QueryResolver interface {
-	Search(ctx context.Context, query string, facets []*model.FacetInput, filter []*model.FilterInput, first *int, after *string, last *int, before *string) (*model.SearchResult, error)
+	Search(ctx context.Context, query string, facets []*model.InFacet, filter []*model.InFilter, first *int, after *string, last *int, before *string) (*model.SearchResult, error)
 	MediathekEntries(ctx context.Context, signatures []string) ([]*model.MediathekFullEntry, error)
 }
 
@@ -577,7 +577,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Search(childComplexity, args["query"].(string), args["facets"].([]*model.FacetInput), args["filter"].([]*model.FilterInput), args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
+		return e.complexity.Query.Search(childComplexity, args["query"].(string), args["facets"].([]*model.InFacet), args["filter"].([]*model.InFilter), args["first"].(*int), args["after"].(*string), args["last"].(*int), args["before"].(*string)), true
 
 	case "Reference.signature":
 		if e.complexity.Reference.Signature == nil {
@@ -636,8 +636,10 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e, 0, 0, make(chan graphql.DeferredResult)}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
-		ec.unmarshalInputFacetInput,
-		ec.unmarshalInputFilterInput,
+		ec.unmarshalInputInFacet,
+		ec.unmarshalInputInFacetTerm,
+		ec.unmarshalInputInFilter,
+		ec.unmarshalInputInFilterBoolTerm,
 	)
 	first := true
 
@@ -781,19 +783,19 @@ func (ec *executionContext) field_Query_search_args(ctx context.Context, rawArgs
 		}
 	}
 	args["query"] = arg0
-	var arg1 []*model.FacetInput
+	var arg1 []*model.InFacet
 	if tmp, ok := rawArgs["facets"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("facets"))
-		arg1, err = ec.unmarshalOFacetInput2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐFacetInputᚄ(ctx, tmp)
+		arg1, err = ec.unmarshalOInFacet2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐInFacetᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
 	}
 	args["facets"] = arg1
-	var arg2 []*model.FilterInput
+	var arg2 []*model.InFilter
 	if tmp, ok := rawArgs["filter"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
-		arg2, err = ec.unmarshalOFilterInput2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐFilterInputᚄ(ctx, tmp)
+		arg2, err = ec.unmarshalOInFilter2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐInFilterᚄ(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -3356,7 +3358,7 @@ func (ec *executionContext) _Query_search(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Search(rctx, fc.Args["query"].(string), fc.Args["facets"].([]*model.FacetInput), fc.Args["filter"].([]*model.FilterInput), fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
+		return ec.resolvers.Query().Search(rctx, fc.Args["query"].(string), fc.Args["facets"].([]*model.InFacet), fc.Args["filter"].([]*model.InFilter), fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["last"].(*int), fc.Args["before"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5711,29 +5713,58 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
-func (ec *executionContext) unmarshalInputFacetInput(ctx context.Context, obj interface{}) (model.FacetInput, error) {
-	var it model.FacetInput
+func (ec *executionContext) unmarshalInputInFacet(ctx context.Context, obj interface{}) (model.InFacet, error) {
+	var it model.InFacet
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"name", "field", "valuesString", "ValuesInt"}
+	fieldsInOrder := [...]string{"term", "query"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
 			continue
 		}
 		switch k {
-		case "name":
+		case "term":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
-			data, err := ec.unmarshalNString2string(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("term"))
+			data, err := ec.unmarshalOInFacetTerm2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐInFacetTerm(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.Name = data
+			it.Term = data
+		case "query":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
+			data, err := ec.unmarshalNInFilter2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐInFilter(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Query = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputInFacetTerm(ctx context.Context, obj interface{}) (model.InFacetTerm, error) {
+	var it model.InFacetTerm
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	fieldsInOrder := [...]string{"field", "name", "include", "exclude"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
 		case "field":
 			var err error
 
@@ -5743,38 +5774,80 @@ func (ec *executionContext) unmarshalInputFacetInput(ctx context.Context, obj in
 				return it, err
 			}
 			it.Field = data
-		case "valuesString":
+		case "name":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("valuesString"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			data, err := ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Name = data
+		case "include":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("include"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ValuesString = data
-		case "ValuesInt":
+			it.Include = data
+		case "exclude":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ValuesInt"))
-			data, err := ec.unmarshalOInt2ᚕintᚄ(ctx, v)
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exclude"))
+			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ValuesInt = data
+			it.Exclude = data
 		}
 	}
 
 	return it, nil
 }
 
-func (ec *executionContext) unmarshalInputFilterInput(ctx context.Context, obj interface{}) (model.FilterInput, error) {
-	var it model.FilterInput
+func (ec *executionContext) unmarshalInputInFilter(ctx context.Context, obj interface{}) (model.InFilter, error) {
+	var it model.InFilter
 	asMap := map[string]interface{}{}
 	for k, v := range obj.(map[string]interface{}) {
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"field", "and", "valuesString"}
+	fieldsInOrder := [...]string{"boolTerm"}
+	for _, k := range fieldsInOrder {
+		v, ok := asMap[k]
+		if !ok {
+			continue
+		}
+		switch k {
+		case "boolTerm":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boolTerm"))
+			data, err := ec.unmarshalOInFilterBoolTerm2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐInFilterBoolTerm(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.BoolTerm = data
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputInFilterBoolTerm(ctx context.Context, obj interface{}) (model.InFilterBoolTerm, error) {
+	var it model.InFilterBoolTerm
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	if _, present := asMap["and"]; !present {
+		asMap["and"] = true
+	}
+
+	fieldsInOrder := [...]string{"field", "and", "values"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -5794,20 +5867,20 @@ func (ec *executionContext) unmarshalInputFilterInput(ctx context.Context, obj i
 			var err error
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("and"))
-			data, err := ec.unmarshalOBoolean2ᚖbool(ctx, v)
+			data, err := ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
 				return it, err
 			}
 			it.And = data
-		case "valuesString":
+		case "values":
 			var err error
 
-			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("valuesString"))
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("values"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
-			it.ValuesString = data
+			it.Values = data
 		}
 	}
 
@@ -6968,11 +7041,6 @@ func (ec *executionContext) marshalNFacet2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋ
 	return ec._Facet(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNFacetInput2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐFacetInput(ctx context.Context, v interface{}) (*model.FacetInput, error) {
-	res, err := ec.unmarshalInputFacetInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) marshalNFacetValue2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐFacetValueᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.FacetValue) graphql.Marshaler {
 	ret := make(graphql.Array, len(v))
 	var wg sync.WaitGroup
@@ -7027,11 +7095,6 @@ func (ec *executionContext) marshalNFacetValue2ᚖgithubᚗcomᚋje4ᚋrevcatᚋ
 	return ec._FacetValue(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNFilterInput2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐFilterInput(ctx context.Context, v interface{}) (*model.FilterInput, error) {
-	res, err := ec.unmarshalInputFilterInput(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
-}
-
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
 	res, err := graphql.UnmarshalID(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7045,6 +7108,16 @@ func (ec *executionContext) marshalNID2string(ctx context.Context, sel ast.Selec
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) unmarshalNInFacet2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐInFacet(ctx context.Context, v interface{}) (*model.InFacet, error) {
+	res, err := ec.unmarshalInputInFacet(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalNInFilter2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐInFilter(ctx context.Context, v interface{}) (*model.InFilter, error) {
+	res, err := ec.unmarshalInputInFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalNInt2int(ctx context.Context, v interface{}) (int, error) {
@@ -7580,7 +7653,7 @@ func (ec *executionContext) marshalOBoolean2ᚖbool(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) unmarshalOFacetInput2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐFacetInputᚄ(ctx context.Context, v interface{}) ([]*model.FacetInput, error) {
+func (ec *executionContext) unmarshalOInFacet2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐInFacetᚄ(ctx context.Context, v interface{}) ([]*model.InFacet, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7589,10 +7662,10 @@ func (ec *executionContext) unmarshalOFacetInput2ᚕᚖgithubᚗcomᚋje4ᚋrevc
 		vSlice = graphql.CoerceList(v)
 	}
 	var err error
-	res := make([]*model.FacetInput, len(vSlice))
+	res := make([]*model.InFacet, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNFacetInput2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐFacetInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNInFacet2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐInFacet(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -7600,7 +7673,15 @@ func (ec *executionContext) unmarshalOFacetInput2ᚕᚖgithubᚗcomᚋje4ᚋrevc
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalOFilterInput2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐFilterInputᚄ(ctx context.Context, v interface{}) ([]*model.FilterInput, error) {
+func (ec *executionContext) unmarshalOInFacetTerm2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐInFacetTerm(ctx context.Context, v interface{}) (*model.InFacetTerm, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputInFacetTerm(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOInFilter2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐInFilterᚄ(ctx context.Context, v interface{}) ([]*model.InFilter, error) {
 	if v == nil {
 		return nil, nil
 	}
@@ -7609,10 +7690,10 @@ func (ec *executionContext) unmarshalOFilterInput2ᚕᚖgithubᚗcomᚋje4ᚋrev
 		vSlice = graphql.CoerceList(v)
 	}
 	var err error
-	res := make([]*model.FilterInput, len(vSlice))
+	res := make([]*model.InFilter, len(vSlice))
 	for i := range vSlice {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNFilterInput2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐFilterInput(ctx, vSlice[i])
+		res[i], err = ec.unmarshalNInFilter2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐInFilter(ctx, vSlice[i])
 		if err != nil {
 			return nil, err
 		}
@@ -7620,42 +7701,12 @@ func (ec *executionContext) unmarshalOFilterInput2ᚕᚖgithubᚗcomᚋje4ᚋrev
 	return res, nil
 }
 
-func (ec *executionContext) unmarshalOInt2ᚕintᚄ(ctx context.Context, v interface{}) ([]int, error) {
+func (ec *executionContext) unmarshalOInFilterBoolTerm2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐInFilterBoolTerm(ctx context.Context, v interface{}) (*model.InFilterBoolTerm, error) {
 	if v == nil {
 		return nil, nil
 	}
-	var vSlice []interface{}
-	if v != nil {
-		vSlice = graphql.CoerceList(v)
-	}
-	var err error
-	res := make([]int, len(vSlice))
-	for i := range vSlice {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithIndex(i))
-		res[i], err = ec.unmarshalNInt2int(ctx, vSlice[i])
-		if err != nil {
-			return nil, err
-		}
-	}
-	return res, nil
-}
-
-func (ec *executionContext) marshalOInt2ᚕintᚄ(ctx context.Context, sel ast.SelectionSet, v []int) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	ret := make(graphql.Array, len(v))
-	for i := range v {
-		ret[i] = ec.marshalNInt2int(ctx, sel, v[i])
-	}
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
+	res, err := ec.unmarshalInputInFilterBoolTerm(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
 func (ec *executionContext) unmarshalOInt2ᚖint(ctx context.Context, v interface{}) (*int, error) {

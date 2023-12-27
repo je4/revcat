@@ -11,7 +11,7 @@ import (
 
 type RevCatGraphQLClient interface {
 	MediathekEntries(ctx context.Context, signatures []string, interceptors ...clientv2.RequestInterceptor) (*MediathekEntries, error)
-	Search(ctx context.Context, query string, facets []*FacetInput, filter []*FilterInput, first *int64, after *string, last *int64, before *string, interceptors ...clientv2.RequestInterceptor) (*Search, error)
+	Search(ctx context.Context, query string, facets []*InFacet, filter []*InFilter, first *int64, after *string, last *int64, before *string, interceptors ...clientv2.RequestInterceptor) (*Search, error)
 }
 
 type Client struct {
@@ -621,7 +621,7 @@ func (c *Client) MediathekEntries(ctx context.Context, signatures []string, inte
 	return &res, nil
 }
 
-const SearchDocument = `query search ($query: String!, $facets: [FacetInput!], $filter: [FilterInput!], $first: Int, $after: String, $last: Int, $before: String) {
+const SearchDocument = `query search ($query: String!, $facets: [InFacet!], $filter: [InFilter!], $first: Int, $after: String, $last: Int, $before: String) {
 	search(query: $query, facets: $facets, filter: $filter, first: $first, after: $after, last: $last, before: $before) {
 		totalCount
 		pageInfo {
@@ -722,7 +722,7 @@ fragment FacetValueFragment on FacetValue {
 }
 `
 
-func (c *Client) Search(ctx context.Context, query string, facets []*FacetInput, filter []*FilterInput, first *int64, after *string, last *int64, before *string, interceptors ...clientv2.RequestInterceptor) (*Search, error) {
+func (c *Client) Search(ctx context.Context, query string, facets []*InFacet, filter []*InFilter, first *int64, after *string, last *int64, before *string, interceptors ...clientv2.RequestInterceptor) (*Search, error) {
 	vars := map[string]interface{}{
 		"query":  query,
 		"facets": facets,

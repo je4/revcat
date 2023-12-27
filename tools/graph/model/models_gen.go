@@ -7,23 +7,32 @@ type Facet struct {
 	Values []*FacetValue `json:"values"`
 }
 
-type FacetInput struct {
-	Name         string   `json:"name"`
-	Field        string   `json:"field"`
-	ValuesString []string `json:"valuesString,omitempty"`
-	ValuesInt    []int    `json:"ValuesInt,omitempty"`
-}
-
 type FacetValue struct {
 	ValStr *string `json:"valStr,omitempty"`
 	ValInt *int    `json:"valInt,omitempty"`
 	Count  int     `json:"count"`
 }
 
-type FilterInput struct {
-	Field        string   `json:"field"`
-	And          *bool    `json:"and,omitempty"`
-	ValuesString []string `json:"valuesString,omitempty"`
+type InFacet struct {
+	Term  *InFacetTerm `json:"term,omitempty"`
+	Query *InFilter    `json:"query"`
+}
+
+type InFacetTerm struct {
+	Field   string   `json:"field"`
+	Name    string   `json:"name"`
+	Include []string `json:"include,omitempty"`
+	Exclude []string `json:"exclude,omitempty"`
+}
+
+type InFilter struct {
+	BoolTerm *InFilterBoolTerm `json:"boolTerm,omitempty"`
+}
+
+type InFilterBoolTerm struct {
+	Field  string   `json:"field"`
+	And    bool     `json:"and"`
+	Values []string `json:"values,omitempty"`
 }
 
 type KeyValue struct {

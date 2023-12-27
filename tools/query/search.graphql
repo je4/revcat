@@ -1,4 +1,4 @@
-query search($query: String!, $facets: [FacetInput!], $filter: [FilterInput!], $first: Int, $after: String, $last: Int, $before: String) {
+query search($query: String!, $facets: [InFacet!], $filter: [InFilter!], $first: Int, $after: String, $last: Int, $before: String) {
     search(query: $query, facets: $facets, filter: $filter, first: $first, after: $after, last: $last, before: $before) {
         totalCount
         pageInfo {

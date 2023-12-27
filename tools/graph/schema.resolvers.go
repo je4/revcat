@@ -12,7 +12,7 @@ import (
 	"slices"
 	"strings"
 
-	emperror "emperror.dev/errors"
+	emperrors "emperror.dev/errors"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"github.com/je4/revcat/v2/pkg/sourcetype"
@@ -21,6 +21,9 @@ import (
 
 // ReferencesFull is the resolver for the referencesFull field.
 func (r *mediathekFullEntryResolver) ReferencesFull(ctx context.Context, obj *model.MediathekFullEntry) ([]*model.MediathekBaseEntry, error) {
+	if errValue := ctx.Value("error"); errValue != nil {
+		return nil, emperrors.Errorf("error: %s", errValue)
+	}
 	var result = make([]*model.MediathekBaseEntry, 0)
 	var signatures = []string{}
 	for _, ref := range obj.Base.References {
@@ -31,11 +34,11 @@ func (r *mediathekFullEntryResolver) ReferencesFull(ctx context.Context, obj *mo
 	}
 	docs, err := r.loadEntries(ctx, signatures)
 	if err != nil {
-		return nil, emperror.Wrapf(err, "cannot load entries %v", signatures)
+		return nil, emperrors.Wrapf(err, "cannot load entries %v", signatures)
 	}
 	groups, err := stringsFromContext(ctx, "groups")
 	if err != nil {
-		return nil, emperror.Wrap(err, "cannot get groups from context")
+		return nil, emperrors.Wrap(err, "cannot get groups from context")
 	}
 	var access = make(map[string]bool)
 	for _, doc := range docs {
@@ -56,13 +59,16 @@ func (r *mediathekFullEntryResolver) ReferencesFull(ctx context.Context, obj *mo
 }
 
 // Search is the resolver for the search field.
-func (r *queryResolver) Search(ctx context.Context, query string, facets []*model.FacetInput, filter []*model.FilterInput, first *int, after *string, last *int, before *string) (*model.SearchResult, error) {
+func (r *queryResolver) Search(ctx context.Context, query string, facets []*model.InFacet, filter []*model.InFilter, first *int, after *string, last *int, before *string) (*model.SearchResult, error) {
+	if errValue := ctx.Value("error"); errValue != nil {
+		return nil, emperrors.Errorf("error: %s", errValue)
+	}
 	var from = 0
 	var size = 25
 
 	if first != nil && last != nil {
 		if *first > *last {
-			return nil, emperror.Errorf("first cannot be greater than last")
+			return nil, emperrors.Errorf("first cannot be greater than last")
 		}
 		from = *first
 		size = *last - *first
@@ -71,17 +77,17 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 		}
 	}
 	if after != nil && before != nil && *after != "" && *before != "" {
-		return nil, emperror.Errorf("after and before cannot be used together")
+		return nil, emperrors.Errorf("after and before cannot be used together")
 	}
 	if after != nil {
 		if *after != "" {
 			crs := &cursor{}
 			afterJson, err := base64.StdEncoding.DecodeString(*after)
 			if err != nil {
-				return nil, emperror.Wrapf(err, "cannot decode after cursor '%s'", *after)
+				return nil, emperrors.Wrapf(err, "cannot decode after cursor '%s'", *after)
 			}
 			if err := json.Unmarshal(afterJson, crs); err != nil {
-				return nil, emperror.Wrapf(err, "cannot unmarshal after cursor '%s'", afterJson)
+				return nil, emperrors.Wrapf(err, "cannot unmarshal after cursor '%s'", afterJson)
 			}
 			from = crs.From + 1
 			size = crs.Size
@@ -92,10 +98,10 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 			crs := &cursor{}
 			beforeJson, err := base64.StdEncoding.DecodeString(*before)
 			if err != nil {
-				return nil, emperror.Wrapf(err, "cannot decode before cursor '%s'", *before)
+				return nil, emperrors.Wrapf(err, "cannot decode before cursor '%s'", *before)
 			}
 			if err := json.Unmarshal(beforeJson, crs); err != nil {
-				return nil, emperror.Wrapf(err, "cannot unmarshal before cursor '%s'", beforeJson)
+				return nil, emperrors.Wrapf(err, "cannot unmarshal before cursor '%s'", beforeJson)
 			}
 			from = crs.From - size
 			if from < 0 {
@@ -106,15 +112,15 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 	}
 	groups, err := stringsFromContext(ctx, "groups")
 	if err != nil {
-		return nil, emperror.Wrap(err, "cannot get groups from context")
+		return nil, emperrors.Wrap(err, "cannot get groups from context")
 	}
 	clientName, err := stringFromContext(ctx, "client")
 	if err != nil || clientName == "" {
-		return nil, emperror.Wrap(err, "cannot get client from context")
+		return nil, emperrors.Wrap(err, "cannot get client from context")
 	}
 	client, ok := r.client[clientName]
 	if !ok {
-		return nil, emperror.Errorf("client '%s' not found", clientName)
+		return nil, emperrors.Errorf("client '%s' not found", clientName)
 	}
 
 	baseQuery := types.BoolQuery{
@@ -183,14 +189,51 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 		aclQuery.MinimumShouldMatch = 0
 	}
 
+	//
+	// start building query
+	//
+
 	var esFilter = []types.Query{
 		types.Query{Bool: &baseQuery},
 		types.Query{Bool: &aclQuery},
 	}
+	var esPostFilter = []types.Query{
+		types.Query{Bool: &baseQuery},
+		types.Query{Bool: &aclQuery},
+	}
+	var esAggs = map[string]types.Aggregations{}
 
 	for _, f := range filter {
-		for _, val := range f.ValuesString {
-			esFilter = append(esFilter, createFilterQuery(f.Field, val))
+		newFilter, err := createFilterQuery(f)
+		if err != nil {
+			return nil, emperrors.Wrapf(err, "cannot create filter query for %v", f)
+		}
+		esFilter = append(esFilter, newFilter)
+	}
+
+	for _, f := range facets {
+		if err != nil {
+			return nil, emperrors.Wrapf(err, "cannot create filter query for %v", f)
+		}
+		newFilter, err := createFilterQuery(f.Query)
+		if err != nil {
+			return nil, emperrors.Wrapf(err, "cannot create facet filter query for %v", f)
+		}
+
+		esPostFilter = append(esPostFilter, newFilter)
+		if f.Term != nil {
+			termAgg := &types.TermsAggregation{
+				Field: &f.Term.Field,
+				//			Name:  &f.Name,
+			}
+			if len(f.Term.Include) > 0 {
+				termAgg.Include = f.Term.Include
+				s := len(f.Term.Include)
+				termAgg.Size = &s
+			}
+			esAggs[f.Term.Name] = types.Aggregations{
+				Terms: termAgg,
+			}
 		}
 	}
 
@@ -203,6 +246,10 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 		})
 	}
 
+	if len(facets) > 0 {
+
+	}
+
 	resp, err := r.elastic.Search().
 		Index(r.index).
 		Request(&search.Request{
@@ -212,18 +259,59 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 					Must:   esMust,
 				},
 			},
+			Aggregations: esAggs,
+			PostFilter: &types.Query{
+				Bool: &types.BoolQuery{
+					Filter: esPostFilter,
+				},
+			},
 		}).
 		From(from).
 		Size(size).
 		Do(ctx)
 	if err != nil {
-		return nil, emperror.Wrapf(err, "cannot search for '%s'", query)
+		return nil, emperrors.Wrapf(err, "cannot search for '%s'", query)
 	}
 	var result = &model.SearchResult{
 		TotalCount: int(resp.Hits.Total.Value),
 		Edges:      make([]*model.MediathekFullEntry, 0),
 		Facets:     make([]*model.Facet, 0),
 		PageInfo:   &model.PageInfo{},
+	}
+	for name, bucketAny := range resp.Aggregations {
+		facet := &model.Facet{
+			Field:  name,
+			Values: make([]*model.FacetValue, 0),
+		}
+		switch bucket := bucketAny.(type) {
+		case *types.StringTermsAggregate:
+			switch bucketType1 := bucket.Buckets.(type) {
+			case []types.StringTermsBucket:
+				for _, stb := range bucketType1 {
+					switch kt := stb.Key.(type) {
+					case string:
+						facet.Values = append(facet.Values, &model.FacetValue{
+							ValStr: &kt,
+							Count:  int(stb.DocCount),
+						})
+					case int64:
+						intVal := int(kt)
+						facet.Values = append(facet.Values, &model.FacetValue{
+							ValInt: &intVal,
+							Count:  int(stb.DocCount),
+						})
+					default:
+						return nil, emperrors.Errorf("unknown bucket key type of StringTermsBucket key %T", kt)
+					}
+				}
+				//			case map[string]any:
+			default:
+				return nil, emperrors.Errorf("unknown bucket type of StringTermsAggregate %T", bucketType1)
+			}
+		default:
+			return nil, emperrors.Errorf("unknown bucket type %T", bucket)
+		}
+		result.Facets = append(result.Facets, facet)
 	}
 	if result.TotalCount > from+size {
 		result.PageInfo.HasNextPage = true
@@ -237,7 +325,7 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 			Size: size,
 		})
 		if err != nil {
-			return nil, emperror.Wrap(err, "cannot marshal end cursor")
+			return nil, emperrors.Wrap(err, "cannot marshal end cursor")
 		}
 		result.PageInfo.EndCursor = base64.StdEncoding.EncodeToString(endCursor)
 	}
@@ -248,14 +336,14 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 			Size: size,
 		})
 		if err != nil {
-			return nil, emperror.Wrap(err, "cannot marshal start cursor")
+			return nil, emperrors.Wrap(err, "cannot marshal start cursor")
 		}
 		result.PageInfo.StartCursor = url.QueryEscape(base64.StdEncoding.EncodeToString(startCursor))
 	}
 	for _, hit := range resp.Hits.Hits {
 		source := &sourcetype.SourceData{}
 		if err := json.Unmarshal(hit.Source_, source); err != nil {
-			return nil, emperror.Wrapf(err, "cannot unmarshal hit %v", hit)
+			return nil, emperrors.Wrapf(err, "cannot unmarshal hit %v", hit)
 		}
 		entry := sourceToMediathekFullEntry(source)
 		result.Edges = append(result.Edges, entry)
@@ -265,16 +353,19 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 
 // MediathekEntries is the resolver for the mediathekEntries field.
 func (r *queryResolver) MediathekEntries(ctx context.Context, signatures []string) ([]*model.MediathekFullEntry, error) {
+	if errValue := ctx.Value("error"); errValue != nil {
+		return nil, emperrors.Errorf("error: %s", errValue)
+	}
 	docs, err := r.loadEntries(ctx, signatures)
 	if err != nil {
-		return nil, emperror.Wrapf(err, "cannot load entries %v", signatures)
+		return nil, emperrors.Wrapf(err, "cannot load entries %v", signatures)
 	}
 
 	entries := make([]*model.MediathekFullEntry, 0)
 	var access = make(map[string]bool)
 	groups, err := stringsFromContext(ctx, "groups")
 	if err != nil {
-		return nil, emperror.Wrap(err, "cannot get groups from context")
+		return nil, emperrors.Wrap(err, "cannot get groups from context")
 	}
 	for _, doc := range docs {
 		for t, acls := range doc.ACL {
