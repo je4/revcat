@@ -2,16 +2,28 @@
 
 package client
 
-type Facet struct {
-	Field  string        `json:"field"`
-	Values []*FacetValue `json:"values"`
+type FacetValue interface {
+	IsFacetValue()
 }
 
-type FacetValue struct {
-	ValStr *string `json:"valStr,omitempty"`
-	ValInt *int64  `json:"valInt,omitempty"`
-	Count  int64   `json:"count"`
+type Facet struct {
+	Name   string       `json:"name"`
+	Values []FacetValue `json:"values,omitempty"`
 }
+
+type FacetValueInt struct {
+	IntVal int64 `json:"intVal"`
+	Count  int64 `json:"count"`
+}
+
+func (FacetValueInt) IsFacetValue() {}
+
+type FacetValueString struct {
+	StrVal string `json:"strVal"`
+	Count  int64  `json:"count"`
+}
+
+func (FacetValueString) IsFacetValue() {}
 
 type InFacet struct {
 	Term  *InFacetTerm `json:"term,omitempty"`

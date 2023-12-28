@@ -63,14 +63,27 @@ fragment PageInfoFragment on PageInfo {
     endCursor
 }
 
-fragment FacetValueFragment on FacetValue {
-    valStr
-    valInt
+fragment FacetValueStringFragment on FacetValueString {
+    strVal
     count
 }
 
+fragment FacetValueIntFragment on FacetValueInt {
+    intVal
+    count
+}
+
+fragment FacetValueFragment on FacetValue {
+    ...on FacetValueString {
+        ...FacetValueStringFragment
+    }
+    ...on FacetValueInt {
+        ...FacetValueIntFragment
+    }
+}
+
 fragment FacetFragment on Facet {
-    field
+    name
     values {
         ...FacetValueFragment
     }

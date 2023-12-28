@@ -2,16 +2,28 @@
 
 package model
 
-type Facet struct {
-	Field  string        `json:"field"`
-	Values []*FacetValue `json:"values"`
+type FacetValue interface {
+	IsFacetValue()
 }
 
-type FacetValue struct {
-	ValStr *string `json:"valStr,omitempty"`
-	ValInt *int    `json:"valInt,omitempty"`
-	Count  int     `json:"count"`
+type Facet struct {
+	Name   string       `json:"name"`
+	Values []FacetValue `json:"values,omitempty"`
 }
+
+type FacetValueInt struct {
+	IntVal int `json:"intVal"`
+	Count  int `json:"count"`
+}
+
+func (FacetValueInt) IsFacetValue() {}
+
+type FacetValueString struct {
+	StrVal string `json:"strVal"`
+	Count  int    `json:"count"`
+}
+
+func (FacetValueString) IsFacetValue() {}
 
 type InFacet struct {
 	Term  *InFacetTerm `json:"term,omitempty"`

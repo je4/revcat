@@ -6,9 +6,7 @@ package graph
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
-	"net/url"
 	"slices"
 	"strings"
 
@@ -22,7 +20,7 @@ import (
 // ReferencesFull is the resolver for the referencesFull field.
 func (r *mediathekFullEntryResolver) ReferencesFull(ctx context.Context, obj *model.MediathekFullEntry) ([]*model.MediathekBaseEntry, error) {
 	if errValue := ctx.Value("error"); errValue != nil {
-		return nil, emperrors.Errorf("error: %s", errValue)
+		return nil, emperrors.Errorf("%s", errValue)
 	}
 	var result = make([]*model.MediathekBaseEntry, 0)
 	var signatures = []string{}
@@ -61,7 +59,7 @@ func (r *mediathekFullEntryResolver) ReferencesFull(ctx context.Context, obj *mo
 // Search is the resolver for the search field.
 func (r *queryResolver) Search(ctx context.Context, query string, facets []*model.InFacet, filter []*model.InFilter, first *int, after *string, last *int, before *string) (*model.SearchResult, error) {
 	if errValue := ctx.Value("error"); errValue != nil {
-		return nil, emperrors.Errorf("error: %s", errValue)
+		return nil, emperrors.Errorf("%s", errValue)
 	}
 	var from = 0
 	var size = 25
@@ -81,13 +79,9 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 	}
 	if after != nil {
 		if *after != "" {
-			crs := &cursor{}
-			afterJson, err := base64.StdEncoding.DecodeString(*after)
+			crs, err := DecodeCursor(*after)
 			if err != nil {
-				return nil, emperrors.Wrapf(err, "cannot decode after cursor '%s'", *after)
-			}
-			if err := json.Unmarshal(afterJson, crs); err != nil {
-				return nil, emperrors.Wrapf(err, "cannot unmarshal after cursor '%s'", afterJson)
+				return nil, emperrors.Wrapf(err, "cannot decode before cursor '%s'", *after)
 			}
 			from = crs.From + 1
 			size = crs.Size
@@ -95,13 +89,9 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 	}
 	if before != nil {
 		if *before != "" {
-			crs := &cursor{}
-			beforeJson, err := base64.StdEncoding.DecodeString(*before)
+			crs, err := DecodeCursor(*before)
 			if err != nil {
 				return nil, emperrors.Wrapf(err, "cannot decode before cursor '%s'", *before)
-			}
-			if err := json.Unmarshal(beforeJson, crs); err != nil {
-				return nil, emperrors.Wrapf(err, "cannot unmarshal before cursor '%s'", beforeJson)
 			}
 			from = crs.From - size
 			if from < 0 {
@@ -226,10 +216,16 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 				Field: &f.Term.Field,
 				//			Name:  &f.Name,
 			}
-			if len(f.Term.Include) > 0 {
-				termAgg.Include = f.Term.Include
-				s := len(f.Term.Include)
-				termAgg.Size = &s
+			if len(f.Term.Include) == 1 {
+				termAgg.Include = f.Term.Include[0]
+			} else {
+				if len(f.Term.Include) > 1 {
+					termAgg.Include = f.Term.Include
+					s := len(f.Term.Include)
+					termAgg.Size = &s
+					zero := 0
+					termAgg.MinDocCount = &zero
+				}
 			}
 			esAggs[f.Term.Name] = types.Aggregations{
 				Terms: termAgg,
@@ -280,8 +276,8 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 	}
 	for name, bucketAny := range resp.Aggregations {
 		facet := &model.Facet{
-			Field:  name,
-			Values: make([]*model.FacetValue, 0),
+			Name:   name,
+			Values: make([]model.FacetValue, 0),
 		}
 		switch bucket := bucketAny.(type) {
 		case *types.StringTermsAggregate:
@@ -290,14 +286,14 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 				for _, stb := range bucketType1 {
 					switch kt := stb.Key.(type) {
 					case string:
-						facet.Values = append(facet.Values, &model.FacetValue{
-							ValStr: &kt,
+						facet.Values = append(facet.Values, &model.FacetValueString{
+							StrVal: kt,
 							Count:  int(stb.DocCount),
 						})
 					case int64:
 						intVal := int(kt)
-						facet.Values = append(facet.Values, &model.FacetValue{
-							ValInt: &intVal,
+						facet.Values = append(facet.Values, &model.FacetValueInt{
+							IntVal: intVal,
 							Count:  int(stb.DocCount),
 						})
 					default:
@@ -320,25 +316,15 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 		if cFrom >= result.TotalCount {
 			cFrom = result.TotalCount - 1
 		}
-		endCursor, err := json.Marshal(cursor{
-			From: cFrom,
-			Size: size,
-		})
-		if err != nil {
+		if result.PageInfo.EndCursor, err = NewCursor(cFrom, size).Encode(); err != nil {
 			return nil, emperrors.Wrap(err, "cannot marshal end cursor")
 		}
-		result.PageInfo.EndCursor = base64.StdEncoding.EncodeToString(endCursor)
 	}
 	if from > 0 {
 		result.PageInfo.HasPreviousPage = true
-		startCursor, err := json.Marshal(cursor{
-			From: from,
-			Size: size,
-		})
-		if err != nil {
-			return nil, emperrors.Wrap(err, "cannot marshal start cursor")
+		if result.PageInfo.StartCursor, err = NewCursor(from, size).Encode(); err != nil {
+			return nil, emperrors.Wrap(err, "cannot marshal end cursor")
 		}
-		result.PageInfo.StartCursor = url.QueryEscape(base64.StdEncoding.EncodeToString(startCursor))
 	}
 	for _, hit := range resp.Hits.Hits {
 		source := &sourcetype.SourceData{}
@@ -354,7 +340,7 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 // MediathekEntries is the resolver for the mediathekEntries field.
 func (r *queryResolver) MediathekEntries(ctx context.Context, signatures []string) ([]*model.MediathekFullEntry, error) {
 	if errValue := ctx.Value("error"); errValue != nil {
-		return nil, emperrors.Errorf("error: %s", errValue)
+		return nil, emperrors.Errorf("%s", errValue)
 	}
 	docs, err := r.loadEntries(ctx, signatures)
 	if err != nil {
@@ -394,14 +380,3 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type mediathekFullEntryResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
-
-// !!! WARNING !!!
-// The code below was going to be deleted when updating resolvers. It has been copied here so you have
-// one last chance to move it out of harms way if you want. There are two reasons this happens:
-//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
-//     it when you're done.
-//   - You have helper methods in this file. Move them out to keep these resolver files clean.
-type cursor struct {
-	From int `json:"from"`
-	Size int `json:"size"`
-}

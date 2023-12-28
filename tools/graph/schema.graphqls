@@ -74,18 +74,22 @@ type MediathekFullEntry {
   media: [MediaList!]
 }
 
-type FacetValue {
-  valStr: String
-  valInt: Int
+type FacetValueString {
+  strVal: String!
   count: Int!
 }
 
-
-type Facet {
-    field: String!
-    values: [FacetValue!]!
+type FacetValueInt {
+  intVal: Int!
+  count: Int!
 }
 
+union FacetValue = FacetValueString | FacetValueInt
+
+type Facet {
+    name: String!
+    values: [FacetValue!]
+}
 
 type PageInfo {
   hasNextPage: Boolean!

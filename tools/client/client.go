@@ -306,41 +306,70 @@ func (t *PageInfoFragment) GetEndCursor() string {
 	return t.EndCursor
 }
 
-type FacetValueFragment struct {
-	ValStr *string "json:\"valStr,omitempty\" graphql:\"valStr\""
-	ValInt *int64  "json:\"valInt,omitempty\" graphql:\"valInt\""
-	Count  int64   "json:\"count\" graphql:\"count\""
+type FacetValueStringFragment struct {
+	StrVal string "json:\"strVal\" graphql:\"strVal\""
+	Count  int64  "json:\"count\" graphql:\"count\""
 }
 
-func (t *FacetValueFragment) GetValStr() *string {
+func (t *FacetValueStringFragment) GetStrVal() string {
 	if t == nil {
-		t = &FacetValueFragment{}
+		t = &FacetValueStringFragment{}
 	}
-	return t.ValStr
+	return t.StrVal
 }
-func (t *FacetValueFragment) GetValInt() *int64 {
+func (t *FacetValueStringFragment) GetCount() int64 {
 	if t == nil {
-		t = &FacetValueFragment{}
-	}
-	return t.ValInt
-}
-func (t *FacetValueFragment) GetCount() int64 {
-	if t == nil {
-		t = &FacetValueFragment{}
+		t = &FacetValueStringFragment{}
 	}
 	return t.Count
 }
 
-type FacetFragment struct {
-	Field  string                "json:\"field\" graphql:\"field\""
-	Values []*FacetValueFragment "json:\"values\" graphql:\"values\""
+type FacetValueIntFragment struct {
+	IntVal int64 "json:\"intVal\" graphql:\"intVal\""
+	Count  int64 "json:\"count\" graphql:\"count\""
 }
 
-func (t *FacetFragment) GetField() string {
+func (t *FacetValueIntFragment) GetIntVal() int64 {
+	if t == nil {
+		t = &FacetValueIntFragment{}
+	}
+	return t.IntVal
+}
+func (t *FacetValueIntFragment) GetCount() int64 {
+	if t == nil {
+		t = &FacetValueIntFragment{}
+	}
+	return t.Count
+}
+
+type FacetValueFragment struct {
+	FacetValueString FacetValueStringFragment "graphql:\"... on FacetValueString\""
+	FacetValueInt    FacetValueIntFragment    "graphql:\"... on FacetValueInt\""
+}
+
+func (t *FacetValueFragment) GetFacetValueString() *FacetValueStringFragment {
+	if t == nil {
+		t = &FacetValueFragment{}
+	}
+	return &t.FacetValueString
+}
+func (t *FacetValueFragment) GetFacetValueInt() *FacetValueIntFragment {
+	if t == nil {
+		t = &FacetValueFragment{}
+	}
+	return &t.FacetValueInt
+}
+
+type FacetFragment struct {
+	Name   string                "json:\"name\" graphql:\"name\""
+	Values []*FacetValueFragment "json:\"values,omitempty\" graphql:\"values\""
+}
+
+func (t *FacetFragment) GetName() string {
 	if t == nil {
 		t = &FacetFragment{}
 	}
-	return t.Field
+	return t.Name
 }
 func (t *FacetFragment) GetValues() []*FacetValueFragment {
 	if t == nil {
@@ -710,14 +739,25 @@ fragment MediaListFragment on MediaList {
 	}
 }
 fragment FacetFragment on Facet {
-	field
+	name
 	values {
 		... FacetValueFragment
 	}
 }
 fragment FacetValueFragment on FacetValue {
-	valStr
-	valInt
+	... on FacetValueString {
+		... FacetValueStringFragment
+	}
+	... on FacetValueInt {
+		... FacetValueIntFragment
+	}
+}
+fragment FacetValueStringFragment on FacetValueString {
+	strVal
+	count
+}
+fragment FacetValueIntFragment on FacetValueInt {
+	intVal
 	count
 }
 `
