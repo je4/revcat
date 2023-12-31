@@ -71,36 +71,42 @@ type MediaList struct {
 }
 
 type MediathekBaseEntry struct {
-	ID                string       `json:"id"`
-	Signature         string       `json:"signature"`
-	SignatureOriginal string       `json:"signatureOriginal"`
-	Source            string       `json:"source"`
-	Title             string       `json:"title"`
-	Series            *string      `json:"series,omitempty"`
-	Place             *string      `json:"place,omitempty"`
-	Date              *string      `json:"date,omitempty"`
-	CollectionTitle   *string      `json:"collectionTitle,omitempty"`
-	Person            []*Person    `json:"person,omitempty"`
-	Catalog           []string     `json:"catalog,omitempty"`
-	Category          []string     `json:"category,omitempty"`
-	Tags              []string     `json:"tags,omitempty"`
-	URL               *string      `json:"url,omitempty"`
-	Publisher         *string      `json:"publisher,omitempty"`
-	Rights            *string      `json:"rights,omitempty"`
-	License           *string      `json:"license,omitempty"`
-	References        []*Reference `json:"references,omitempty"`
-	Type              *string      `json:"type,omitempty"`
-	Poster            *Media       `json:"poster,omitempty"`
+	ID                string             `json:"id"`
+	Signature         string             `json:"signature"`
+	SignatureOriginal string             `json:"signatureOriginal"`
+	Source            string             `json:"source"`
+	Title             []*MultiLangString `json:"title"`
+	Series            *string            `json:"series,omitempty"`
+	Place             *string            `json:"place,omitempty"`
+	Date              *string            `json:"date,omitempty"`
+	CollectionTitle   *string            `json:"collectionTitle,omitempty"`
+	Person            []*Person          `json:"person,omitempty"`
+	Catalog           []string           `json:"catalog,omitempty"`
+	Category          []string           `json:"category,omitempty"`
+	Tags              []string           `json:"tags,omitempty"`
+	URL               *string            `json:"url,omitempty"`
+	Publisher         *string            `json:"publisher,omitempty"`
+	Rights            *string            `json:"rights,omitempty"`
+	License           *string            `json:"license,omitempty"`
+	References        []*Reference       `json:"references,omitempty"`
+	Type              *string            `json:"type,omitempty"`
+	Poster            *Media             `json:"poster,omitempty"`
 }
 
 type MediathekFullEntry struct {
 	ID             string                `json:"id"`
 	Base           *MediathekBaseEntry   `json:"base"`
 	Notes          []*Note               `json:"notes,omitempty"`
-	Abstract       *string               `json:"abstract,omitempty"`
+	Abstract       []*MultiLangString    `json:"abstract,omitempty"`
 	ReferencesFull []*MediathekBaseEntry `json:"referencesFull,omitempty"`
 	Extra          []*KeyValue           `json:"extra,omitempty"`
 	Media          []*MediaList          `json:"media,omitempty"`
+}
+
+type MultiLangString struct {
+	Lang       string `json:"lang"`
+	Value      string `json:"value"`
+	Translated bool   `json:"translated"`
 }
 
 type Note struct {

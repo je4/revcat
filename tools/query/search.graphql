@@ -12,7 +12,9 @@ query search($query: String!, $facets: [InFacet!], $filter: [InFilter!], $first:
             notes {
                 ...NoteFragment
             }
-            abstract
+            abstract {
+                ...MultiLangFragment
+            }
             extra {
                 ...KeyValueFragment
             }

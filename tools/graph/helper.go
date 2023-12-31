@@ -98,10 +98,11 @@ func sourceToMediathekBaseEntry(src *sourcetype.SourceData) *model.MediathekBase
 		Signature:         src.Signature,
 		SignatureOriginal: src.SignatureOriginal,
 		Source:            src.Source,
-		Title:             src.Title,
+		Title:             []*model.MultiLangString{}, //src.Title,
 		Series:            &src.Series,
 		Place:             &src.Place,
 		Date:              &src.Date,
+		Person:            []*model.Person{},
 		Category:          src.Category,
 		Tags:              src.Tags,
 		URL:               &src.Url,
@@ -112,6 +113,29 @@ func sourceToMediathekBaseEntry(src *sourcetype.SourceData) *model.MediathekBase
 		References:        make([]*model.Reference, 0),
 		Poster:            sourceMediaToMedia(src.Poster),
 	}
+	for _, person := range src.Persons {
+		p := &model.Person{
+			Name: person.Name,
+		}
+		if person.Role != "" {
+			p.Role = &person.Role
+		}
+		entry.Person = append(entry.Person, p)
+	}
+	for _, lang := range src.Title.GetNativeLanguages() {
+		entry.Title = append(entry.Title, &model.MultiLangString{
+			Lang:       lang.String(),
+			Value:      src.Title.Get(lang),
+			Translated: false,
+		})
+	}
+	for _, lang := range src.Title.GetTranslatedLanguages() {
+		entry.Title = append(entry.Title, &model.MultiLangString{
+			Lang:       lang.String(),
+			Value:      src.Title.Get(lang),
+			Translated: true,
+		})
+	}
 	return entry
 }
 
@@ -120,10 +144,24 @@ func sourceToMediathekFullEntry(src *sourcetype.SourceData) *model.MediathekFull
 		ID:             src.ID,
 		Base:           sourceToMediathekBaseEntry(src),
 		Notes:          []*model.Note{},
-		Abstract:       &src.Abstract,
+		Abstract:       []*model.MultiLangString{}, //&src.Abstract,
 		ReferencesFull: []*model.MediathekBaseEntry{},
 		Extra:          []*model.KeyValue{},
 		Media:          []*model.MediaList{},
+	}
+	for _, lang := range src.Abstract.GetNativeLanguages() {
+		entry.Abstract = append(entry.Abstract, &model.MultiLangString{
+			Lang:       lang.String(),
+			Value:      src.Abstract.Get(lang),
+			Translated: false,
+		})
+	}
+	for _, lang := range src.Abstract.GetTranslatedLanguages() {
+		entry.Abstract = append(entry.Abstract, &model.MultiLangString{
+			Lang:       lang.String(),
+			Value:      src.Abstract.Get(lang),
+			Translated: true,
+		})
 	}
 	for _, note := range src.Notes {
 		entry.Notes = append(entry.Notes, &model.Note{

@@ -3,6 +3,8 @@ package sourcetype
 import (
 	"bytes"
 	"compress/gzip"
+	"github.com/je4/zsearch/v2/pkg/translate"
+
 	"encoding/base64"
 	"encoding/json"
 	"github.com/pkg/errors"
@@ -12,40 +14,40 @@ import (
 )
 
 type SourceData struct {
-	ID                string               `json:"-"`
-	Signature         string               `json:"signature"`
-	SignatureOriginal string               `json:"signatureoriginal"`
-	Source            string               `json:"source"`
-	Title             string               `json:"title"`
-	Series            string               `json:"series"`
-	Place             string               `json:"place"`
-	Date              string               `json:"date"`
-	CollectionTitle   string               `json:"collectiontitle"`
-	Persons           []Person             `json:"persons"`
-	ACL               map[string][]string  `json:"acl"`
-	Catalog           []string             `json:"catalog"`
-	Category          []string             `json:"category"`
-	Tags              []string             `json:"tags"`
-	Media             map[string]MediaList `json:"media"`
-	Poster            *Media               `json:"poster"`
-	Notes             []Note               `json:"notes"`
-	Url               string               `json:"url"`
-	Abstract          string               `json:"abstract"`
-	References        []Reference          `json:"references"`
-	Meta              *Metalist            `json:"meta,omitempty"`
-	Extra             *Metalist            `json:"extra,omitempty"`
-	Vars              *Varlist             `json:"vars,omitempty"`
-	Type              string               `json:"type"`
-	Queries           []Query              `json:"queries,omitempty"`
-	ContentStr        string               `json:"-"`
-	ContentMime       string               `json:"-"`
-	HasMedia          bool                 `json:"hasmedia"`
-	Mediatype         []string             `json:"mediatype"`
-	DateAdded         time.Time            `json:"dateadded"`
-	Timestamp         time.Time            `json:"timestamp"`
-	Publisher         string               `json:"publisher"`
-	Rights            string               `json:"rights"`
-	License           string               `json:"license"`
+	ID                string                     `json:"-"`
+	Signature         string                     `json:"signature"`
+	SignatureOriginal string                     `json:"signatureoriginal"`
+	Source            string                     `json:"source"`
+	Title             *translate.MultiLangString `json:"title"`
+	Series            string                     `json:"series"`
+	Place             string                     `json:"place"`
+	Date              string                     `json:"date"`
+	CollectionTitle   string                     `json:"collectiontitle"`
+	Persons           []Person                   `json:"persons"`
+	ACL               map[string][]string        `json:"acl"`
+	Catalog           []string                   `json:"catalog"`
+	Category          []string                   `json:"category"`
+	Tags              []string                   `json:"tags"`
+	Media             map[string]MediaList       `json:"media"`
+	Poster            *Media                     `json:"poster"`
+	Notes             []Note                     `json:"notes"`
+	Url               string                     `json:"url"`
+	Abstract          *translate.MultiLangString `json:"abstract"`
+	References        []Reference                `json:"references"`
+	Meta              *Metalist                  `json:"meta,omitempty"`
+	Extra             *Metalist                  `json:"extra,omitempty"`
+	Vars              *Varlist                   `json:"vars,omitempty"`
+	Type              string                     `json:"type"`
+	Queries           []Query                    `json:"queries,omitempty"`
+	ContentStr        string                     `json:"-"`
+	ContentMime       string                     `json:"-"`
+	HasMedia          bool                       `json:"hasmedia"`
+	Mediatype         []string                   `json:"mediatype"`
+	DateAdded         time.Time                  `json:"dateadded"`
+	Timestamp         time.Time                  `json:"timestamp"`
+	Publisher         string                     `json:"publisher"`
+	Rights            string                     `json:"rights"`
+	License           string                     `json:"license"`
 }
 
 func GUnzip(data string) (string, error) {

@@ -7,7 +7,9 @@ query MediathekEntries($signatures: [String!]!) {
         notes {
             ...NoteFragment
         }
-        abstract
+        abstract {
+            ...MultiLangFragment
+        }
         extra {
             ...KeyValueFragment
         }

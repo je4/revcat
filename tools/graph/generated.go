@@ -118,6 +118,12 @@ type ComplexityRoot struct {
 		ReferencesFull func(childComplexity int) int
 	}
 
+	MultiLangString struct {
+		Lang       func(childComplexity int) int
+		Translated func(childComplexity int) int
+		Value      func(childComplexity int) int
+	}
+
 	Note struct {
 		Text  func(childComplexity int) int
 		Title func(childComplexity int) int
@@ -509,6 +515,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.MediathekFullEntry.ReferencesFull(childComplexity), true
+
+	case "MultiLangString.lang":
+		if e.complexity.MultiLangString.Lang == nil {
+			break
+		}
+
+		return e.complexity.MultiLangString.Lang(childComplexity), true
+
+	case "MultiLangString.translated":
+		if e.complexity.MultiLangString.Translated == nil {
+			break
+		}
+
+		return e.complexity.MultiLangString.Translated(childComplexity), true
+
+	case "MultiLangString.value":
+		if e.complexity.MultiLangString.Value == nil {
+			break
+		}
+
+		return e.complexity.MultiLangString.Value(childComplexity), true
 
 	case "Note.text":
 		if e.complexity.Note.Text == nil {
@@ -1984,9 +2011,9 @@ func (ec *executionContext) _MediathekBaseEntry_title(ctx context.Context, field
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.([]*model.MultiLangString)
 	fc.Result = res
-	return ec.marshalNString2string(ctx, field.Selections, res)
+	return ec.marshalNMultiLangString2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMultiLangStringᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MediathekBaseEntry_title(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -1996,7 +2023,15 @@ func (ec *executionContext) fieldContext_MediathekBaseEntry_title(ctx context.Co
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "lang":
+				return ec.fieldContext_MultiLangString_lang(ctx, field)
+			case "value":
+				return ec.fieldContext_MultiLangString_value(ctx, field)
+			case "translated":
+				return ec.fieldContext_MultiLangString_translated(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MultiLangString", field.Name)
 		},
 	}
 	return fc, nil
@@ -2853,9 +2888,9 @@ func (ec *executionContext) _MediathekFullEntry_abstract(ctx context.Context, fi
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.([]*model.MultiLangString)
 	fc.Result = res
-	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalOMultiLangString2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMultiLangStringᚄ(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_MediathekFullEntry_abstract(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -2865,7 +2900,15 @@ func (ec *executionContext) fieldContext_MediathekFullEntry_abstract(ctx context
 		IsMethod:   false,
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
-			return nil, errors.New("field of type String does not have child fields")
+			switch field.Name {
+			case "lang":
+				return ec.fieldContext_MultiLangString_lang(ctx, field)
+			case "value":
+				return ec.fieldContext_MultiLangString_value(ctx, field)
+			case "translated":
+				return ec.fieldContext_MultiLangString_translated(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MultiLangString", field.Name)
 		},
 	}
 	return fc, nil
@@ -3043,6 +3086,138 @@ func (ec *executionContext) fieldContext_MediathekFullEntry_media(ctx context.Co
 				return ec.fieldContext_MediaList_items(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type MediaList", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MultiLangString_lang(ctx context.Context, field graphql.CollectedField, obj *model.MultiLangString) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MultiLangString_lang(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Lang, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MultiLangString_lang(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MultiLangString",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MultiLangString_value(ctx context.Context, field graphql.CollectedField, obj *model.MultiLangString) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MultiLangString_value(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Value, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MultiLangString_value(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MultiLangString",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MultiLangString_translated(ctx context.Context, field graphql.CollectedField, obj *model.MultiLangString) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MultiLangString_translated(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Translated, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MultiLangString_translated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MultiLangString",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
 		},
 	}
 	return fc, nil
@@ -6437,6 +6612,55 @@ func (ec *executionContext) _MediathekFullEntry(ctx context.Context, sel ast.Sel
 	return out
 }
 
+var multiLangStringImplementors = []string{"MultiLangString"}
+
+func (ec *executionContext) _MultiLangString(ctx context.Context, sel ast.SelectionSet, obj *model.MultiLangString) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, multiLangStringImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MultiLangString")
+		case "lang":
+			out.Values[i] = ec._MultiLangString_lang(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "value":
+			out.Values[i] = ec._MultiLangString_value(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "translated":
+			out.Values[i] = ec._MultiLangString_translated(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var noteImplementors = []string{"Note"}
 
 func (ec *executionContext) _Note(ctx context.Context, sel ast.SelectionSet, obj *model.Note) graphql.Marshaler {
@@ -7344,6 +7568,60 @@ func (ec *executionContext) marshalNMediathekFullEntry2ᚖgithubᚗcomᚋje4ᚋr
 	return ec._MediathekFullEntry(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNMultiLangString2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMultiLangStringᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MultiLangString) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNMultiLangString2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMultiLangString(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNMultiLangString2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMultiLangString(ctx context.Context, sel ast.SelectionSet, v *model.MultiLangString) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MultiLangString(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNNote2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐNote(ctx context.Context, sel ast.SelectionSet, v *model.Note) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -8019,6 +8297,53 @@ func (ec *executionContext) marshalOMediathekFullEntry2ᚕᚖgithubᚗcomᚋje4�
 				defer wg.Done()
 			}
 			ret[i] = ec.marshalNMediathekFullEntry2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediathekFullEntry(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalOMultiLangString2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMultiLangStringᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MultiLangString) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNMultiLangString2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMultiLangString(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)

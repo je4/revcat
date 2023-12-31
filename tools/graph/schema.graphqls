@@ -41,12 +41,18 @@ type Reference {
     signature: String!
 }
 
+type MultiLangString {
+    lang: String!
+    value: String!
+    translated: Boolean!
+}
+
 type MediathekBaseEntry {
     id: ID!
     signature: String!
     signatureOriginal: String!
     source: String!
-    title: String!
+    title: [MultiLangString!]!
     series: String
     place: String
     date: String
@@ -65,10 +71,10 @@ type MediathekBaseEntry {
 }
 
 type MediathekFullEntry {
-    id: ID!
+  id: ID!
   base: MediathekBaseEntry!
   notes: [Note!]
-  abstract: String
+  abstract: [MultiLangString!]
   referencesFull: [MediathekBaseEntry!]
   extra: [KeyValue!]
   media: [MediaList!]

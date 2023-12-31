@@ -29,7 +29,7 @@ type Query struct {
 type MediathekBaseFragment struct {
 	Signature  string               "json:\"signature\" graphql:\"signature\""
 	Source     string               "json:\"source\" graphql:\"source\""
-	Title      string               "json:\"title\" graphql:\"title\""
+	Title      []*MultiLangFragment "json:\"title\" graphql:\"title\""
 	Series     *string              "json:\"series,omitempty\" graphql:\"series\""
 	Place      *string              "json:\"place,omitempty\" graphql:\"place\""
 	Date       *string              "json:\"date,omitempty\" graphql:\"date\""
@@ -56,7 +56,7 @@ func (t *MediathekBaseFragment) GetSource() string {
 	}
 	return t.Source
 }
-func (t *MediathekBaseFragment) GetTitle() string {
+func (t *MediathekBaseFragment) GetTitle() []*MultiLangFragment {
 	if t == nil {
 		t = &MediathekBaseFragment{}
 	}
@@ -133,6 +133,31 @@ func (t *MediathekBaseFragment) GetReferences() []*ReferenceFragment {
 		t = &MediathekBaseFragment{}
 	}
 	return t.References
+}
+
+type MultiLangFragment struct {
+	Lang       string "json:\"lang\" graphql:\"lang\""
+	Value      string "json:\"value\" graphql:\"value\""
+	Translated bool   "json:\"translated\" graphql:\"translated\""
+}
+
+func (t *MultiLangFragment) GetLang() string {
+	if t == nil {
+		t = &MultiLangFragment{}
+	}
+	return t.Lang
+}
+func (t *MultiLangFragment) GetValue() string {
+	if t == nil {
+		t = &MultiLangFragment{}
+	}
+	return t.Value
+}
+func (t *MultiLangFragment) GetTranslated() bool {
+	if t == nil {
+		t = &MultiLangFragment{}
+	}
+	return t.Translated
 }
 
 type NoteFragment struct {
@@ -382,7 +407,7 @@ type MediathekEntries_MediathekEntries struct {
 	ID             string                   "json:\"id\" graphql:\"id\""
 	Base           *MediathekBaseFragment   "json:\"base\" graphql:\"base\""
 	Notes          []*NoteFragment          "json:\"notes,omitempty\" graphql:\"notes\""
-	Abstract       *string                  "json:\"abstract,omitempty\" graphql:\"abstract\""
+	Abstract       []*MultiLangFragment     "json:\"abstract,omitempty\" graphql:\"abstract\""
 	Extra          []*KeyValueFragment      "json:\"extra,omitempty\" graphql:\"extra\""
 	Media          []*MediaListFragment     "json:\"media,omitempty\" graphql:\"media\""
 	ReferencesFull []*MediathekBaseFragment "json:\"referencesFull,omitempty\" graphql:\"referencesFull\""
@@ -407,7 +432,7 @@ func (t *MediathekEntries_MediathekEntries) GetNotes() []*NoteFragment {
 	}
 	return t.Notes
 }
-func (t *MediathekEntries_MediathekEntries) GetAbstract() *string {
+func (t *MediathekEntries_MediathekEntries) GetAbstract() []*MultiLangFragment {
 	if t == nil {
 		t = &MediathekEntries_MediathekEntries{}
 	}
@@ -442,7 +467,7 @@ type Search_Search_Edges struct {
 	ID             string                   "json:\"id\" graphql:\"id\""
 	Base           *MediathekBaseFragment   "json:\"base\" graphql:\"base\""
 	Notes          []*NoteFragment          "json:\"notes,omitempty\" graphql:\"notes\""
-	Abstract       *string                  "json:\"abstract,omitempty\" graphql:\"abstract\""
+	Abstract       []*MultiLangFragment     "json:\"abstract,omitempty\" graphql:\"abstract\""
 	Extra          []*KeyValueFragment      "json:\"extra,omitempty\" graphql:\"extra\""
 	Media          []*MediaListFragment     "json:\"media,omitempty\" graphql:\"media\""
 	ReferencesFull []*MediathekBaseFragment "json:\"referencesFull,omitempty\" graphql:\"referencesFull\""
@@ -467,7 +492,7 @@ func (t *Search_Search_Edges) GetNotes() []*NoteFragment {
 	}
 	return t.Notes
 }
-func (t *Search_Search_Edges) GetAbstract() *string {
+func (t *Search_Search_Edges) GetAbstract() []*MultiLangFragment {
 	if t == nil {
 		t = &Search_Search_Edges{}
 	}
@@ -568,7 +593,9 @@ const MediathekEntriesDocument = `query MediathekEntries ($signatures: [String!]
 		notes {
 			... NoteFragment
 		}
-		abstract
+		abstract {
+			... MultiLangFragment
+		}
 		extra {
 			... KeyValueFragment
 		}
@@ -584,7 +611,9 @@ const MediathekEntriesDocument = `query MediathekEntries ($signatures: [String!]
 fragment MediathekBaseFragment on MediathekBaseEntry {
 	signature
 	source
-	title
+	title {
+		... MultiLangFragment
+	}
 	series
 	place
 	date
@@ -601,6 +630,11 @@ fragment MediathekBaseFragment on MediathekBaseEntry {
 	references {
 		... ReferenceFragment
 	}
+}
+fragment MultiLangFragment on MultiLangString {
+	lang
+	value
+	translated
 }
 fragment MediaItemFragment on Media {
 	name
@@ -664,7 +698,9 @@ const SearchDocument = `query search ($query: String!, $facets: [InFacet!], $fil
 			notes {
 				... NoteFragment
 			}
-			abstract
+			abstract {
+				... MultiLangFragment
+			}
 			extra {
 				... KeyValueFragment
 			}
@@ -691,7 +727,9 @@ fragment PageInfoFragment on PageInfo {
 fragment MediathekBaseFragment on MediathekBaseEntry {
 	signature
 	source
-	title
+	title {
+		... MultiLangFragment
+	}
 	series
 	place
 	date
@@ -708,6 +746,11 @@ fragment MediathekBaseFragment on MediathekBaseEntry {
 	references {
 		... ReferenceFragment
 	}
+}
+fragment MultiLangFragment on MultiLangString {
+	lang
+	value
+	translated
 }
 fragment MediaItemFragment on Media {
 	name

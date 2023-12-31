@@ -2,7 +2,9 @@
 fragment MediathekBaseFragment on MediathekBaseEntry {
     signature
     source
-    title
+    title {
+        ...MultiLangFragment
+    }
     series
     place
     date
@@ -19,6 +21,12 @@ fragment MediathekBaseFragment on MediathekBaseEntry {
     references {
         ...ReferenceFragment
     }
+}
+
+fragment MultiLangFragment on MultiLangString {
+    lang
+    value
+    translated
 }
 
 fragment NoteFragment on Note {
