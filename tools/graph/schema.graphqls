@@ -124,6 +124,8 @@ input InFilter {
 input InFacetTerm {
     field: String!
     name: String!
+    minDocCount: Int! = 1
+    size: Int! = 10
     include: [String!]
     exclude: [String!]
 }

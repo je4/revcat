@@ -5983,7 +5983,14 @@ func (ec *executionContext) unmarshalInputInFacetTerm(ctx context.Context, obj i
 		asMap[k] = v
 	}
 
-	fieldsInOrder := [...]string{"field", "name", "include", "exclude"}
+	if _, present := asMap["minDocCount"]; !present {
+		asMap["minDocCount"] = 1
+	}
+	if _, present := asMap["size"]; !present {
+		asMap["size"] = 10
+	}
+
+	fieldsInOrder := [...]string{"field", "name", "minDocCount", "size", "include", "exclude"}
 	for _, k := range fieldsInOrder {
 		v, ok := asMap[k]
 		if !ok {
@@ -6008,6 +6015,24 @@ func (ec *executionContext) unmarshalInputInFacetTerm(ctx context.Context, obj i
 				return it, err
 			}
 			it.Name = data
+		case "minDocCount":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minDocCount"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.MinDocCount = data
+		case "size":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
+			data, err := ec.unmarshalNInt2int(ctx, v)
+			if err != nil {
+				return it, err
+			}
+			it.Size = data
 		case "include":
 			var err error
 

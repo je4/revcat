@@ -50,7 +50,7 @@ func (r *Resolver) loadEntries(ctx context.Context, signatures []string) ([]sour
 		}
 		newSignatures = append(newSignatures, signature)
 	}
-	mgetResponse, err := r.elastic.Mget().Index(r.index).Ids(newSignatures...).Do(ctx)
+	mgetResponse, err := r.elastic.Mget().Index(r.index).Ids(newSignatures...).SourceExcludes_("title_vector", "content_vector").Do(ctx)
 	if err != nil {
 		return nil, emperror.Wrapf(err, "cannot load '%s' entries %v", r.index, signatures)
 	}

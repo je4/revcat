@@ -213,7 +213,9 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 		esPostFilter = append(esPostFilter, newFilter)
 		if f.Term != nil {
 			termAgg := &types.TermsAggregation{
-				Field: &f.Term.Field,
+				Field:       &f.Term.Field,
+				Size:        &f.Term.Size,
+				MinDocCount: &f.Term.MinDocCount,
 				//			Name:  &f.Name,
 			}
 			if len(f.Term.Include) == 1 {
@@ -227,6 +229,7 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 					termAgg.MinDocCount = &zero
 				}
 			}
+
 			esAggs[f.Term.Name] = types.Aggregations{
 				Terms: termAgg,
 			}
@@ -248,6 +251,7 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 
 	resp, err := r.elastic.Search().
 		Index(r.index).
+		SourceExcludes_("title_vector", "content_vector").
 		Request(&search.Request{
 			Query: &types.Query{
 				Bool: &types.BoolQuery{

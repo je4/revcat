@@ -31,10 +31,12 @@ type InFacet struct {
 }
 
 type InFacetTerm struct {
-	Field   string   `json:"field"`
-	Name    string   `json:"name"`
-	Include []string `json:"include,omitempty"`
-	Exclude []string `json:"exclude,omitempty"`
+	Field       string   `json:"field"`
+	Name        string   `json:"name"`
+	MinDocCount int64    `json:"minDocCount"`
+	Size        int64    `json:"size"`
+	Include     []string `json:"include,omitempty"`
+	Exclude     []string `json:"exclude,omitempty"`
 }
 
 type InFilter struct {
