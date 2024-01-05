@@ -202,15 +202,26 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 	}
 
 	for _, f := range facets {
-		if err != nil {
-			return nil, emperrors.Wrapf(err, "cannot create filter query for %v", f)
-		}
 		newFilter, err := createFilterQuery(f.Query)
 		if err != nil {
 			return nil, emperrors.Wrapf(err, "cannot create facet filter query for %v", f)
 		}
 
 		esPostFilter = append(esPostFilter, newFilter)
+	}
+	for _, f := range facets {
+		facetFilter := []types.Query{}
+		for _, f2 := range facets {
+			if f2.Term.Name == f.Term.Name {
+				continue
+			}
+			newFilter, err := createFilterQuery(f2.Query)
+			if err != nil {
+				return nil, emperrors.Wrapf(err, "cannot create facet filter query for %v", f2)
+			}
+
+			facetFilter = append(facetFilter, newFilter)
+		}
 		if f.Term != nil {
 			termAgg := &types.TermsAggregation{
 				Field:       &f.Term.Field,
@@ -231,7 +242,16 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 			}
 
 			esAggs[f.Term.Name] = types.Aggregations{
-				Terms: termAgg,
+				Filter: &types.Query{
+					Bool: &types.BoolQuery{
+						Filter: facetFilter,
+					},
+				},
+				Aggregations: map[string]types.Aggregations{
+					"theAggregation": types.Aggregations{
+						Terms: termAgg,
+					},
+				},
 			}
 		}
 	}
@@ -283,7 +303,15 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 			Name:   name,
 			Values: make([]model.FacetValue, 0),
 		}
-		switch bucket := bucketAny.(type) {
+		filterAgg, ok := bucketAny.(*types.FilterAggregate)
+		if !ok {
+			return nil, emperrors.Errorf("unknown base bucket type %T in %s", bucketAny, name)
+		}
+		theAgg, ok := filterAgg.Aggregations["theAggregation"]
+		if !ok {
+			return nil, emperrors.Errorf("theAggregation not found in filter aggregate %s", name)
+		}
+		switch bucket := theAgg.(type) {
 		case *types.StringTermsAggregate:
 			switch bucketType1 := bucket.Buckets.(type) {
 			case []types.StringTermsBucket:
