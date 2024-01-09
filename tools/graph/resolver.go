@@ -50,36 +50,38 @@ func (r *Resolver) loadEntries(ctx context.Context, signatures []string) ([]sour
 		}
 		newSignatures = append(newSignatures, signature)
 	}
-	mgetResponse, err := r.elastic.Mget().Index(r.index).Ids(newSignatures...).SourceExcludes_("title_vector", "content_vector").Do(ctx)
-	if err != nil {
-		return nil, emperror.Wrapf(err, "cannot load '%s' entries %v", r.index, signatures)
-	}
-	for _, docInt := range mgetResponse.Docs {
-		doc, ok := docInt.(map[string]interface{})
-		if !ok {
-			return nil, emperror.Errorf("cannot convert doc %v to map", docInt)
-		}
-		if found, ok := doc["found"].(bool); !ok || !found {
-			return nil, emperror.Errorf("document %s not found", doc["id"])
-		}
-		id, ok := doc["_id"].(string)
-		if !ok {
-			return nil, emperror.Errorf("cannot convert doc id %v to string", doc["_id"])
-		}
-		sourceMap, ok := doc["_source"].(map[string]interface{})
-		if !ok {
-			return nil, emperror.Errorf("cannot convert doc source %v to map", doc["_source"])
-		}
-		jsonBytes, err := json.Marshal(sourceMap)
+	if len(newSignatures) > 0 {
+		mgetResponse, err := r.elastic.Mget().Index(r.index).Ids(newSignatures...).SourceExcludes_("title_vector", "content_vector").Do(ctx)
 		if err != nil {
-			return nil, emperror.Wrapf(err, "cannot marshal source %v", sourceMap)
+			return nil, emperror.Wrapf(err, "cannot load '%s' entries %v", r.index, signatures)
 		}
-		source := sourcetype.SourceData{ID: id}
-		if err := json.Unmarshal(jsonBytes, &source); err != nil {
-			return nil, emperror.Wrapf(err, "cannot unmarshal source %v", source)
+		for _, docInt := range mgetResponse.Docs {
+			doc, ok := docInt.(map[string]interface{})
+			if !ok {
+				return nil, emperror.Errorf("cannot convert doc %v to map", docInt)
+			}
+			if found, ok := doc["found"].(bool); !ok || !found {
+				return nil, emperror.Errorf("document %s not found", doc["id"])
+			}
+			id, ok := doc["_id"].(string)
+			if !ok {
+				return nil, emperror.Errorf("cannot convert doc id %v to string", doc["_id"])
+			}
+			sourceMap, ok := doc["_source"].(map[string]interface{})
+			if !ok {
+				return nil, emperror.Errorf("cannot convert doc source %v to map", doc["_source"])
+			}
+			jsonBytes, err := json.Marshal(sourceMap)
+			if err != nil {
+				return nil, emperror.Wrapf(err, "cannot marshal source %v", sourceMap)
+			}
+			source := sourcetype.SourceData{ID: id}
+			if err := json.Unmarshal(jsonBytes, &source); err != nil {
+				return nil, emperror.Wrapf(err, "cannot unmarshal source %v", source)
+			}
+			result = append(result, source)
+			r.objectCache.Set(id, source)
 		}
-		result = append(result, source)
-		r.objectCache.Set(id, source)
 	}
 	return result, nil
 }
