@@ -100,6 +100,7 @@ type Facet {
 type PageInfo {
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
+  currentCursor: String!
   startCursor: String!
   endCursor: String!
 }
@@ -138,6 +139,7 @@ input InFacet {
 
 
 type Query {
-  search(query: String!, facets: [InFacet!], filter: [InFilter!], first: Int, after: String, last: Int, before: String): SearchResult!
+  search(query: String!, facets: [InFacet!], filter: [InFilter!], vector: [Float!], first: Int, size: Int, cursor: String): SearchResult!
+  chatSearch(filter: [InFilter!], vector: [Float!]!, size: Int!): SearchResult!
   mediathekEntries(signatures: [String!]!): [MediathekFullEntry!]
 }

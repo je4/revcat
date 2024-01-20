@@ -5,6 +5,9 @@ fragment MediathekBaseFragment on MediathekBaseEntry {
     title {
         ...MultiLangFragment
     }
+    person {
+        ...PersonFragment
+    }
     series
     place
     date
@@ -67,6 +70,7 @@ fragment KeyValueFragment on KeyValue {
 fragment PageInfoFragment on PageInfo {
     hasNextPage
     hasPreviousPage
+    currentCursor
     startCursor
     endCursor
 }
@@ -97,3 +101,7 @@ fragment FacetFragment on Facet {
     }
 }
 
+fragment PersonFragment on Person {
+    name
+    role
+}

@@ -57,48 +57,31 @@ func (r *mediathekFullEntryResolver) ReferencesFull(ctx context.Context, obj *mo
 }
 
 // Search is the resolver for the search field.
-func (r *queryResolver) Search(ctx context.Context, query string, facets []*model.InFacet, filter []*model.InFilter, first *int, after *string, last *int, before *string) (*model.SearchResult, error) {
+func (r *queryResolver) Search(ctx context.Context, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string) (*model.SearchResult, error) {
 	if errValue := ctx.Value("error"); errValue != nil {
 		return nil, emperrors.Errorf("%s", errValue)
 	}
 	var from = 0
-	var size = 25
+	var num = 25
 
-	if first != nil && last != nil {
-		if *first > *last {
-			return nil, emperrors.Errorf("first cannot be greater than last")
-		}
+	if first != nil && size != nil {
 		from = *first
-		size = *last - *first
-		if size == 0 {
-			size = 25
-		}
+		num = *size
 	}
-	if after != nil && before != nil && *after != "" && *before != "" {
-		return nil, emperrors.Errorf("after and before cannot be used together")
-	}
-	if after != nil {
-		if *after != "" {
-			crs, err := DecodeCursor(*after)
-			if err != nil {
-				return nil, emperrors.Wrapf(err, "cannot decode before cursor '%s'", *after)
-			}
-			from = crs.From + 1
-			size = crs.Size
+	if cursor != nil && *cursor != "" {
+		crs, err := DecodeCursor(*cursor)
+		if err != nil {
+			return nil, emperrors.Wrapf(err, "cannot decode cursor '%s'", *cursor)
 		}
+		from = crs.From + 1
+		num = crs.Size
 	}
-	if before != nil {
-		if *before != "" {
-			crs, err := DecodeCursor(*before)
-			if err != nil {
-				return nil, emperrors.Wrapf(err, "cannot decode before cursor '%s'", *before)
-			}
-			from = crs.From - size
-			if from < 0 {
-				from = 0
-			}
-			size = crs.Size
-		}
+
+	if from < 0 {
+		from = 0
+	}
+	if num <= 0 {
+		num = 25
 	}
 	groups, err := stringsFromContext(ctx, "groups")
 	if err != nil {
@@ -269,25 +252,27 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 
 	}
 
+	searchRequest := &search.Request{
+		Query: &types.Query{
+			Bool: &types.BoolQuery{
+				Filter: esFilter,
+				Must:   esMust,
+			},
+		},
+		Aggregations: esAggs,
+		PostFilter: &types.Query{
+			Bool: &types.BoolQuery{
+				Filter: esPostFilter,
+			},
+		},
+	}
+
 	resp, err := r.elastic.Search().
 		Index(r.index).
 		SourceExcludes_("title_vector", "content_vector").
-		Request(&search.Request{
-			Query: &types.Query{
-				Bool: &types.BoolQuery{
-					Filter: esFilter,
-					Must:   esMust,
-				},
-			},
-			Aggregations: esAggs,
-			PostFilter: &types.Query{
-				Bool: &types.BoolQuery{
-					Filter: esPostFilter,
-				},
-			},
-		}).
+		Request(searchRequest).
 		From(from).
-		Size(size).
+		Size(num).
 		Do(ctx)
 	if err != nil {
 		return nil, emperrors.Wrapf(err, "cannot search for '%s'", query)
@@ -341,22 +326,126 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 		}
 		result.Facets = append(result.Facets, facet)
 	}
-	if result.TotalCount > from+size {
+	if result.TotalCount > from+num {
 		result.PageInfo.HasNextPage = true
-
-		cFrom := from + size - 1
-		if cFrom >= result.TotalCount {
-			cFrom = result.TotalCount - 1
-		}
-		if result.PageInfo.EndCursor, err = NewCursor(cFrom, size).Encode(); err != nil {
+		if result.PageInfo.EndCursor, err = NewCursor(min(from+num-1, result.TotalCount-1), num).Encode(); err != nil {
 			return nil, emperrors.Wrap(err, "cannot marshal end cursor")
 		}
 	}
 	if from > 0 {
 		result.PageInfo.HasPreviousPage = true
-		if result.PageInfo.StartCursor, err = NewCursor(from, size).Encode(); err != nil {
+
+		if result.PageInfo.StartCursor, err = NewCursor(max(from-num, 0), num).Encode(); err != nil {
 			return nil, emperrors.Wrap(err, "cannot marshal end cursor")
 		}
+	}
+	result.PageInfo.CurrentCursor, err = NewCursor(from, num).Encode()
+	if err != nil {
+		return nil, emperrors.Wrap(err, "cannot marshal current cursor")
+	}
+	for _, hit := range resp.Hits.Hits {
+		source := &sourcetype.SourceData{}
+		if err := json.Unmarshal(hit.Source_, source); err != nil {
+			return nil, emperrors.Wrapf(err, "cannot unmarshal hit %v", hit)
+		}
+		entry := sourceToMediathekFullEntry(source)
+		result.Edges = append(result.Edges, entry)
+	}
+	return result, nil
+}
+
+// ChatSearch is the resolver for the chatSearch field.
+func (r *queryResolver) ChatSearch(ctx context.Context, filter []*model.InFilter, vector []float64, size int) (*model.SearchResult, error) {
+	if errValue := ctx.Value("error"); errValue != nil {
+		return nil, emperrors.Errorf("%s", errValue)
+	}
+	esFilter := []types.Query{}
+	for _, f := range filter {
+		newFilter, err := createFilterQuery(f)
+		if err != nil {
+			return nil, emperrors.Wrapf(err, "cannot create filter query for %v", f)
+		}
+		esFilter = append(esFilter, newFilter)
+	}
+
+	vectorBytes, err := json.Marshal(vector)
+	if err != nil {
+		return nil, emperrors.Wrap(err, "cannot marshal params")
+	}
+	searchRequest := &search.Request{
+		Query: &types.Query{
+			ScriptScore: &types.ScriptScoreQuery{
+				Query: &types.Query{
+					Exists: &types.ExistsQuery{
+						Field: "content_vector",
+					},
+				},
+				Script: &types.InlineScript{
+					Source: "cosineSimilarity(params.queryVector, 'content_vector') + 1.0",
+					Params: map[string]json.RawMessage{
+						"queryVector": vectorBytes,
+					},
+				},
+			},
+		},
+	}
+	resp, err := r.elastic.Search().
+		Index(r.index).
+		SourceExcludes_("title_vector", "content_vector").
+		Request(searchRequest).
+		Size(size).
+		Do(ctx)
+	if err != nil {
+		return nil, emperrors.Wrap(err, "cannot search")
+	}
+	var result = &model.SearchResult{
+		TotalCount: int(resp.Hits.Total.Value),
+		Edges:      make([]*model.MediathekFullEntry, 0),
+		Facets:     make([]*model.Facet, 0),
+		PageInfo:   &model.PageInfo{},
+	}
+	for name, bucketAny := range resp.Aggregations {
+		facet := &model.Facet{
+			Name:   name,
+			Values: make([]model.FacetValue, 0),
+		}
+		filterAgg, ok := bucketAny.(*types.FilterAggregate)
+		if !ok {
+			return nil, emperrors.Errorf("unknown base bucket type %T in %s", bucketAny, name)
+		}
+		theAgg, ok := filterAgg.Aggregations["theAggregation"]
+		if !ok {
+			return nil, emperrors.Errorf("theAggregation not found in filter aggregate %s", name)
+		}
+		switch bucket := theAgg.(type) {
+		case *types.StringTermsAggregate:
+			switch bucketType1 := bucket.Buckets.(type) {
+			case []types.StringTermsBucket:
+				for _, stb := range bucketType1 {
+					switch kt := stb.Key.(type) {
+					case string:
+						facet.Values = append(facet.Values, &model.FacetValueString{
+							StrVal: kt,
+							Count:  int(stb.DocCount),
+						})
+					case int64:
+						intVal := int(kt)
+						facet.Values = append(facet.Values, &model.FacetValueInt{
+							IntVal: intVal,
+							Count:  int(stb.DocCount),
+						})
+					default:
+						return nil, emperrors.Errorf("unknown bucket key type of StringTermsBucket key %T", kt)
+					}
+				}
+				//			case map[string]any:
+			default:
+				return nil, emperrors.Errorf("unknown bucket type of StringTermsAggregate %T", bucketType1)
+			}
+		default:
+			return nil, emperrors.Errorf("unknown bucket type %T", bucket)
+		}
+		result.Facets = append(result.Facets, facet)
 	}
 	for _, hit := range resp.Hits.Hits {
 		source := &sourcetype.SourceData{}

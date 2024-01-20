@@ -1,5 +1,40 @@
-query search($query: String!, $facets: [InFacet!], $filter: [InFilter!], $first: Int, $after: String, $last: Int, $before: String) {
-    search(query: $query, facets: $facets, filter: $filter, first: $first, after: $after, last: $last, before: $before) {
+query chatSearch($filter: [InFilter!], $vector: [Float!]!, $size: Int!) {
+    chatSearch(filter: $filter, vector: $vector, size: $size) {
+        totalCount
+        pageInfo {
+            ...PageInfoFragment
+        }
+        edges {
+            id
+            base {
+                ...MediathekBaseFragment
+            }
+            notes {
+                ...NoteFragment
+            }
+            abstract {
+                ...MultiLangFragment
+            }
+            extra {
+                ...KeyValueFragment
+            }
+            media {
+                ...MediaListFragment
+            }
+            referencesFull {
+                ...MediathekBaseFragment
+            }
+            __typename
+        }
+        facets {
+            ...FacetFragment
+        }
+        __typename
+    }
+}
+
+query search($query: String!, $facets: [InFacet!], $filter: [InFilter!], $vector: [Float!], $first: Int, $size: Int, $cursor: String) {
+    search(query: $query, facets: $facets, filter: $filter, vector: $vector, first: $first, size: $size, cursor: $cursor) {
         totalCount
         pageInfo {
             ...PageInfoFragment
