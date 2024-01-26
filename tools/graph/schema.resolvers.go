@@ -91,88 +91,14 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 	if err != nil || clientName == "" {
 		return nil, emperrors.Wrap(err, "cannot get client from context")
 	}
-	client, ok := r.client[clientName]
-	if !ok {
-		return nil, emperrors.Errorf("client '%s' not found", clientName)
-	}
 
-	baseQuery := types.BoolQuery{
-		Must:               []types.Query{},
-		Should:             []types.Query{},
-		MinimumShouldMatch: 1,
-	}
-	for _, q := range client.AND {
-		if q.Field == "" {
-			continue
-		}
-		for _, val := range q.Values {
-			baseQuery.Must = append(baseQuery.Must, types.Query{
-				Term: map[string]types.TermQuery{
-					q.Field: {
-						Value: val,
-					},
-				},
-			})
-			// baseQuery.Must = append(baseQuery.Must, createFilterQuery(q.Field, val))
-		}
-	}
-	for _, q := range client.OR {
-		if q.Field == "" {
-			continue
-		}
-		for _, val := range q.Values {
-			baseQuery.Should = append(baseQuery.Should, types.Query{
-				Term: map[string]types.TermQuery{
-					q.Field: {
-						Value: val,
-					},
-				},
-			})
-			//			baseQuery.Should = append(baseQuery.Should, createFilterQuery(q.Field, val))
-		}
-	}
-	if len(baseQuery.Should) == 0 {
-		baseQuery.MinimumShouldMatch = 0
-	}
-	aclQuery := types.BoolQuery{
-		Must:               []types.Query{},
-		Should:             []types.Query{},
-		MinimumShouldMatch: 1,
-	}
-	grps := []string{}
-	for _, grp := range client.Groups {
-		grps = append(grps, strings.ToLower(grp))
-	}
-	for _, grp := range groups {
-		grps = append(grps, strings.ToLower(grp))
-	}
-	slices.Sort(grps)
-	grps = slices.Compact(grps)
-	for _, grp := range grps {
-		aclQuery.Must = append(aclQuery.Must, types.Query{
-			Term: map[string]types.TermQuery{
-				"acl.meta.keyword": {
-					Value: grp,
-				},
-			},
-		})
-		//		aclQuery.Must = append(aclQuery.Must, createFilterQuery("acl.meta", grp))
-	}
-	if len(aclQuery.Should) == 0 {
-		aclQuery.MinimumShouldMatch = 0
-	}
-
-	//
-	// start building query
-	//
-
-	var esFilter = []types.Query{
-		types.Query{Bool: &baseQuery},
-		types.Query{Bool: &aclQuery},
+	esFilter, err := r.buildBaseFilter(clientName, groups)
+	if err != nil {
+		return nil, emperrors.Wrap(err, "cannot build base filter")
 	}
 	var esPostFilter = []types.Query{
-		types.Query{Bool: &baseQuery},
-		types.Query{Bool: &aclQuery},
+		//		types.Query{Bool: &baseQuery},
+		//		types.Query{Bool: &aclQuery},
 	}
 	var esAggs = map[string]types.Aggregations{}
 
@@ -326,16 +252,20 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 		}
 		result.Facets = append(result.Facets, facet)
 	}
+	r.logger.Debug().Msgf("total count %d, from %d, num %d", result.TotalCount, from, num)
 	if result.TotalCount > from+num {
 		result.PageInfo.HasNextPage = true
-		if result.PageInfo.EndCursor, err = NewCursor(min(from+num-1, result.TotalCount-1), num).Encode(); err != nil {
+		nFrom := min(from+num-1, result.TotalCount-1)
+		r.logger.Debug().Msgf("next: from %d, num %d", nFrom, num)
+		if result.PageInfo.EndCursor, err = NewCursor(nFrom, num).Encode(); err != nil {
 			return nil, emperrors.Wrap(err, "cannot marshal end cursor")
 		}
 	}
 	if from > 0 {
 		result.PageInfo.HasPreviousPage = true
-
-		if result.PageInfo.StartCursor, err = NewCursor(max(from-num, 0), num).Encode(); err != nil {
+		nFrom := max(from-num-1, -1)
+		r.logger.Debug().Msgf("prev: from %d, num %d", nFrom, num)
+		if result.PageInfo.StartCursor, err = NewCursor(nFrom, num).Encode(); err != nil {
 			return nil, emperrors.Wrap(err, "cannot marshal end cursor")
 		}
 	}
@@ -354,12 +284,154 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 	return result, nil
 }
 
-// ChatSearch is the resolver for the chatSearch field.
-func (r *queryResolver) ChatSearch(ctx context.Context, filter []*model.InFilter, vector []float64, size int) (*model.SearchResult, error) {
+// MediathekEntries is the resolver for the mediathekEntries field.
+func (r *queryResolver) MediathekEntries(ctx context.Context, signatures []string) ([]*model.MediathekFullEntry, error) {
 	if errValue := ctx.Value("error"); errValue != nil {
 		return nil, emperrors.Errorf("%s", errValue)
 	}
-	esFilter := []types.Query{}
+	docs, err := r.loadEntries(ctx, signatures)
+	if err != nil {
+		return nil, emperrors.Wrapf(err, "cannot load entries %v", signatures)
+	}
+
+	entries := make([]*model.MediathekFullEntry, 0)
+	var access = make(map[string]bool)
+	groups, err := stringsFromContext(ctx, "groups")
+	if err != nil {
+		return nil, emperrors.Wrap(err, "cannot get groups from context")
+	}
+	for _, doc := range docs {
+		for t, acls := range doc.ACL {
+			for _, group := range groups {
+				if slices.Contains(acls, group) {
+					access[strings.ToLower(t)] = true
+					break
+				}
+			}
+		}
+		if ok, found := access["meta"]; ok && found {
+			entry := sourceToMediathekFullEntry(&doc)
+			entries = append(entries, entry)
+		}
+	}
+	return entries, nil
+}
+
+// MediathekFullEntry returns MediathekFullEntryResolver implementation.
+func (r *Resolver) MediathekFullEntry() MediathekFullEntryResolver {
+	return &mediathekFullEntryResolver{r}
+}
+
+// Query returns QueryResolver implementation.
+func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
+
+type mediathekFullEntryResolver struct{ *Resolver }
+type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.
+func (r *queryResolver) buildBaseFilter(clientName string, groups []string) ([]types.Query, error) {
+	client, ok := r.client[clientName]
+	if !ok {
+		return nil, emperrors.Errorf("client '%s' not found", clientName)
+	}
+	baseQuery := types.BoolQuery{
+		Must:               []types.Query{},
+		Should:             []types.Query{},
+		MinimumShouldMatch: 1,
+	}
+	for _, q := range client.AND {
+		if q.Field == "" {
+			continue
+		}
+		for _, val := range q.Values {
+			baseQuery.Must = append(baseQuery.Must, types.Query{
+				Term: map[string]types.TermQuery{
+					q.Field: {
+						Value: val,
+					},
+				},
+			})
+			// baseQuery.Must = append(baseQuery.Must, createFilterQuery(q.Field, val))
+		}
+	}
+	for _, q := range client.OR {
+		if q.Field == "" {
+			continue
+		}
+		for _, val := range q.Values {
+			baseQuery.Should = append(baseQuery.Should, types.Query{
+				Term: map[string]types.TermQuery{
+					q.Field: {
+						Value: val,
+					},
+				},
+			})
+		}
+	}
+	if len(baseQuery.Should) == 0 {
+		baseQuery.MinimumShouldMatch = 0
+	}
+	aclQuery := types.BoolQuery{
+		Must:               []types.Query{},
+		Should:             []types.Query{},
+		MinimumShouldMatch: 1,
+	}
+	grps := []string{}
+	for _, grp := range client.Groups {
+		grps = append(grps, strings.ToLower(grp))
+	}
+	for _, grp := range groups {
+		grps = append(grps, strings.ToLower(grp))
+	}
+	slices.Sort(grps)
+	grps = slices.Compact(grps)
+	for _, grp := range grps {
+		aclQuery.Must = append(aclQuery.Must, types.Query{
+			Term: map[string]types.TermQuery{
+				"acl.meta.keyword": {
+					Value: grp,
+				},
+			},
+		})
+		//		aclQuery.Must = append(aclQuery.Must, createFilterQuery("acl.meta", grp))
+	}
+	if len(aclQuery.Should) == 0 {
+		aclQuery.MinimumShouldMatch = 0
+	}
+
+	var esFilter = []types.Query{
+		types.Query{Bool: &baseQuery},
+		types.Query{Bool: &aclQuery},
+	}
+
+	return esFilter, nil
+}
+
+// VectorSearch is the resolver for the vectorSearch field.
+func (r *queryResolver) VectorSearch(ctx context.Context, filter []*model.InFilter, vector []float64, size int) (*model.SearchResult, error) {
+	if errValue := ctx.Value("error"); errValue != nil {
+		return nil, emperrors.Errorf("%s", errValue)
+	}
+
+	groups, err := stringsFromContext(ctx, "groups")
+	if err != nil {
+		return nil, emperrors.Wrap(err, "cannot get groups from context")
+	}
+	clientName, err := stringFromContext(ctx, "client")
+	if err != nil || clientName == "" {
+		return nil, emperrors.Wrap(err, "cannot get client from context")
+	}
+
+	esFilter, err := r.buildBaseFilter(clientName, groups)
+	if err != nil {
+		return nil, emperrors.Wrap(err, "cannot build base filter")
+	}
+
 	for _, f := range filter {
 		newFilter, err := createFilterQuery(f)
 		if err != nil {
@@ -457,47 +529,3 @@ func (r *queryResolver) ChatSearch(ctx context.Context, filter []*model.InFilter
 	}
 	return result, nil
 }
-
-// MediathekEntries is the resolver for the mediathekEntries field.
-func (r *queryResolver) MediathekEntries(ctx context.Context, signatures []string) ([]*model.MediathekFullEntry, error) {
-	if errValue := ctx.Value("error"); errValue != nil {
-		return nil, emperrors.Errorf("%s", errValue)
-	}
-	docs, err := r.loadEntries(ctx, signatures)
-	if err != nil {
-		return nil, emperrors.Wrapf(err, "cannot load entries %v", signatures)
-	}
-
-	entries := make([]*model.MediathekFullEntry, 0)
-	var access = make(map[string]bool)
-	groups, err := stringsFromContext(ctx, "groups")
-	if err != nil {
-		return nil, emperrors.Wrap(err, "cannot get groups from context")
-	}
-	for _, doc := range docs {
-		for t, acls := range doc.ACL {
-			for _, group := range groups {
-				if slices.Contains(acls, group) {
-					access[strings.ToLower(t)] = true
-					break
-				}
-			}
-		}
-		if ok, found := access["meta"]; ok && found {
-			entry := sourceToMediathekFullEntry(&doc)
-			entries = append(entries, entry)
-		}
-	}
-	return entries, nil
-}
-
-// MediathekFullEntry returns MediathekFullEntryResolver implementation.
-func (r *Resolver) MediathekFullEntry() MediathekFullEntryResolver {
-	return &mediathekFullEntryResolver{r}
-}
-
-// Query returns QueryResolver implementation.
-func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
-
-type mediathekFullEntryResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }
