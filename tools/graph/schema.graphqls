@@ -140,6 +140,6 @@ input InFacet {
 
 type Query {
   search(query: String!, facets: [InFacet!], filter: [InFilter!], vector: [Float!], first: Int, size: Int, cursor: String): SearchResult!
-  chatSearch(filter: [InFilter!], vector: [Float!]!, size: Int!): SearchResult!
+  vectorSearch(filter: [InFilter!], vector: [Float!]!, size: Int!): SearchResult!
   mediathekEntries(signatures: [String!]!): [MediathekFullEntry!]
 }

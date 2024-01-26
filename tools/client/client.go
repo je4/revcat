@@ -11,7 +11,8 @@ import (
 
 type RevCatGraphQLClient interface {
 	MediathekEntries(ctx context.Context, signatures []string, interceptors ...clientv2.RequestInterceptor) (*MediathekEntries, error)
-	ChatSearch(ctx context.Context, filter []*InFilter, vector []float64, size int64, interceptors ...clientv2.RequestInterceptor) (*ChatSearch, error)
+	VectorSearchShort(ctx context.Context, filter []*InFilter, vector []float64, size int64, interceptors ...clientv2.RequestInterceptor) (*VectorSearchShort, error)
+	VectorSearch(ctx context.Context, filter []*InFilter, vector []float64, size int64, interceptors ...clientv2.RequestInterceptor) (*VectorSearch, error)
 	Search(ctx context.Context, query string, facets []*InFacet, filter []*InFilter, vector []float64, first *int64, size *int64, cursor *string, interceptors ...clientv2.RequestInterceptor) (*Search, error)
 }
 
@@ -25,7 +26,7 @@ func NewClient(cli *http.Client, baseURL string, options *clientv2.Options, inte
 
 type Query struct {
 	Search           SearchResult          "json:\"search\" graphql:\"search\""
-	ChatSearch       SearchResult          "json:\"chatSearch\" graphql:\"chatSearch\""
+	VectorSearch     SearchResult          "json:\"vectorSearch\" graphql:\"vectorSearch\""
 	MediathekEntries []*MediathekFullEntry "json:\"mediathekEntries,omitempty\" graphql:\"mediathekEntries\""
 }
 type MediathekBaseFragment struct {
@@ -142,6 +143,108 @@ func (t *MediathekBaseFragment) GetReferences() []*ReferenceFragment {
 		t = &MediathekBaseFragment{}
 	}
 	return t.References
+}
+
+type MediathekBaseShortFragment struct {
+	Signature string               "json:\"signature\" graphql:\"signature\""
+	Source    string               "json:\"source\" graphql:\"source\""
+	Title     []*MultiLangFragment "json:\"title\" graphql:\"title\""
+	Person    []*PersonFragment    "json:\"person,omitempty\" graphql:\"person\""
+	Series    *string              "json:\"series,omitempty\" graphql:\"series\""
+	Place     *string              "json:\"place,omitempty\" graphql:\"place\""
+	Date      *string              "json:\"date,omitempty\" graphql:\"date\""
+	Category  []string             "json:\"category,omitempty\" graphql:\"category\""
+	Tags      []string             "json:\"tags,omitempty\" graphql:\"tags\""
+	URL       *string              "json:\"url,omitempty\" graphql:\"url\""
+	Publisher *string              "json:\"publisher,omitempty\" graphql:\"publisher\""
+	Rights    *string              "json:\"rights,omitempty\" graphql:\"rights\""
+	License   *string              "json:\"license,omitempty\" graphql:\"license\""
+	Type      *string              "json:\"type,omitempty\" graphql:\"type\""
+}
+
+func (t *MediathekBaseShortFragment) GetSignature() string {
+	if t == nil {
+		t = &MediathekBaseShortFragment{}
+	}
+	return t.Signature
+}
+func (t *MediathekBaseShortFragment) GetSource() string {
+	if t == nil {
+		t = &MediathekBaseShortFragment{}
+	}
+	return t.Source
+}
+func (t *MediathekBaseShortFragment) GetTitle() []*MultiLangFragment {
+	if t == nil {
+		t = &MediathekBaseShortFragment{}
+	}
+	return t.Title
+}
+func (t *MediathekBaseShortFragment) GetPerson() []*PersonFragment {
+	if t == nil {
+		t = &MediathekBaseShortFragment{}
+	}
+	return t.Person
+}
+func (t *MediathekBaseShortFragment) GetSeries() *string {
+	if t == nil {
+		t = &MediathekBaseShortFragment{}
+	}
+	return t.Series
+}
+func (t *MediathekBaseShortFragment) GetPlace() *string {
+	if t == nil {
+		t = &MediathekBaseShortFragment{}
+	}
+	return t.Place
+}
+func (t *MediathekBaseShortFragment) GetDate() *string {
+	if t == nil {
+		t = &MediathekBaseShortFragment{}
+	}
+	return t.Date
+}
+func (t *MediathekBaseShortFragment) GetCategory() []string {
+	if t == nil {
+		t = &MediathekBaseShortFragment{}
+	}
+	return t.Category
+}
+func (t *MediathekBaseShortFragment) GetTags() []string {
+	if t == nil {
+		t = &MediathekBaseShortFragment{}
+	}
+	return t.Tags
+}
+func (t *MediathekBaseShortFragment) GetURL() *string {
+	if t == nil {
+		t = &MediathekBaseShortFragment{}
+	}
+	return t.URL
+}
+func (t *MediathekBaseShortFragment) GetPublisher() *string {
+	if t == nil {
+		t = &MediathekBaseShortFragment{}
+	}
+	return t.Publisher
+}
+func (t *MediathekBaseShortFragment) GetRights() *string {
+	if t == nil {
+		t = &MediathekBaseShortFragment{}
+	}
+	return t.Rights
+}
+func (t *MediathekBaseShortFragment) GetLicense() *string {
+	if t == nil {
+		t = &MediathekBaseShortFragment{}
+	}
+	return t.License
+}
+func (t *MediathekBaseShortFragment) GetType() *string {
+	if t == nil {
+		t = &MediathekBaseShortFragment{}
+	}
+	return t.Type
 }
 
 type MultiLangFragment struct {
@@ -497,7 +600,71 @@ func (t *MediathekEntries_MediathekEntries) GetTypename() *string {
 	return t.Typename
 }
 
-type ChatSearch_ChatSearch_Edges struct {
+type VectorSearchShort_VectorSearch_Edges struct {
+	ID       string                      "json:\"id\" graphql:\"id\""
+	Base     *MediathekBaseShortFragment "json:\"base\" graphql:\"base\""
+	Abstract []*MultiLangFragment        "json:\"abstract,omitempty\" graphql:\"abstract\""
+	Typename *string                     "json:\"__typename,omitempty\" graphql:\"__typename\""
+}
+
+func (t *VectorSearchShort_VectorSearch_Edges) GetID() string {
+	if t == nil {
+		t = &VectorSearchShort_VectorSearch_Edges{}
+	}
+	return t.ID
+}
+func (t *VectorSearchShort_VectorSearch_Edges) GetBase() *MediathekBaseShortFragment {
+	if t == nil {
+		t = &VectorSearchShort_VectorSearch_Edges{}
+	}
+	return t.Base
+}
+func (t *VectorSearchShort_VectorSearch_Edges) GetAbstract() []*MultiLangFragment {
+	if t == nil {
+		t = &VectorSearchShort_VectorSearch_Edges{}
+	}
+	return t.Abstract
+}
+func (t *VectorSearchShort_VectorSearch_Edges) GetTypename() *string {
+	if t == nil {
+		t = &VectorSearchShort_VectorSearch_Edges{}
+	}
+	return t.Typename
+}
+
+type VectorSearchShort_VectorSearch struct {
+	TotalCount int64                                   "json:\"totalCount\" graphql:\"totalCount\""
+	Edges      []*VectorSearchShort_VectorSearch_Edges "json:\"edges\" graphql:\"edges\""
+	Facets     []*FacetFragment                        "json:\"facets\" graphql:\"facets\""
+	Typename   *string                                 "json:\"__typename,omitempty\" graphql:\"__typename\""
+}
+
+func (t *VectorSearchShort_VectorSearch) GetTotalCount() int64 {
+	if t == nil {
+		t = &VectorSearchShort_VectorSearch{}
+	}
+	return t.TotalCount
+}
+func (t *VectorSearchShort_VectorSearch) GetEdges() []*VectorSearchShort_VectorSearch_Edges {
+	if t == nil {
+		t = &VectorSearchShort_VectorSearch{}
+	}
+	return t.Edges
+}
+func (t *VectorSearchShort_VectorSearch) GetFacets() []*FacetFragment {
+	if t == nil {
+		t = &VectorSearchShort_VectorSearch{}
+	}
+	return t.Facets
+}
+func (t *VectorSearchShort_VectorSearch) GetTypename() *string {
+	if t == nil {
+		t = &VectorSearchShort_VectorSearch{}
+	}
+	return t.Typename
+}
+
+type VectorSearch_VectorSearch_Edges struct {
 	ID             string                   "json:\"id\" graphql:\"id\""
 	Base           *MediathekBaseFragment   "json:\"base\" graphql:\"base\""
 	Notes          []*NoteFragment          "json:\"notes,omitempty\" graphql:\"notes\""
@@ -508,90 +675,83 @@ type ChatSearch_ChatSearch_Edges struct {
 	Typename       *string                  "json:\"__typename,omitempty\" graphql:\"__typename\""
 }
 
-func (t *ChatSearch_ChatSearch_Edges) GetID() string {
+func (t *VectorSearch_VectorSearch_Edges) GetID() string {
 	if t == nil {
-		t = &ChatSearch_ChatSearch_Edges{}
+		t = &VectorSearch_VectorSearch_Edges{}
 	}
 	return t.ID
 }
-func (t *ChatSearch_ChatSearch_Edges) GetBase() *MediathekBaseFragment {
+func (t *VectorSearch_VectorSearch_Edges) GetBase() *MediathekBaseFragment {
 	if t == nil {
-		t = &ChatSearch_ChatSearch_Edges{}
+		t = &VectorSearch_VectorSearch_Edges{}
 	}
 	return t.Base
 }
-func (t *ChatSearch_ChatSearch_Edges) GetNotes() []*NoteFragment {
+func (t *VectorSearch_VectorSearch_Edges) GetNotes() []*NoteFragment {
 	if t == nil {
-		t = &ChatSearch_ChatSearch_Edges{}
+		t = &VectorSearch_VectorSearch_Edges{}
 	}
 	return t.Notes
 }
-func (t *ChatSearch_ChatSearch_Edges) GetAbstract() []*MultiLangFragment {
+func (t *VectorSearch_VectorSearch_Edges) GetAbstract() []*MultiLangFragment {
 	if t == nil {
-		t = &ChatSearch_ChatSearch_Edges{}
+		t = &VectorSearch_VectorSearch_Edges{}
 	}
 	return t.Abstract
 }
-func (t *ChatSearch_ChatSearch_Edges) GetExtra() []*KeyValueFragment {
+func (t *VectorSearch_VectorSearch_Edges) GetExtra() []*KeyValueFragment {
 	if t == nil {
-		t = &ChatSearch_ChatSearch_Edges{}
+		t = &VectorSearch_VectorSearch_Edges{}
 	}
 	return t.Extra
 }
-func (t *ChatSearch_ChatSearch_Edges) GetMedia() []*MediaListFragment {
+func (t *VectorSearch_VectorSearch_Edges) GetMedia() []*MediaListFragment {
 	if t == nil {
-		t = &ChatSearch_ChatSearch_Edges{}
+		t = &VectorSearch_VectorSearch_Edges{}
 	}
 	return t.Media
 }
-func (t *ChatSearch_ChatSearch_Edges) GetReferencesFull() []*MediathekBaseFragment {
+func (t *VectorSearch_VectorSearch_Edges) GetReferencesFull() []*MediathekBaseFragment {
 	if t == nil {
-		t = &ChatSearch_ChatSearch_Edges{}
+		t = &VectorSearch_VectorSearch_Edges{}
 	}
 	return t.ReferencesFull
 }
-func (t *ChatSearch_ChatSearch_Edges) GetTypename() *string {
+func (t *VectorSearch_VectorSearch_Edges) GetTypename() *string {
 	if t == nil {
-		t = &ChatSearch_ChatSearch_Edges{}
+		t = &VectorSearch_VectorSearch_Edges{}
 	}
 	return t.Typename
 }
 
-type ChatSearch_ChatSearch struct {
-	TotalCount int64                          "json:\"totalCount\" graphql:\"totalCount\""
-	PageInfo   *PageInfoFragment              "json:\"pageInfo\" graphql:\"pageInfo\""
-	Edges      []*ChatSearch_ChatSearch_Edges "json:\"edges\" graphql:\"edges\""
-	Facets     []*FacetFragment               "json:\"facets\" graphql:\"facets\""
-	Typename   *string                        "json:\"__typename,omitempty\" graphql:\"__typename\""
+type VectorSearch_VectorSearch struct {
+	TotalCount int64                              "json:\"totalCount\" graphql:\"totalCount\""
+	Edges      []*VectorSearch_VectorSearch_Edges "json:\"edges\" graphql:\"edges\""
+	Facets     []*FacetFragment                   "json:\"facets\" graphql:\"facets\""
+	Typename   *string                            "json:\"__typename,omitempty\" graphql:\"__typename\""
 }
 
-func (t *ChatSearch_ChatSearch) GetTotalCount() int64 {
+func (t *VectorSearch_VectorSearch) GetTotalCount() int64 {
 	if t == nil {
-		t = &ChatSearch_ChatSearch{}
+		t = &VectorSearch_VectorSearch{}
 	}
 	return t.TotalCount
 }
-func (t *ChatSearch_ChatSearch) GetPageInfo() *PageInfoFragment {
+func (t *VectorSearch_VectorSearch) GetEdges() []*VectorSearch_VectorSearch_Edges {
 	if t == nil {
-		t = &ChatSearch_ChatSearch{}
-	}
-	return t.PageInfo
-}
-func (t *ChatSearch_ChatSearch) GetEdges() []*ChatSearch_ChatSearch_Edges {
-	if t == nil {
-		t = &ChatSearch_ChatSearch{}
+		t = &VectorSearch_VectorSearch{}
 	}
 	return t.Edges
 }
-func (t *ChatSearch_ChatSearch) GetFacets() []*FacetFragment {
+func (t *VectorSearch_VectorSearch) GetFacets() []*FacetFragment {
 	if t == nil {
-		t = &ChatSearch_ChatSearch{}
+		t = &VectorSearch_VectorSearch{}
 	}
 	return t.Facets
 }
-func (t *ChatSearch_ChatSearch) GetTypename() *string {
+func (t *VectorSearch_VectorSearch) GetTypename() *string {
 	if t == nil {
-		t = &ChatSearch_ChatSearch{}
+		t = &VectorSearch_VectorSearch{}
 	}
 	return t.Typename
 }
@@ -706,15 +866,26 @@ func (t *MediathekEntries) GetMediathekEntries() []*MediathekEntries_MediathekEn
 	return t.MediathekEntries
 }
 
-type ChatSearch struct {
-	ChatSearch ChatSearch_ChatSearch "json:\"chatSearch\" graphql:\"chatSearch\""
+type VectorSearchShort struct {
+	VectorSearch VectorSearchShort_VectorSearch "json:\"vectorSearch\" graphql:\"vectorSearch\""
 }
 
-func (t *ChatSearch) GetChatSearch() *ChatSearch_ChatSearch {
+func (t *VectorSearchShort) GetVectorSearch() *VectorSearchShort_VectorSearch {
 	if t == nil {
-		t = &ChatSearch{}
+		t = &VectorSearchShort{}
 	}
-	return &t.ChatSearch
+	return &t.VectorSearch
+}
+
+type VectorSearch struct {
+	VectorSearch VectorSearch_VectorSearch "json:\"vectorSearch\" graphql:\"vectorSearch\""
+}
+
+func (t *VectorSearch) GetVectorSearch() *VectorSearch_VectorSearch {
+	if t == nil {
+		t = &VectorSearch{}
+	}
+	return &t.VectorSearch
 }
 
 type Search struct {
@@ -835,12 +1006,100 @@ func (c *Client) MediathekEntries(ctx context.Context, signatures []string, inte
 	return &res, nil
 }
 
-const ChatSearchDocument = `query chatSearch ($filter: [InFilter!], $vector: [Float!]!, $size: Int!) {
-	chatSearch(filter: $filter, vector: $vector, size: $size) {
+const VectorSearchShortDocument = `query vectorSearchShort ($filter: [InFilter!], $vector: [Float!]!, $size: Int!) {
+	vectorSearch(filter: $filter, vector: $vector, size: $size) {
 		totalCount
-		pageInfo {
-			... PageInfoFragment
+		edges {
+			id
+			base {
+				... MediathekBaseShortFragment
+			}
+			abstract {
+				... MultiLangFragment
+			}
+			__typename
 		}
+		facets {
+			... FacetFragment
+		}
+		__typename
+	}
+}
+fragment MediathekBaseShortFragment on MediathekBaseEntry {
+	signature
+	source
+	title {
+		... MultiLangFragment
+	}
+	person {
+		... PersonFragment
+	}
+	series
+	place
+	date
+	category
+	tags
+	url
+	publisher
+	rights
+	license
+	type
+}
+fragment MultiLangFragment on MultiLangString {
+	lang
+	value
+	translated
+}
+fragment PersonFragment on Person {
+	name
+	role
+}
+fragment FacetFragment on Facet {
+	name
+	values {
+		... FacetValueFragment
+	}
+}
+fragment FacetValueFragment on FacetValue {
+	... on FacetValueString {
+		... FacetValueStringFragment
+	}
+	... on FacetValueInt {
+		... FacetValueIntFragment
+	}
+}
+fragment FacetValueStringFragment on FacetValueString {
+	strVal
+	count
+}
+fragment FacetValueIntFragment on FacetValueInt {
+	intVal
+	count
+}
+`
+
+func (c *Client) VectorSearchShort(ctx context.Context, filter []*InFilter, vector []float64, size int64, interceptors ...clientv2.RequestInterceptor) (*VectorSearchShort, error) {
+	vars := map[string]interface{}{
+		"filter": filter,
+		"vector": vector,
+		"size":   size,
+	}
+
+	var res VectorSearchShort
+	if err := c.Client.Post(ctx, "vectorSearchShort", VectorSearchShortDocument, &res, vars, interceptors...); err != nil {
+		if c.Client.ParseDataWhenErrors {
+			return &res, err
+		}
+
+		return nil, err
+	}
+
+	return &res, nil
+}
+
+const VectorSearchDocument = `query vectorSearch ($filter: [InFilter!], $vector: [Float!]!, $size: Int!) {
+	vectorSearch(filter: $filter, vector: $vector, size: $size) {
+		totalCount
 		edges {
 			id
 			base {
@@ -868,13 +1127,6 @@ const ChatSearchDocument = `query chatSearch ($filter: [InFilter!], $vector: [Fl
 		}
 		__typename
 	}
-}
-fragment PageInfoFragment on PageInfo {
-	hasNextPage
-	hasPreviousPage
-	currentCursor
-	startCursor
-	endCursor
 }
 fragment MediathekBaseFragment on MediathekBaseEntry {
 	signature
@@ -964,15 +1216,15 @@ fragment FacetValueIntFragment on FacetValueInt {
 }
 `
 
-func (c *Client) ChatSearch(ctx context.Context, filter []*InFilter, vector []float64, size int64, interceptors ...clientv2.RequestInterceptor) (*ChatSearch, error) {
+func (c *Client) VectorSearch(ctx context.Context, filter []*InFilter, vector []float64, size int64, interceptors ...clientv2.RequestInterceptor) (*VectorSearch, error) {
 	vars := map[string]interface{}{
 		"filter": filter,
 		"vector": vector,
 		"size":   size,
 	}
 
-	var res ChatSearch
-	if err := c.Client.Post(ctx, "chatSearch", ChatSearchDocument, &res, vars, interceptors...); err != nil {
+	var res VectorSearch
+	if err := c.Client.Post(ctx, "vectorSearch", VectorSearchDocument, &res, vars, interceptors...); err != nil {
 		if c.Client.ParseDataWhenErrors {
 			return &res, err
 		}
@@ -1136,7 +1388,8 @@ func (c *Client) Search(ctx context.Context, query string, facets []*InFacet, fi
 }
 
 var DocumentOperationNames = map[string]string{
-	MediathekEntriesDocument: "MediathekEntries",
-	ChatSearchDocument:       "chatSearch",
-	SearchDocument:           "search",
+	MediathekEntriesDocument:  "MediathekEntries",
+	VectorSearchShortDocument: "vectorSearchShort",
+	VectorSearchDocument:      "vectorSearch",
+	SearchDocument:            "search",
 }

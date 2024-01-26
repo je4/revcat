@@ -1,4 +1,3 @@
-
 fragment MediathekBaseFragment on MediathekBaseEntry {
     signature
     source
@@ -24,6 +23,27 @@ fragment MediathekBaseFragment on MediathekBaseEntry {
     references {
         ...ReferenceFragment
     }
+}
+
+fragment MediathekBaseShortFragment on MediathekBaseEntry {
+    signature
+    source
+    title {
+        ...MultiLangFragment
+    }
+    person {
+        ...PersonFragment
+    }
+    series
+    place
+    date
+    category
+    tags
+    url
+    publisher
+    rights
+    license
+    type
 }
 
 fragment MultiLangFragment on MultiLangString {

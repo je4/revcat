@@ -1,9 +1,26 @@
-query chatSearch($filter: [InFilter!], $vector: [Float!]!, $size: Int!) {
-    chatSearch(filter: $filter, vector: $vector, size: $size) {
+query vectorSearchShort($filter: [InFilter!], $vector: [Float!]!, $size: Int!) {
+    vectorSearch(filter: $filter, vector: $vector, size: $size) {
         totalCount
-        pageInfo {
-            ...PageInfoFragment
+        edges {
+            id
+            base {
+                ...MediathekBaseShortFragment
+            }
+            abstract {
+                ...MultiLangFragment
+            }
+            __typename
         }
+        facets {
+            ...FacetFragment
+        }
+        __typename
+    }
+}
+
+query vectorSearch($filter: [InFilter!], $vector: [Float!]!, $size: Int!) {
+    vectorSearch(filter: $filter, vector: $vector, size: $size) {
+        totalCount
         edges {
             id
             base {

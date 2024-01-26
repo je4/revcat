@@ -143,9 +143,9 @@ type ComplexityRoot struct {
 	}
 
 	Query struct {
-		ChatSearch       func(childComplexity int, filter []*model.InFilter, vector []float64, size int) int
 		MediathekEntries func(childComplexity int, signatures []string) int
 		Search           func(childComplexity int, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string) int
+		VectorSearch     func(childComplexity int, filter []*model.InFilter, vector []float64, size int) int
 	}
 
 	Reference struct {
@@ -167,7 +167,7 @@ type MediathekFullEntryResolver interface {
 }
 type QueryResolver interface {
 	Search(ctx context.Context, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string) (*model.SearchResult, error)
-	ChatSearch(ctx context.Context, filter []*model.InFilter, vector []float64, size int) (*model.SearchResult, error)
+	VectorSearch(ctx context.Context, filter []*model.InFilter, vector []float64, size int) (*model.SearchResult, error)
 	MediathekEntries(ctx context.Context, signatures []string) ([]*model.MediathekFullEntry, error)
 }
 
@@ -603,18 +603,6 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Person.Role(childComplexity), true
 
-	case "Query.chatSearch":
-		if e.complexity.Query.ChatSearch == nil {
-			break
-		}
-
-		args, err := ec.field_Query_chatSearch_args(context.TODO(), rawArgs)
-		if err != nil {
-			return 0, false
-		}
-
-		return e.complexity.Query.ChatSearch(childComplexity, args["filter"].([]*model.InFilter), args["vector"].([]float64), args["size"].(int)), true
-
 	case "Query.mediathekEntries":
 		if e.complexity.Query.MediathekEntries == nil {
 			break
@@ -638,6 +626,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Search(childComplexity, args["query"].(string), args["facets"].([]*model.InFacet), args["filter"].([]*model.InFilter), args["vector"].([]float64), args["first"].(*int), args["size"].(*int), args["cursor"].(*string)), true
+
+	case "Query.vectorSearch":
+		if e.complexity.Query.VectorSearch == nil {
+			break
+		}
+
+		args, err := ec.field_Query_vectorSearch_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.VectorSearch(childComplexity, args["filter"].([]*model.InFilter), args["vector"].([]float64), args["size"].(int)), true
 
 	case "Reference.signature":
 		if e.complexity.Reference.Signature == nil {
@@ -816,39 +816,6 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 	return args, nil
 }
 
-func (ec *executionContext) field_Query_chatSearch_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
-	var err error
-	args := map[string]interface{}{}
-	var arg0 []*model.InFilter
-	if tmp, ok := rawArgs["filter"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
-		arg0, err = ec.unmarshalOInFilter2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐInFilterᚄ(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["filter"] = arg0
-	var arg1 []float64
-	if tmp, ok := rawArgs["vector"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vector"))
-		arg1, err = ec.unmarshalNFloat2ᚕfloat64ᚄ(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["vector"] = arg1
-	var arg2 int
-	if tmp, ok := rawArgs["size"]; ok {
-		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
-		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
-		if err != nil {
-			return nil, err
-		}
-	}
-	args["size"] = arg2
-	return args, nil
-}
-
 func (ec *executionContext) field_Query_mediathekEntries_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -930,6 +897,39 @@ func (ec *executionContext) field_Query_search_args(ctx context.Context, rawArgs
 		}
 	}
 	args["cursor"] = arg6
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_vectorSearch_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 []*model.InFilter
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg0, err = ec.unmarshalOInFilter2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐInFilterᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filter"] = arg0
+	var arg1 []float64
+	if tmp, ok := rawArgs["vector"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("vector"))
+		arg1, err = ec.unmarshalNFloat2ᚕfloat64ᚄ(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["vector"] = arg1
+	var arg2 int
+	if tmp, ok := rawArgs["size"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
+		arg2, err = ec.unmarshalNInt2int(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["size"] = arg2
 	return args, nil
 }
 
@@ -3733,8 +3733,8 @@ func (ec *executionContext) fieldContext_Query_search(ctx context.Context, field
 	return fc, nil
 }
 
-func (ec *executionContext) _Query_chatSearch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_Query_chatSearch(ctx, field)
+func (ec *executionContext) _Query_vectorSearch(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_vectorSearch(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -3747,7 +3747,7 @@ func (ec *executionContext) _Query_chatSearch(ctx context.Context, field graphql
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().ChatSearch(rctx, fc.Args["filter"].([]*model.InFilter), fc.Args["vector"].([]float64), fc.Args["size"].(int))
+		return ec.resolvers.Query().VectorSearch(rctx, fc.Args["filter"].([]*model.InFilter), fc.Args["vector"].([]float64), fc.Args["size"].(int))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -3764,7 +3764,7 @@ func (ec *executionContext) _Query_chatSearch(ctx context.Context, field graphql
 	return ec.marshalNSearchResult2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐSearchResult(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_Query_chatSearch(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_Query_vectorSearch(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Query",
 		Field:      field,
@@ -3791,7 +3791,7 @@ func (ec *executionContext) fieldContext_Query_chatSearch(ctx context.Context, f
 		}
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
-	if fc.Args, err = ec.field_Query_chatSearch_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+	if fc.Args, err = ec.field_Query_vectorSearch_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return fc, err
 	}
@@ -7034,7 +7034,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			}
 
 			out.Concurrently(i, func(ctx context.Context) graphql.Marshaler { return rrm(innerCtx) })
-		case "chatSearch":
+		case "vectorSearch":
 			field := field
 
 			innerFunc := func(ctx context.Context, fs *graphql.FieldSet) (res graphql.Marshaler) {
@@ -7043,7 +7043,7 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 						ec.Error(ctx, ec.Recover(ctx, r))
 					}
 				}()
-				res = ec._Query_chatSearch(ctx, field)
+				res = ec._Query_vectorSearch(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&fs.Invalids, 1)
 				}
