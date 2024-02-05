@@ -284,6 +284,124 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 	return result, nil
 }
 
+// VectorSearch is the resolver for the vectorSearch field.
+func (r *queryResolver) VectorSearch(ctx context.Context, filter []*model.InFilter, vector []float64, size int) (*model.SearchResult, error) {
+	if errValue := ctx.Value("error"); errValue != nil {
+		return nil, emperrors.Errorf("%s", errValue)
+	}
+
+	groups, err := stringsFromContext(ctx, "groups")
+	if err != nil {
+		return nil, emperrors.Wrap(err, "cannot get groups from context")
+	}
+	clientName, err := stringFromContext(ctx, "client")
+	if err != nil || clientName == "" {
+		return nil, emperrors.Wrap(err, "cannot get client from context")
+	}
+
+	esFilter, err := r.buildBaseFilter(clientName, groups)
+	if err != nil {
+		return nil, emperrors.Wrap(err, "cannot build base filter")
+	}
+
+	for _, f := range filter {
+		newFilter, err := createFilterQuery(f)
+		if err != nil {
+			return nil, emperrors.Wrapf(err, "cannot create filter query for %v", f)
+		}
+		esFilter = append(esFilter, newFilter)
+	}
+
+	vectorBytes, err := json.Marshal(vector)
+	if err != nil {
+		return nil, emperrors.Wrap(err, "cannot marshal params")
+	}
+	searchRequest := &search.Request{
+		Query: &types.Query{
+			ScriptScore: &types.ScriptScoreQuery{
+				Query: &types.Query{
+					Exists: &types.ExistsQuery{
+						Field: "content_vector",
+					},
+				},
+				Script: &types.InlineScript{
+					Source: "cosineSimilarity(params.queryVector, 'content_vector') + 1.0",
+					Params: map[string]json.RawMessage{
+						"queryVector": vectorBytes,
+					},
+				},
+			},
+		},
+	}
+	resp, err := r.elastic.Search().
+		Index(r.index).
+		SourceExcludes_("title_vector", "content_vector").
+		Request(searchRequest).
+		Size(size).
+		Do(ctx)
+	if err != nil {
+		return nil, emperrors.Wrap(err, "cannot search")
+	}
+	var result = &model.SearchResult{
+		TotalCount: int(resp.Hits.Total.Value),
+		Edges:      make([]*model.MediathekFullEntry, 0),
+		Facets:     make([]*model.Facet, 0),
+		PageInfo:   &model.PageInfo{},
+	}
+	for name, bucketAny := range resp.Aggregations {
+		facet := &model.Facet{
+			Name:   name,
+			Values: make([]model.FacetValue, 0),
+		}
+		filterAgg, ok := bucketAny.(*types.FilterAggregate)
+		if !ok {
+			return nil, emperrors.Errorf("unknown base bucket type %T in %s", bucketAny, name)
+		}
+		theAgg, ok := filterAgg.Aggregations["theAggregation"]
+		if !ok {
+			return nil, emperrors.Errorf("theAggregation not found in filter aggregate %s", name)
+		}
+		switch bucket := theAgg.(type) {
+		case *types.StringTermsAggregate:
+			switch bucketType1 := bucket.Buckets.(type) {
+			case []types.StringTermsBucket:
+				for _, stb := range bucketType1 {
+					switch kt := stb.Key.(type) {
+					case string:
+						facet.Values = append(facet.Values, &model.FacetValueString{
+							StrVal: kt,
+							Count:  int(stb.DocCount),
+						})
+					case int64:
+						intVal := int(kt)
+						facet.Values = append(facet.Values, &model.FacetValueInt{
+							IntVal: intVal,
+							Count:  int(stb.DocCount),
+						})
+					default:
+						return nil, emperrors.Errorf("unknown bucket key type of StringTermsBucket key %T", kt)
+					}
+				}
+				//			case map[string]any:
+			default:
+				return nil, emperrors.Errorf("unknown bucket type of StringTermsAggregate %T", bucketType1)
+			}
+		default:
+			return nil, emperrors.Errorf("unknown bucket type %T", bucket)
+		}
+		result.Facets = append(result.Facets, facet)
+	}
+	for _, hit := range resp.Hits.Hits {
+		source := &sourcetype.SourceData{}
+		if err := json.Unmarshal(hit.Source_, source); err != nil {
+			return nil, emperrors.Wrapf(err, "cannot unmarshal hit %v", hit)
+		}
+		entry := sourceToMediathekFullEntry(source)
+		result.Edges = append(result.Edges, entry)
+	}
+	return result, nil
+}
+
 // MediathekEntries is the resolver for the mediathekEntries field.
 func (r *queryResolver) MediathekEntries(ctx context.Context, signatures []string) ([]*model.MediathekFullEntry, error) {
 	if errValue := ctx.Value("error"); errValue != nil {
@@ -410,122 +528,4 @@ func (r *queryResolver) buildBaseFilter(clientName string, groups []string) ([]t
 	}
 
 	return esFilter, nil
-}
-
-// VectorSearch is the resolver for the vectorSearch field.
-func (r *queryResolver) VectorSearch(ctx context.Context, filter []*model.InFilter, vector []float64, size int) (*model.SearchResult, error) {
-	if errValue := ctx.Value("error"); errValue != nil {
-		return nil, emperrors.Errorf("%s", errValue)
-	}
-
-	groups, err := stringsFromContext(ctx, "groups")
-	if err != nil {
-		return nil, emperrors.Wrap(err, "cannot get groups from context")
-	}
-	clientName, err := stringFromContext(ctx, "client")
-	if err != nil || clientName == "" {
-		return nil, emperrors.Wrap(err, "cannot get client from context")
-	}
-
-	esFilter, err := r.buildBaseFilter(clientName, groups)
-	if err != nil {
-		return nil, emperrors.Wrap(err, "cannot build base filter")
-	}
-
-	for _, f := range filter {
-		newFilter, err := createFilterQuery(f)
-		if err != nil {
-			return nil, emperrors.Wrapf(err, "cannot create filter query for %v", f)
-		}
-		esFilter = append(esFilter, newFilter)
-	}
-
-	vectorBytes, err := json.Marshal(vector)
-	if err != nil {
-		return nil, emperrors.Wrap(err, "cannot marshal params")
-	}
-	searchRequest := &search.Request{
-		Query: &types.Query{
-			ScriptScore: &types.ScriptScoreQuery{
-				Query: &types.Query{
-					Exists: &types.ExistsQuery{
-						Field: "content_vector",
-					},
-				},
-				Script: &types.InlineScript{
-					Source: "cosineSimilarity(params.queryVector, 'content_vector') + 1.0",
-					Params: map[string]json.RawMessage{
-						"queryVector": vectorBytes,
-					},
-				},
-			},
-		},
-	}
-	resp, err := r.elastic.Search().
-		Index(r.index).
-		SourceExcludes_("title_vector", "content_vector").
-		Request(searchRequest).
-		Size(size).
-		Do(ctx)
-	if err != nil {
-		return nil, emperrors.Wrap(err, "cannot search")
-	}
-	var result = &model.SearchResult{
-		TotalCount: int(resp.Hits.Total.Value),
-		Edges:      make([]*model.MediathekFullEntry, 0),
-		Facets:     make([]*model.Facet, 0),
-		PageInfo:   &model.PageInfo{},
-	}
-	for name, bucketAny := range resp.Aggregations {
-		facet := &model.Facet{
-			Name:   name,
-			Values: make([]model.FacetValue, 0),
-		}
-		filterAgg, ok := bucketAny.(*types.FilterAggregate)
-		if !ok {
-			return nil, emperrors.Errorf("unknown base bucket type %T in %s", bucketAny, name)
-		}
-		theAgg, ok := filterAgg.Aggregations["theAggregation"]
-		if !ok {
-			return nil, emperrors.Errorf("theAggregation not found in filter aggregate %s", name)
-		}
-		switch bucket := theAgg.(type) {
-		case *types.StringTermsAggregate:
-			switch bucketType1 := bucket.Buckets.(type) {
-			case []types.StringTermsBucket:
-				for _, stb := range bucketType1 {
-					switch kt := stb.Key.(type) {
-					case string:
-						facet.Values = append(facet.Values, &model.FacetValueString{
-							StrVal: kt,
-							Count:  int(stb.DocCount),
-						})
-					case int64:
-						intVal := int(kt)
-						facet.Values = append(facet.Values, &model.FacetValueInt{
-							IntVal: intVal,
-							Count:  int(stb.DocCount),
-						})
-					default:
-						return nil, emperrors.Errorf("unknown bucket key type of StringTermsBucket key %T", kt)
-					}
-				}
-				//			case map[string]any:
-			default:
-				return nil, emperrors.Errorf("unknown bucket type of StringTermsAggregate %T", bucketType1)
-			}
-		default:
-			return nil, emperrors.Errorf("unknown bucket type %T", bucket)
-		}
-		result.Facets = append(result.Facets, facet)
-	}
-	for _, hit := range resp.Hits.Hits {
-		source := &sourcetype.SourceData{}
-		if err := json.Unmarshal(hit.Source_, source); err != nil {
-			return nil, emperrors.Wrapf(err, "cannot unmarshal hit %v", hit)
-		}
-		entry := sourceToMediathekFullEntry(source)
-		result.Edges = append(result.Edges, entry)
-	}
-	return result, nil
 }
