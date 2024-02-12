@@ -1,5 +1,6 @@
 fragment MediathekBaseFragment on MediathekBaseEntry {
     signature
+    collectionTitle
     source
     title {
         ...MultiLangFragment
