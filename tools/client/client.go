@@ -30,22 +30,23 @@ type Query struct {
 	MediathekEntries []*MediathekFullEntry "json:\"mediathekEntries,omitempty\" graphql:\"mediathekEntries\""
 }
 type MediathekBaseFragment struct {
-	Signature  string               "json:\"signature\" graphql:\"signature\""
-	Source     string               "json:\"source\" graphql:\"source\""
-	Title      []*MultiLangFragment "json:\"title\" graphql:\"title\""
-	Person     []*PersonFragment    "json:\"person,omitempty\" graphql:\"person\""
-	Series     *string              "json:\"series,omitempty\" graphql:\"series\""
-	Place      *string              "json:\"place,omitempty\" graphql:\"place\""
-	Date       *string              "json:\"date,omitempty\" graphql:\"date\""
-	Category   []string             "json:\"category,omitempty\" graphql:\"category\""
-	Tags       []string             "json:\"tags,omitempty\" graphql:\"tags\""
-	URL        *string              "json:\"url,omitempty\" graphql:\"url\""
-	Publisher  *string              "json:\"publisher,omitempty\" graphql:\"publisher\""
-	Rights     *string              "json:\"rights,omitempty\" graphql:\"rights\""
-	License    *string              "json:\"license,omitempty\" graphql:\"license\""
-	Type       *string              "json:\"type,omitempty\" graphql:\"type\""
-	Poster     *MediaItemFragment   "json:\"poster,omitempty\" graphql:\"poster\""
-	References []*ReferenceFragment "json:\"references,omitempty\" graphql:\"references\""
+	Signature       string               "json:\"signature\" graphql:\"signature\""
+	CollectionTitle *string              "json:\"collectionTitle,omitempty\" graphql:\"collectionTitle\""
+	Source          string               "json:\"source\" graphql:\"source\""
+	Title           []*MultiLangFragment "json:\"title\" graphql:\"title\""
+	Person          []*PersonFragment    "json:\"person,omitempty\" graphql:\"person\""
+	Series          *string              "json:\"series,omitempty\" graphql:\"series\""
+	Place           *string              "json:\"place,omitempty\" graphql:\"place\""
+	Date            *string              "json:\"date,omitempty\" graphql:\"date\""
+	Category        []string             "json:\"category,omitempty\" graphql:\"category\""
+	Tags            []string             "json:\"tags,omitempty\" graphql:\"tags\""
+	URL             *string              "json:\"url,omitempty\" graphql:\"url\""
+	Publisher       *string              "json:\"publisher,omitempty\" graphql:\"publisher\""
+	Rights          *string              "json:\"rights,omitempty\" graphql:\"rights\""
+	License         *string              "json:\"license,omitempty\" graphql:\"license\""
+	Type            *string              "json:\"type,omitempty\" graphql:\"type\""
+	Poster          *MediaItemFragment   "json:\"poster,omitempty\" graphql:\"poster\""
+	References      []*ReferenceFragment "json:\"references,omitempty\" graphql:\"references\""
 }
 
 func (t *MediathekBaseFragment) GetSignature() string {
@@ -53,6 +54,12 @@ func (t *MediathekBaseFragment) GetSignature() string {
 		t = &MediathekBaseFragment{}
 	}
 	return t.Signature
+}
+func (t *MediathekBaseFragment) GetCollectionTitle() *string {
+	if t == nil {
+		t = &MediathekBaseFragment{}
+	}
+	return t.CollectionTitle
 }
 func (t *MediathekBaseFragment) GetSource() string {
 	if t == nil {
@@ -925,6 +932,7 @@ const MediathekEntriesDocument = `query MediathekEntries ($signatures: [String!]
 }
 fragment MediathekBaseFragment on MediathekBaseEntry {
 	signature
+	collectionTitle
 	source
 	title {
 		... MultiLangFragment
@@ -1130,6 +1138,7 @@ const VectorSearchDocument = `query vectorSearch ($filter: [InFilter!], $vector:
 }
 fragment MediathekBaseFragment on MediathekBaseEntry {
 	signature
+	collectionTitle
 	source
 	title {
 		... MultiLangFragment
@@ -1278,6 +1287,7 @@ fragment PageInfoFragment on PageInfo {
 }
 fragment MediathekBaseFragment on MediathekBaseEntry {
 	signature
+	collectionTitle
 	source
 	title {
 		... MultiLangFragment
