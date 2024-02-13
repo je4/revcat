@@ -217,6 +217,18 @@ func main() {
 
 		*/
 	}
+	query.Bool.Must = []types.Query{
+		types.Query{
+			Terms: &types.TermsQuery{
+				TermsQuery: map[string]types.TermsQueryField{"acl.meta.keyword": []types.FieldValue{"global/guest"}},
+			},
+		},
+		types.Query{
+			Terms: &types.TermsQuery{
+				TermsQuery: map[string]types.TermsQueryField{"acl.content.keyword": []types.FieldValue{"global/guest"}},
+			},
+		},
+	}
 	var sort = types.SortOptions{
 		SortOptions: map[string]types.FieldSort{
 			"signature.keyword": types.FieldSort{
