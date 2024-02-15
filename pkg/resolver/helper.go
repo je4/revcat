@@ -1,4 +1,4 @@
-package server
+package resolver
 
 import (
 	"context"
@@ -97,6 +97,7 @@ func sourceToMediathekBaseEntry(src *sourcetype.SourceData) *model.MediathekBase
 		ID:                src.ID,
 		Signature:         src.Signature,
 		SignatureOriginal: src.SignatureOriginal,
+		CollectionTitle:   &src.CollectionTitle,
 		Source:            src.Source,
 		Title:             []*model.MultiLangString{}, //src.Title,
 		Series:            &src.Series,

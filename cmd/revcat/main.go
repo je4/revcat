@@ -4,10 +4,12 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
+	"github.com/dgraph-io/badger/v4"
 	"github.com/elastic/elastic-transport-go/v8/elastictransport"
 	elasticsearch "github.com/elastic/go-elasticsearch/v8"
 	"github.com/je4/revcat/v2/config"
 	"github.com/je4/revcat/v2/data/certs"
+	"github.com/je4/revcat/v2/pkg/resolver"
 	"github.com/je4/revcat/v2/pkg/server"
 	"github.com/je4/utils/v2/pkg/zLogger"
 	"github.com/rs/zerolog"
@@ -24,6 +26,7 @@ import (
 )
 
 var configfile = flag.String("config", "", "location of toml configuration file")
+var local = flag.Bool("local", false, "run with local badger database")
 
 type LoggingHttpElasticClient struct {
 	c http.Client
@@ -153,7 +156,19 @@ func main() {
 		cert = &c
 	}
 
-	ctrl := server.NewController(conf.LocalAddr, conf.ExternalAddr, cert, elastic, conf.ElasticSearch.Index, conf.Client, logger)
+	var serverResolver resolver.Resolver
+	if !*local {
+		serverResolver = resolver.NewElasticResolver(elastic, conf.ElasticSearch.Index, conf.Client, logger)
+	} else {
+		db, err := badger.Open(badger.DefaultOptions(conf.Badger))
+		if err != nil {
+			logger.Fatal().Err(err)
+		}
+		defer db.Close()
+		serverResolver = resolver.NewBadgerResolver(logger, db)
+	}
+
+	ctrl := server.NewController(conf.LocalAddr, conf.ExternalAddr, cert, serverResolver, conf.Client, logger)
 	ctrl.Start()
 
 	done := make(chan os.Signal, 1)

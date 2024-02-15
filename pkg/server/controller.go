@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
-	elasticsearch "github.com/elastic/go-elasticsearch/v8"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/je4/revcat/v2/config"
+	"github.com/je4/revcat/v2/pkg/resolver"
 	"github.com/je4/revcat/v2/tools/graph"
 	"github.com/je4/utils/v2/pkg/zLogger"
 	"net/http"
@@ -19,11 +19,11 @@ import (
 	"time"
 )
 
-func graphqlHandler(elastic *elasticsearch.TypedClient, index string, clients []*config.Client, logger zLogger.ZLogger) gin.HandlerFunc {
+func graphqlHandler(serverResolver resolver.Resolver, logger zLogger.ZLogger) gin.HandlerFunc {
 	h := handler.NewDefaultServer(
 		graph.NewExecutableSchema(
 			graph.Config{
-				Resolvers: graph.NewResolver(elastic, index, clients, logger),
+				Resolvers: graph.NewResolver(serverResolver, logger),
 			}))
 	return func(c *gin.Context) {
 		h.ServeHTTP(c.Writer, c.Request)
@@ -38,7 +38,7 @@ func playgroundHandler() gin.HandlerFunc {
 	}
 }
 
-func NewController(localAddr, externalAddr string, cert *tls.Certificate, elastic *elasticsearch.TypedClient, index string, clients []*config.Client, logger zLogger.ZLogger) *Controller {
+func NewController(localAddr, externalAddr string, cert *tls.Certificate, serverResolver resolver.Resolver, clients []*config.Client, logger zLogger.ZLogger) *Controller {
 	// for faster access
 	clientByApiKey := make(map[string]*config.Client)
 	for _, client := range clients {
@@ -140,7 +140,7 @@ func NewController(localAddr, externalAddr string, cert *tls.Certificate, elasti
 
 	subRouter.Use(checkAuthMiddleware())
 
-	subRouter.POST("/", graphqlHandler(elastic, index, clients, logger))
+	subRouter.POST("/", graphqlHandler(serverResolver, logger))
 	subRouter.GET("/", playgroundHandler())
 
 	var tlsConfig *tls.Config

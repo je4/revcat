@@ -1,4 +1,4 @@
-package server
+package resolver
 
 import (
 	emperrors "emperror.dev/errors"

@@ -1,17 +1,18 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
-	"encoding/json"
 	"flag"
 	"fmt"
+	"github.com/andybalholm/brotli"
+	"github.com/dgraph-io/badger/v4"
 	"github.com/elastic/elastic-transport-go/v8/elastictransport"
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/sortorder"
 	"github.com/je4/revcat/v2/config"
-	"github.com/je4/revcat/v2/pkg/sourcetype"
 	"github.com/je4/utils/v2/pkg/zLogger"
 	"github.com/rs/zerolog"
 	"io"
@@ -130,6 +131,12 @@ func main() {
 		logger.Panic().Err(err)
 	}
 
+	db, err := badger.Open(badger.DefaultOptions(conf.Badger))
+	if err != nil {
+		log.Panic(err)
+	}
+	defer db.Close()
+
 	var query = &types.Query{
 		Bool: &types.BoolQuery{
 			Boost:              nil,
@@ -206,31 +213,25 @@ func main() {
 				})
 			}
 		}
-		/*
-			for _, val := range client.AND {
-				query.Bool.Must = append(query.Bool.Should, types.Query{
-					Terms: &types.TermsQuery{
-						TermsQuery: map[string]types.TermsQueryField{val.Field: []types.FieldValue{val}},
-					},
-				})
-			}
-
-		*/
 	}
-	query.Bool.Must = []types.Query{
-		types.Query{
+	query.Bool.Must = []types.Query{}
+	for _, client := range conf.Client {
+
+		query.Bool.Must = append(query.Bool.Must, types.Query{
 			Terms: &types.TermsQuery{
-				TermsQuery: map[string]types.TermsQueryField{"acl.meta.keyword": []types.FieldValue{"global/guest"}},
+				TermsQuery: map[string]types.TermsQueryField{"acl.meta.keyword": client.Groups},
 			},
 		},
-		types.Query{
-			Terms: &types.TermsQuery{
-				TermsQuery: map[string]types.TermsQueryField{"acl.content.keyword": []types.FieldValue{"global/guest"}},
-			},
-		},
+			types.Query{
+				Terms: &types.TermsQuery{
+					TermsQuery: map[string]types.TermsQueryField{"acl.content.keyword": client.Groups},
+				},
+			})
 	}
 	var sort = types.SortOptions{
 		SortOptions: map[string]types.FieldSort{
+			"_score": types.FieldSort{
+				Order: &sortorder.Desc},
 			"signature.keyword": types.FieldSort{
 				Order: &sortorder.Asc},
 		},
@@ -246,14 +247,32 @@ func main() {
 		if len(result.Hits.Hits) == 0 {
 			break
 		}
-		for _, doc := range result.Hits.Hits {
-			source := sourcetype.SourceData{ID: doc.Id_}
-			if err := json.Unmarshal(doc.Source_, &source); err != nil {
-				logger.Panic().Err(err)
+		db.Update(func(txn *badger.Txn) error {
+			for _, doc := range result.Hits.Hits {
+				/*
+					source := sourcetype.SourceData{ID: doc.Id_}
+					if err := json.Unmarshal(doc.Source_, &source); err != nil {
+						logger.Panic().Err(err)
+					}
+
+				*/
+				buf := bytes.NewBuffer([]byte{})
+				bw := brotli.NewWriter(buf)
+				if _, err := bw.Write(doc.Source_); err != nil {
+					logger.Panic().Err(err)
+				}
+				if err := bw.Close(); err != nil {
+					logger.Panic().Err(err)
+
+				}
+				if err := txn.Set([]byte(doc.Id_), buf.Bytes()); err != nil {
+					logger.Panic().Err(err)
+				}
+				logger.Info().Msgf("[%05d]: %s", counter+1, doc.Id_)
+				counter++
+				searchAfter = doc.Sort
 			}
-			logger.Info().Msgf("[%05d]source: %s", counter+1, source.Signature)
-			counter++
-			searchAfter = doc.Sort
-		}
+			return nil
+		})
 	}
 }

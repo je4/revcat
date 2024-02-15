@@ -37,6 +37,7 @@ type RevCatConfig struct {
 
 	LogFile  string `toml:"logfile"`
 	LogLevel string `toml:"loglevel"`
+	Badger   string `toml:"badger"`
 
 	ElasticSearch ElasticSearchConfig `toml:"elasticsearch"`
 
