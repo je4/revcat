@@ -1,16 +1,16 @@
 package main
 
 import (
+	"context"
 	"crypto/tls"
 	"flag"
 	"fmt"
-	"github.com/dgraph-io/badger/v4"
 	"github.com/elastic/elastic-transport-go/v8/elastictransport"
-	elasticsearch "github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/sortorder"
 	"github.com/je4/revcat/v2/config"
-	"github.com/je4/revcat/v2/data/certs"
 	"github.com/je4/revcat/v2/pkg/resolver"
-	"github.com/je4/revcat/v2/pkg/server"
 	"github.com/je4/utils/v2/pkg/zLogger"
 	"github.com/rs/zerolog"
 	"io"
@@ -19,14 +19,12 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"os"
-	"os/signal"
 	"path/filepath"
 	"strings"
-	"syscall"
 )
 
 var configfile = flag.String("config", "", "location of toml configuration file")
-var local = flag.Bool("local", false, "run with local badger database")
+var clientParam = flag.String("client", "test", "client name")
 
 type LoggingHttpElasticClient struct {
 	c http.Client
@@ -43,7 +41,6 @@ func (l LoggingHttpElasticClient) RoundTrip(request *http.Request) (*http.Respon
 }
 
 func main() {
-
 	flag.Parse()
 
 	var cfgFS fs.FS
@@ -56,18 +53,14 @@ func main() {
 		cfgFile = "revcat.toml"
 	}
 
-	conf := &config.RevCatConfig{
-		LogFile:      "",
-		LogLevel:     "DEBUG",
-		LocalAddr:    "localhost:81",
-		ExternalAddr: "http://localhost:81/graphql",
-		Client:       []*config.Client{},
+	conf := &config.ZoomConfig{
+		LogLevel: "DEBUG",
 		ElasticSearch: config.ElasticSearchConfig{
 			Debug: false,
 		},
 	}
 
-	if err := config.LoadRevCatConfig(cfgFS, cfgFile, conf); err != nil {
+	if err := config.LoadZoomConfig(cfgFS, cfgFile, conf); err != nil {
 		log.Fatalf("cannot load toml from [%v] %s: %v", cfgFS, cfgFile, err)
 	}
 
@@ -76,7 +69,7 @@ func main() {
 	if conf.LogFile != "" {
 		fp, err := os.OpenFile(conf.LogFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0644)
 		if err != nil {
-			log.Fatalf("cannot open logfile %s: %v", conf.LogFile, err)
+			log.Panicf("cannot open logfile %s: %v", conf.LogFile, err)
 		}
 		defer fp.Close()
 		out = fp
@@ -101,6 +94,17 @@ func main() {
 		_logger = _logger.Level(zerolog.DebugLevel)
 	}
 	var logger zLogger.ZLogger = &_logger
+
+	var client *config.Client
+	for _, c := range conf.Client {
+		if c.Name == *clientParam {
+			client = c
+			break
+		}
+	}
+	if client == nil {
+		logger.Panic().Msgf("client %s not found in config file", *clientParam)
+	}
 
 	elasticConfig := elasticsearch.Config{
 		APIKey:    string(conf.ElasticSearch.ApiKey),
@@ -130,56 +134,44 @@ func main() {
 	}
 	elastic, err := elasticsearch.NewTypedClient(elasticConfig)
 	if err != nil {
-		logger.Fatal().Err(err)
+		logger.Panic().Err(err)
 	}
 
-	var cert *tls.Certificate
-	if conf.TLSCert != "" {
-		c, err := tls.LoadX509KeyPair(conf.TLSCert, conf.TLSKey)
-		if err != nil {
-			logger.Fatal().Msgf("cannot load tls certificate: %v", err)
-		}
-		cert = &c
-	} else {
-		certBytes, err := fs.ReadFile(certs.CertFS, "localhost.cert.pem")
-		if err != nil {
-			logger.Fatal().Msgf("cannot read internal cert")
-		}
-		keyBytes, err := fs.ReadFile(certs.CertFS, "localhost.key.pem")
-		if err != nil {
-			logger.Fatal().Msgf("cannot read internal key")
-		}
-		c, err := tls.X509KeyPair(certBytes, keyBytes)
-		if err != nil {
-			logger.Fatal().Msgf("cannot create internal cert")
-		}
-		cert = &c
+	baseQueries, err := resolver.BuildBaseFilter(client)
+	if err != nil {
+		logger.Panic().Err(err).Msg("cannot build base filter")
 	}
 
-	var serverResolver resolver.Resolver
-	if !*local {
-		serverResolver = resolver.NewElasticResolver(elastic, conf.ElasticSearch.Index, conf.Client, logger)
-	} else {
-		options := badger.DefaultOptions(conf.Badger)
-		options.ReadOnly = true
-		db, err := badger.Open(options)
-		if err != nil {
-			logger.Fatal().Err(err)
-		}
-		defer db.Close()
-		serverResolver = resolver.NewBadgerResolver(logger, db)
+	var query = &types.Query{
+		Bool: &types.BoolQuery{
+			Filter: baseQueries,
+		},
 	}
+	var sort = types.SortOptions{
+		SortOptions: map[string]types.FieldSort{
+			"_score": types.FieldSort{
+				Order: &sortorder.Desc},
+			"signature.keyword": types.FieldSort{
+				Order: &sortorder.Asc},
+		},
+	}
+	var searchAfter = []types.FieldValue{}
+	var counter int64
+	for {
+		result, err := elastic.Search().Query(query).Sort(sort).SearchAfter(searchAfter...).Index(conf.ElasticSearch.Index).Do(context.Background())
 
-	ctrl := server.NewController(conf.LocalAddr, conf.ExternalAddr, cert, serverResolver, conf.Client, logger)
-	ctrl.Start()
+		if err != nil {
+			logger.Panic().Err(err).Msgf(err.Error())
+		}
+		if len(result.Hits.Hits) == 0 {
+			break
+		}
+		for _, doc := range result.Hits.Hits {
+			// do all the stuff here
 
-	done := make(chan os.Signal, 1)
-	signal.Notify(done, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
-	fmt.Println("press ctrl+c to stop server")
-	s := <-done
-	fmt.Println("got signal:", s)
+			searchAfter = doc.Sort
+			counter++
+		}
 
-	if err := ctrl.Stop(); err != nil {
-		logger.Fatal().Msgf("cannot stop server: %v", err)
 	}
 }

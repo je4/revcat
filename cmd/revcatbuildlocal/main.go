@@ -13,6 +13,7 @@ import (
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/sortorder"
 	"github.com/je4/revcat/v2/config"
+	"github.com/je4/revcat/v2/pkg/resolver"
 	"github.com/je4/utils/v2/pkg/zLogger"
 	"github.com/rs/zerolog"
 	"io"
@@ -26,6 +27,7 @@ import (
 )
 
 var configfile = flag.String("config", "", "location of toml configuration file")
+var clientParam = flag.String("client", "test", "client name")
 
 type LoggingHttpElasticClient struct {
 	c http.Client
@@ -137,97 +139,28 @@ func main() {
 	}
 	defer db.Close()
 
-	var query = &types.Query{
-		Bool: &types.BoolQuery{
-			Boost:              nil,
-			Filter:             nil,
-			MinimumShouldMatch: 1,
-			Must:               []types.Query{},
-			MustNot:            nil,
-			QueryName_:         nil,
-			Should:             []types.Query{},
-		},
-		Boosting:          nil,
-		CombinedFields:    nil,
-		Common:            nil,
-		ConstantScore:     nil,
-		DisMax:            nil,
-		DistanceFeature:   nil,
-		Exists:            nil,
-		FieldMaskingSpan:  nil,
-		FunctionScore:     nil,
-		Fuzzy:             nil,
-		GeoBoundingBox:    nil,
-		GeoDistance:       nil,
-		GeoPolygon:        nil,
-		GeoShape:          nil,
-		HasChild:          nil,
-		HasParent:         nil,
-		Ids:               nil,
-		Intervals:         nil,
-		Match:             nil,
-		MatchAll:          nil,
-		MatchBoolPrefix:   nil,
-		MatchNone:         nil,
-		MatchPhrase:       nil,
-		MatchPhrasePrefix: nil,
-		MoreLikeThis:      nil,
-		MultiMatch:        nil,
-		Nested:            nil,
-		ParentId:          nil,
-		Percolate:         nil,
-		Pinned:            nil,
-		Prefix:            nil,
-		QueryString:       nil,
-		Range:             nil,
-		RankFeature:       nil,
-		Regexp:            nil,
-		RuleQuery:         nil,
-		Script:            nil,
-		ScriptScore:       nil,
-		Shape:             nil,
-		SimpleQueryString: nil,
-		SpanContaining:    nil,
-		SpanFirst:         nil,
-		SpanMulti:         nil,
-		SpanNear:          nil,
-		SpanNot:           nil,
-		SpanOr:            nil,
-		SpanTerm:          nil,
-		SpanWithin:        nil,
-		Term:              nil,
-		Terms:             nil,
-		TermsSet:          nil,
-		TextExpansion:     nil,
-		Type:              nil,
-		Wildcard:          nil,
-		Wrapper:           nil,
-	}
-	for _, client := range conf.Client {
-		for _, vals := range client.OR {
-			for _, val := range vals.Values {
-				query.Bool.Should = append(query.Bool.Should, types.Query{
-					Terms: &types.TermsQuery{
-						TermsQuery: map[string]types.TermsQueryField{vals.Field: []types.FieldValue{val}},
-					},
-				})
-			}
+	var client *config.Client
+	for _, c := range conf.Client {
+		if c.Name == *clientParam {
+			client = c
+			break
 		}
 	}
-	query.Bool.Must = []types.Query{}
-	for _, client := range conf.Client {
-
-		query.Bool.Must = append(query.Bool.Must, types.Query{
-			Terms: &types.TermsQuery{
-				TermsQuery: map[string]types.TermsQueryField{"acl.meta.keyword": client.Groups},
-			},
-		},
-			types.Query{
-				Terms: &types.TermsQuery{
-					TermsQuery: map[string]types.TermsQueryField{"acl.content.keyword": client.Groups},
-				},
-			})
+	if client == nil {
+		logger.Panic().Msgf("client %s not found in config file", *clientParam)
 	}
+
+	baseQueries, err := resolver.BuildBaseFilter(client)
+	if err != nil {
+		logger.Panic().Err(err).Msg("cannot build base filter")
+	}
+
+	var query = &types.Query{
+		Bool: &types.BoolQuery{
+			Filter: baseQueries,
+		},
+	}
+
 	var sort = types.SortOptions{
 		SortOptions: map[string]types.FieldSort{
 			"_score": types.FieldSort{

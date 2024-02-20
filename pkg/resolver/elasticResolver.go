@@ -38,47 +38,37 @@ type ElasticResolver struct {
 	client      map[string]*config.Client
 }
 
-func (r *ElasticResolver) buildBaseFilter(clientName string, groups []string) ([]types.Query, error) {
-	client, ok := r.client[clientName]
-	if !ok {
-		return nil, errors.Errorf("client '%s' not found", clientName)
-	}
+func BuildBaseFilter(client *config.Client, groups ...string) ([]types.Query, error) {
+	/*
+		client, ok := r.client[clientName]
+		if !ok {
+			return nil, errors.Errorf("client '%s' not found", clientName)
+		}
+	*/
 	baseQuery := types.BoolQuery{
-		Must:               []types.Query{},
-		Should:             []types.Query{},
-		MinimumShouldMatch: 1,
+		Must: []types.Query{},
 	}
-	for _, q := range client.AND {
-		if q.Field == "" {
-			continue
+	for _, and := range client.AND {
+		andQuery := types.Query{
+			Bool: &types.BoolQuery{
+				MinimumShouldMatch: 1,
+				Should:             []types.Query{},
+			},
 		}
-		for _, val := range q.Values {
-			baseQuery.Must = append(baseQuery.Must, types.Query{
-				Term: map[string]types.TermQuery{
-					q.Field: {
-						Value: val,
-					},
-				},
-			})
-			// baseQuery.Must = append(baseQuery.Must, createFilterQuery(q.Field, val))
-		}
-	}
-	for _, q := range client.OR {
-		if q.Field == "" {
-			continue
-		}
-		for _, val := range q.Values {
-			baseQuery.Should = append(baseQuery.Should, types.Query{
-				Term: map[string]types.TermQuery{
-					q.Field: {
-						Value: val,
+		for _, q := range and.OR {
+			if q.Field == "" {
+				continue
+			}
+			andQuery.Bool.Should = append(andQuery.Bool.Should, types.Query{
+				Terms: &types.TermsQuery{
+					TermsQuery: map[string]types.TermsQueryField{
+						q.Field: q.Values,
 					},
 				},
 			})
 		}
-	}
-	if len(baseQuery.Should) == 0 {
-		baseQuery.MinimumShouldMatch = 0
+		baseQuery.Must = append(baseQuery.Must, andQuery)
+
 	}
 	aclQuery := types.BoolQuery{
 		Must:               []types.Query{},
@@ -186,7 +176,11 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 		return nil, errors.Wrap(err, "cannot get client from context")
 	}
 
-	esFilter, err := r.buildBaseFilter(clientName, groups)
+	client, ok := r.client[clientName]
+	if !ok {
+		return nil, errors.Errorf("client '%s' not found", clientName)
+	}
+	esFilter, err := BuildBaseFilter(client, groups...)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot build base filter")
 	}
@@ -426,7 +420,11 @@ func (r *ElasticResolver) VectorSearch(ctx context.Context, filter []*model.InFi
 		return nil, errors.Wrap(err, "cannot get client from context")
 	}
 
-	esFilter, err := r.buildBaseFilter(clientName, groups)
+	client, ok := r.client[clientName]
+	if !ok {
+		return nil, errors.Errorf("client '%s' not found", clientName)
+	}
+	esFilter, err := BuildBaseFilter(client, groups...)
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot build base filter")
 	}
