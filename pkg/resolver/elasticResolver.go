@@ -203,8 +203,11 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 		if err != nil {
 			return nil, errors.Wrapf(err, "cannot create facet filter query for %v", f)
 		}
-
-		esPostFilter = append(esPostFilter, newFilter)
+		if f.Query.BoolTerm.And {
+			esFilter = append(esFilter, newFilter)
+		} else {
+			esPostFilter = append(esPostFilter, newFilter)
+		}
 	}
 	for _, f := range facets {
 		facetFilter := []types.Query{}

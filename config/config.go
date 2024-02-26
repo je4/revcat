@@ -33,11 +33,15 @@ type ElasticSearchConfig struct {
 }
 
 type ZoomConfig struct {
-	LogFile       string              `toml:"logfile"`
-	LogLevel      string              `toml:"loglevel"`
-	ElasticSearch ElasticSearchConfig `toml:"elasticsearch"`
-	Groups        []string            `toml:"groups"`
-	Client        []*Client           `toml:"client"`
+	LogFile         string              `toml:"logfile"`
+	LogLevel        string              `toml:"loglevel"`
+	ElasticSearch   ElasticSearchConfig `toml:"elasticsearch"`
+	Groups          []string            `toml:"groups"`
+	Client          []*Client           `toml:"client"`
+	ZoomImageHeight int                 `toml:"zoomimageheight"`
+	AspectRatio     float64             `toml:"aspectratio"`
+	Mediaserver     string              `toml:"mediaserver"`
+	CollagePath     string              `toml:"collagepath"`
 }
 
 func LoadZoomConfig(fSys fs.FS, fp string, conf *ZoomConfig) error {

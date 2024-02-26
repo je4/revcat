@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"syscall"
 )
@@ -161,10 +162,12 @@ func main() {
 		serverResolver = resolver.NewElasticResolver(elastic, conf.ElasticSearch.Index, conf.Client, logger)
 	} else {
 		options := badger.DefaultOptions(conf.Badger)
-		options.ReadOnly = true
+		if runtime.GOOS != "windows" {
+			options.ReadOnly = true
+		}
 		db, err := badger.Open(options)
 		if err != nil {
-			logger.Fatal().Err(err)
+			logger.Panic().Err(err).Msg("cannot open badger database")
 		}
 		defer db.Close()
 		serverResolver = resolver.NewBadgerResolver(logger, db)
