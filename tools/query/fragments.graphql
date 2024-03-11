@@ -26,27 +26,6 @@ fragment MediathekBaseFragment on MediathekBaseEntry {
     }
 }
 
-fragment MediathekBaseShortFragment on MediathekBaseEntry {
-    signature
-    source
-    title {
-        ...MultiLangFragment
-    }
-    person {
-        ...PersonFragment
-    }
-    series
-    place
-    date
-    category
-    tags
-    url
-    publisher
-    rights
-    license
-    type
-}
-
 fragment MultiLangFragment on MultiLangString {
     lang
     value

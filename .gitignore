@@ -22,6 +22,4 @@ go.work
 go.work.sum
 go.sum
 
-*.pem
-
 .idea/

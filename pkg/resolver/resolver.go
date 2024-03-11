@@ -12,8 +12,5 @@ type Resolver interface {
 	// MediathekEntries is the resolver for the mediathekEntries field.
 	MediathekEntries(ctx context.Context, signatures []string) ([]*model.MediathekFullEntry, error)
 
-	// VectorSearch is the resolver for the vectorSearch field.
-	VectorSearch(ctx context.Context, filter []*model.InFilter, vector []float64, size int) (*model.SearchResult, error)
-
 	ReferencesFull(ctx context.Context, obj *model.MediathekFullEntry) ([]*model.MediathekBaseEntry, error)
 }

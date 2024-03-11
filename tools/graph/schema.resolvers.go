@@ -20,11 +20,6 @@ func (r *queryResolver) Search(ctx context.Context, query string, facets []*mode
 	return r.serverResolver.Search(ctx, query, facets, filter, vector, first, size, cursor)
 }
 
-// VectorSearch is the resolver for the vectorSearch field.
-func (r *queryResolver) VectorSearch(ctx context.Context, filter []*model.InFilter, vector []float64, size int) (*model.SearchResult, error) {
-	return r.serverResolver.VectorSearch(ctx, filter, vector, size)
-}
-
 // MediathekEntries is the resolver for the mediathekEntries field.
 func (r *queryResolver) MediathekEntries(ctx context.Context, signatures []string) ([]*model.MediathekFullEntry, error) {
 	return r.serverResolver.MediathekEntries(ctx, signatures)
@@ -40,3 +35,10 @@ func (r *Resolver) Query() QueryResolver { return &queryResolver{r} }
 
 type mediathekFullEntryResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }
+
+// !!! WARNING !!!
+// The code below was going to be deleted when updating resolvers. It has been copied here so you have
+// one last chance to move it out of harms way if you want. There are two reasons this happens:
+//   - When renaming or deleting a resolver the old code will be put in here. You can safely delete
+//     it when you're done.
+//   - You have helper methods in this file. Move them out to keep these resolver files clean.

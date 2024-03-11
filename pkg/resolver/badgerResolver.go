@@ -74,7 +74,7 @@ func (b *badgerResolver) MediathekEntries(ctx context.Context, signatures []stri
 	return result, nil
 }
 
-func (b *badgerResolver) VectorSearch(ctx context.Context, filter []*model.InFilter, vector []float64, size int) (*model.SearchResult, error) {
+func (b *badgerResolver) VectorSearch(ctx context.Context, vector []float64, facets []*model.InFacet, first *int, size *int, cursor *string) (*model.SearchResult, error) {
 	return nil, errors.Errorf("badgerResolver::VectorSearch not implemented")
 }
 

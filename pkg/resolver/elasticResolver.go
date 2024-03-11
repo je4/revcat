@@ -38,7 +38,7 @@ type ElasticResolver struct {
 	client      map[string]*config.Client
 }
 
-func BuildBaseFilter(client *config.Client, groups ...string) ([]types.Query, error) {
+func BuildBaseFilter(client *config.Client, groups ...string) ([]*types.Query, error) {
 	/*
 		client, ok := r.client[clientName]
 		if !ok {
@@ -98,9 +98,9 @@ func BuildBaseFilter(client *config.Client, groups ...string) ([]types.Query, er
 		aclQuery.MinimumShouldMatch = 0
 	}
 
-	var esFilter = []types.Query{
-		types.Query{Bool: &baseQuery},
-		types.Query{Bool: &aclQuery},
+	var esFilter = []*types.Query{
+		&types.Query{Bool: &baseQuery},
+		&types.Query{Bool: &aclQuery},
 	}
 
 	return esFilter, nil
@@ -148,8 +148,10 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 	var from = 0
 	var num = 25
 
-	if first != nil && size != nil {
+	if first != nil {
 		from = *first
+	}
+	if size != nil {
 		num = *size
 	}
 	if cursor != nil && *cursor != "" {
@@ -184,7 +186,7 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot build base filter")
 	}
-	var esPostFilter = []types.Query{
+	var esPostFilter = []*types.Query{
 		//		types.Query{Bool: &baseQuery},
 		//		types.Query{Bool: &aclQuery},
 	}
@@ -203,14 +205,16 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 		if err != nil {
 			return nil, errors.Wrapf(err, "cannot create facet filter query for %v", f)
 		}
-		if f.Query.BoolTerm.And {
-			esFilter = append(esFilter, newFilter)
-		} else {
-			esPostFilter = append(esPostFilter, newFilter)
+		if newFilter != nil {
+			if f.Query.BoolTerm != nil && f.Query.BoolTerm.And {
+				esFilter = append(esFilter, newFilter)
+			} else {
+				esPostFilter = append(esPostFilter, newFilter)
+			}
 		}
 	}
 	for _, f := range facets {
-		facetFilter := []types.Query{}
+		facetFilter := []*types.Query{}
 		for _, f2 := range facets {
 			if f2.Term.Name == f.Term.Name {
 				continue
@@ -219,8 +223,9 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 			if err != nil {
 				return nil, errors.Wrapf(err, "cannot create facet filter query for %v", f2)
 			}
-
-			facetFilter = append(facetFilter, newFilter)
+			if newFilter != nil {
+				facetFilter = append(facetFilter, newFilter)
+			}
 		}
 		if f.Term != nil {
 			termAgg := &types.TermsAggregation{
@@ -241,18 +246,30 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 				}
 			}
 
-			esAggs[f.Term.Name] = types.Aggregations{
-				Filter: &types.Query{
-					Bool: &types.BoolQuery{
-						Filter: facetFilter,
-					},
-				},
+			agg := types.Aggregations{
 				Aggregations: map[string]types.Aggregations{
 					"theAggregation": types.Aggregations{
 						Terms: termAgg,
 					},
 				},
 			}
+			if len(facetFilter) > 0 {
+				agg.Filter = &types.Query{
+					Bool: &types.BoolQuery{
+						Filter: []types.Query{},
+					},
+				}
+				for _, ff := range facetFilter {
+					if ff != nil {
+						agg.Filter.Bool.Filter = append(agg.Filter.Bool.Filter, *ff)
+					}
+				}
+			} else {
+				agg.Filter = &types.Query{
+					MatchAll: types.NewMatchAllQuery(),
+				}
+			}
+			esAggs[f.Term.Name] = agg
 		}
 	}
 
@@ -264,24 +281,60 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 			},
 		})
 	}
+	if len(vector) > 0 {
+		vectorBytes, err := json.Marshal(vector)
+		if err != nil {
+			return nil, errors.Wrap(err, "cannot marshal params")
+		}
+		esMust = append(esMust, types.Query{
+			ScriptScore: &types.ScriptScoreQuery{
+				Query: &types.Query{
+					Exists: &types.ExistsQuery{
+						Field: "content_vector",
+					},
+				},
+				Script: &types.InlineScript{
+					Source: "cosineSimilarity(params.queryVector, 'content_vector') + 1.0",
+					Params: map[string]json.RawMessage{
+						"queryVector": vectorBytes,
+					},
+				},
+			},
+		})
+	}
 
 	if len(facets) > 0 {
 
 	}
 
-	searchRequest := &search.Request{
-		Query: &types.Query{
+	searchRequest := &search.Request{}
+	if len(esAggs) > 0 {
+		searchRequest.Aggregations = esAggs
+	}
+	if len(esPostFilter) > 0 {
+		searchRequest.PostFilter = &types.Query{
 			Bool: &types.BoolQuery{
-				Filter: esFilter,
+				Filter: []types.Query{},
+			},
+		}
+		for _, f := range esPostFilter {
+			if f != nil {
+				searchRequest.PostFilter.Bool.Filter = append(searchRequest.PostFilter.Bool.Filter, *f)
+			}
+		}
+	}
+	if len(esFilter) > 0 {
+		searchRequest.Query = &types.Query{
+			Bool: &types.BoolQuery{
+				Filter: []types.Query{},
 				Must:   esMust,
 			},
-		},
-		Aggregations: esAggs,
-		PostFilter: &types.Query{
-			Bool: &types.BoolQuery{
-				Filter: esPostFilter,
-			},
-		},
+		}
+		for _, f := range esFilter {
+			if f != nil {
+				searchRequest.Query.Bool.Filter = append(searchRequest.Query.Bool.Filter, *f)
+			}
+		}
 	}
 
 	resp, err := r.elastic.Search().
@@ -406,128 +459,6 @@ func (r *ElasticResolver) MediathekEntries(ctx context.Context, signatures []str
 		}
 	}
 	return entries, nil
-}
-
-// VectorSearch is the resolver for the vectorSearch field.
-func (r *ElasticResolver) VectorSearch(ctx context.Context, filter []*model.InFilter, vector []float64, size int) (*model.SearchResult, error) {
-	if errValue := ctx.Value("error"); errValue != nil {
-		return nil, errors.Errorf("%s", errValue)
-	}
-
-	groups, err := stringsFromContext(ctx, "groups")
-	if err != nil {
-		return nil, errors.Wrap(err, "cannot get groups from context")
-	}
-	clientName, err := stringFromContext(ctx, "client")
-	if err != nil || clientName == "" {
-		return nil, errors.Wrap(err, "cannot get client from context")
-	}
-
-	client, ok := r.client[clientName]
-	if !ok {
-		return nil, errors.Errorf("client '%s' not found", clientName)
-	}
-	esFilter, err := BuildBaseFilter(client, groups...)
-	if err != nil {
-		return nil, errors.Wrap(err, "cannot build base filter")
-	}
-
-	for _, f := range filter {
-		newFilter, err := createFilterQuery(f)
-		if err != nil {
-			return nil, errors.Wrapf(err, "cannot create filter query for %v", f)
-		}
-		esFilter = append(esFilter, newFilter)
-	}
-
-	vectorBytes, err := json.Marshal(vector)
-	if err != nil {
-		return nil, errors.Wrap(err, "cannot marshal params")
-	}
-	searchRequest := &search.Request{
-		Query: &types.Query{
-			ScriptScore: &types.ScriptScoreQuery{
-				Query: &types.Query{
-					Exists: &types.ExistsQuery{
-						Field: "content_vector",
-					},
-				},
-				Script: &types.InlineScript{
-					Source: "cosineSimilarity(params.queryVector, 'content_vector') + 1.0",
-					Params: map[string]json.RawMessage{
-						"queryVector": vectorBytes,
-					},
-				},
-			},
-		},
-	}
-	resp, err := r.elastic.Search().
-		Index(r.index).
-		SourceExcludes_("title_vector", "content_vector").
-		Request(searchRequest).
-		Size(size).
-		Do(ctx)
-	if err != nil {
-		return nil, errors.Wrap(err, "cannot search")
-	}
-	var result = &model.SearchResult{
-		TotalCount: int(resp.Hits.Total.Value),
-		Edges:      make([]*model.MediathekFullEntry, 0),
-		Facets:     make([]*model.Facet, 0),
-		PageInfo:   &model.PageInfo{},
-	}
-	for name, bucketAny := range resp.Aggregations {
-		facet := &model.Facet{
-			Name:   name,
-			Values: make([]model.FacetValue, 0),
-		}
-		filterAgg, ok := bucketAny.(*types.FilterAggregate)
-		if !ok {
-			return nil, errors.Errorf("unknown base bucket type %T in %s", bucketAny, name)
-		}
-		theAgg, ok := filterAgg.Aggregations["theAggregation"]
-		if !ok {
-			return nil, errors.Errorf("theAggregation not found in filter aggregate %s", name)
-		}
-		switch bucket := theAgg.(type) {
-		case *types.StringTermsAggregate:
-			switch bucketType1 := bucket.Buckets.(type) {
-			case []types.StringTermsBucket:
-				for _, stb := range bucketType1 {
-					switch kt := stb.Key.(type) {
-					case string:
-						facet.Values = append(facet.Values, &model.FacetValueString{
-							StrVal: kt,
-							Count:  int(stb.DocCount),
-						})
-					case int64:
-						intVal := int(kt)
-						facet.Values = append(facet.Values, &model.FacetValueInt{
-							IntVal: intVal,
-							Count:  int(stb.DocCount),
-						})
-					default:
-						return nil, errors.Errorf("unknown bucket key type of StringTermsBucket key %T", kt)
-					}
-				}
-				//			case map[string]any:
-			default:
-				return nil, errors.Errorf("unknown bucket type of StringTermsAggregate %T", bucketType1)
-			}
-		default:
-			return nil, errors.Errorf("unknown bucket type %T", bucket)
-		}
-		result.Facets = append(result.Facets, facet)
-	}
-	for _, hit := range resp.Hits.Hits {
-		source := &sourcetype.SourceData{}
-		if err := json.Unmarshal(hit.Source_, source); err != nil {
-			return nil, errors.Wrapf(err, "cannot unmarshal hit %v", hit)
-		}
-		entry := sourceToMediathekFullEntry(source)
-		result.Edges = append(result.Edges, entry)
-	}
-	return result, nil
 }
 
 func (r *ElasticResolver) ReferencesFull(ctx context.Context, obj *model.MediathekFullEntry) ([]*model.MediathekBaseEntry, error) {

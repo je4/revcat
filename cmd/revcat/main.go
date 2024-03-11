@@ -22,7 +22,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"syscall"
 )
 
@@ -85,22 +84,7 @@ func main() {
 
 	//	output := zerolog.ConsoleWriter{Out: out, TimeFormat: time.RFC3339}
 	_logger := zerolog.New(out).With().Timestamp().Logger()
-	switch strings.ToUpper(conf.LogLevel) {
-	case "DEBUG":
-		_logger = _logger.Level(zerolog.DebugLevel)
-	case "INFO":
-		_logger = _logger.Level(zerolog.InfoLevel)
-	case "WARN":
-		_logger = _logger.Level(zerolog.WarnLevel)
-	case "ERROR":
-		_logger = _logger.Level(zerolog.ErrorLevel)
-	case "FATAL":
-		_logger = _logger.Level(zerolog.FatalLevel)
-	case "PANIC":
-		_logger = _logger.Level(zerolog.PanicLevel)
-	default:
-		_logger = _logger.Level(zerolog.DebugLevel)
-	}
+	_logger.Level(zLogger.LogLevel(conf.LogLevel))
 	var logger zLogger.ZLogger = &_logger
 
 	elasticConfig := elasticsearch.Config{
