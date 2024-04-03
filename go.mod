@@ -57,7 +57,6 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/op/go-logging v0.0.0-20160315200505-970db520ece7 // indirect
 	github.com/pelletier/go-toml/v2 v2.1.1 // indirect
 	github.com/sosodev/duration v1.2.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect

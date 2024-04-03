@@ -27,7 +27,7 @@ func (FacetValueString) IsFacetValue() {}
 
 type InFacet struct {
 	Term  *InFacetTerm `json:"term,omitempty"`
-	Query InFilter     `json:"query"`
+	Query *InFilter    `json:"query"`
 }
 
 type InFacetTerm struct {
@@ -97,7 +97,7 @@ type MediathekBaseEntry struct {
 
 type MediathekFullEntry struct {
 	ID             string                `json:"id"`
-	Base           MediathekBaseEntry    `json:"base"`
+	Base           *MediathekBaseEntry   `json:"base"`
 	Notes          []*Note               `json:"notes,omitempty"`
 	Abstract       []*MultiLangString    `json:"abstract,omitempty"`
 	ReferencesFull []*MediathekBaseEntry `json:"referencesFull,omitempty"`
@@ -129,6 +129,9 @@ type Person struct {
 	Role *string `json:"role,omitempty"`
 }
 
+type Query struct {
+}
+
 type Reference struct {
 	Type      *string `json:"type,omitempty"`
 	Title     *string `json:"title,omitempty"`
@@ -137,7 +140,7 @@ type Reference struct {
 
 type SearchResult struct {
 	TotalCount int64                 `json:"totalCount"`
-	PageInfo   PageInfo              `json:"pageInfo"`
+	PageInfo   *PageInfo             `json:"pageInfo"`
 	Edges      []*MediathekFullEntry `json:"edges"`
 	Facets     []*Facet              `json:"facets"`
 }

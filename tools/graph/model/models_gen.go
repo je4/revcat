@@ -129,6 +129,9 @@ type Person struct {
 	Role *string `json:"role,omitempty"`
 }
 
+type Query struct {
+}
+
 type Reference struct {
 	Type      *string `json:"type,omitempty"`
 	Title     *string `json:"title,omitempty"`

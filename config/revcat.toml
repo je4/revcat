@@ -25,10 +25,11 @@ groups = ["global/guest"]
 field = "category.keyword"
 values = [
     "zotero2!!PCB_Basel",
-    "zotero2!!ACT_2020",
+    "zotero2!!ACT Performance Festival",
     "zotero2!!Performance Art!!6x2 Performance-Duos",
     "zotero2!!Archive des Ephemeren",
     "bangbang",
+    "zotero2!!Kaskadenkondensator_ Basel!!Kasko-Videodokumentationen",
     "zotero2!!Performance Art!!Doce en Diciembre",
     "zotero2!!Performance Art!!Together Elsewhere",
     "zotero2!!Interviews Archiv Performativ",

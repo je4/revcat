@@ -139,6 +139,6 @@ input InFacet {
 
 
 type Query {
-  search(query: String!, facets: [InFacet!], filter: [InFilter!], vector: [Float!], first: Int, size: Int, cursor: String): SearchResult!
+  search(query: String!, facets: [InFacet!], filter: [InFilter!], vector: [Float!], first: Int, size: Int, cursor: String, sortField: String, sortOrder: String): SearchResult!
   mediathekEntries(signatures: [String!]!): [MediathekFullEntry!]
 }

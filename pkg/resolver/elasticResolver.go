@@ -8,10 +8,12 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/sortorder"
 	"github.com/je4/revcat/v2/config"
 	"github.com/je4/revcat/v2/pkg/sourcetype"
 	"github.com/je4/revcat/v2/tools/graph/model"
 	"github.com/je4/utils/v2/pkg/zLogger"
+	"regexp"
 	"slices"
 	"strings"
 )
@@ -140,8 +142,18 @@ func (r *ElasticResolver) loadEntries(ctx context.Context, signatures []string) 
 	return result, nil
 }
 
+var sortFieldRegexp = regexp.MustCompile(`^[a-zA-Z0-9_.]*$`)
+
 // Search is the resolver for the search field.
-func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string) (*model.SearchResult, error) {
+func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string, sortField *string, sortOrder *string) (*model.SearchResult, error) {
+	var sOrder string
+	if sortOrder != nil {
+		sOrder = strings.ToLower(*sortOrder)
+	}
+	if !slices.Contains([]string{"asc", "desc"}, sOrder) {
+		sOrder = "asc"
+	}
+
 	if errValue := ctx.Value("error"); errValue != nil {
 		return nil, errors.Errorf("%s", errValue)
 	}
@@ -159,14 +171,14 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 		if err != nil {
 			return nil, errors.Wrapf(err, "cannot decode cursor '%s'", *cursor)
 		}
-		from = crs.From + 1
+		from = crs.From
 		num = crs.Size
 	}
 
 	if from < 0 {
 		from = 0
 	}
-	if num <= 0 {
+	if num < 0 {
 		num = 25
 	}
 	groups, err := stringsFromContext(ctx, "groups")
@@ -215,6 +227,7 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 	}
 	for _, f := range facets {
 		facetFilter := []*types.Query{}
+		//aggInclude := []string{}
 		for _, f2 := range facets {
 			if f2.Term.Name == f.Term.Name {
 				continue
@@ -232,6 +245,8 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 				Field:       &f.Term.Field,
 				Size:        &f.Term.Size,
 				MinDocCount: &f.Term.MinDocCount,
+				//				Exclude:     []string{"bangbang!!.*"},
+				//Include: aggInclude,
 				//			Name:  &f.Name,
 			}
 			if len(f.Term.Include) == 1 {
@@ -336,14 +351,36 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 			}
 		}
 	}
-
-	resp, err := r.elastic.Search().
+	sorts := []types.SortCombinations{}
+	if sortField != nil && *sortField != "" {
+		if !sortFieldRegexp.MatchString(*sortField) {
+			return nil, errors.Errorf("invalid sort field '%s'", *sortField)
+		}
+		var order sortorder.SortOrder
+		switch sOrder {
+		case "asc":
+			order = sortorder.Asc
+		case "desc":
+			order = sortorder.Desc
+		default:
+			order = sortorder.Asc
+		}
+		sort := types.SortOptions{SortOptions: map[string]types.FieldSort{
+			*sortField: {Order: &order},
+		}}
+		sorts = append(sorts, sort)
+	}
+	elasticQuery := r.elastic.Search().
 		Index(r.index).
 		SourceExcludes_("title_vector", "content_vector").
 		Request(searchRequest).
 		From(from).
-		Size(num).
-		Do(ctx)
+		Size(num)
+
+	if len(sorts) > 0 {
+		elasticQuery = elasticQuery.Sort(sorts...)
+	}
+	resp, err := elasticQuery.Do(ctx)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot search for '%s'", query)
 	}

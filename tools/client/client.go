@@ -11,7 +11,7 @@ import (
 
 type RevCatGraphQLClient interface {
 	MediathekEntries(ctx context.Context, signatures []string, interceptors ...clientv2.RequestInterceptor) (*MediathekEntries, error)
-	Search(ctx context.Context, query string, facets []*InFacet, filter []*InFilter, vector []float64, first *int64, size *int64, cursor *string, interceptors ...clientv2.RequestInterceptor) (*Search, error)
+	Search(ctx context.Context, query string, facets []*InFacet, filter []*InFilter, vector []float64, first *int64, size *int64, cursor *string, sortField *string, sortOrder *string, interceptors ...clientv2.RequestInterceptor) (*Search, error)
 }
 
 type Client struct {
@@ -22,10 +22,6 @@ func NewClient(cli *http.Client, baseURL string, options *clientv2.Options, inte
 	return &Client{Client: clientv2.NewClient(cli, baseURL, options, interceptors...)}
 }
 
-type Query struct {
-	Search           SearchResult          "json:\"search\" graphql:\"search\""
-	MediathekEntries []*MediathekFullEntry "json:\"mediathekEntries,omitempty\" graphql:\"mediathekEntries\""
-}
 type MediathekBaseFragment struct {
 	Signature       string               "json:\"signature\" graphql:\"signature\""
 	CollectionTitle *string              "json:\"collectionTitle,omitempty\" graphql:\"collectionTitle\""
@@ -731,8 +727,8 @@ func (c *Client) MediathekEntries(ctx context.Context, signatures []string, inte
 	return &res, nil
 }
 
-const SearchDocument = `query search ($query: String!, $facets: [InFacet!], $filter: [InFilter!], $vector: [Float!], $first: Int, $size: Int, $cursor: String) {
-	search(query: $query, facets: $facets, filter: $filter, vector: $vector, first: $first, size: $size, cursor: $cursor) {
+const SearchDocument = `query search ($query: String!, $facets: [InFacet!], $filter: [InFilter!], $vector: [Float!], $first: Int, $size: Int, $cursor: String, $sortField: String, $sortOrder: String) {
+	search(query: $query, facets: $facets, filter: $filter, vector: $vector, first: $first, size: $size, cursor: $cursor, sortField: $sortField, sortOrder: $sortOrder) {
 		totalCount
 		pageInfo {
 			... PageInfoFragment
@@ -861,15 +857,17 @@ fragment FacetValueIntFragment on FacetValueInt {
 }
 `
 
-func (c *Client) Search(ctx context.Context, query string, facets []*InFacet, filter []*InFilter, vector []float64, first *int64, size *int64, cursor *string, interceptors ...clientv2.RequestInterceptor) (*Search, error) {
+func (c *Client) Search(ctx context.Context, query string, facets []*InFacet, filter []*InFilter, vector []float64, first *int64, size *int64, cursor *string, sortField *string, sortOrder *string, interceptors ...clientv2.RequestInterceptor) (*Search, error) {
 	vars := map[string]interface{}{
-		"query":  query,
-		"facets": facets,
-		"filter": filter,
-		"vector": vector,
-		"first":  first,
-		"size":   size,
-		"cursor": cursor,
+		"query":     query,
+		"facets":    facets,
+		"filter":    filter,
+		"vector":    vector,
+		"first":     first,
+		"size":      size,
+		"cursor":    cursor,
+		"sortField": sortField,
+		"sortOrder": sortOrder,
 	}
 
 	var res Search

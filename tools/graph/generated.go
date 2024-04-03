@@ -144,7 +144,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		MediathekEntries func(childComplexity int, signatures []string) int
-		Search           func(childComplexity int, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string) int
+		Search           func(childComplexity int, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string, sortField *string, sortOrder *string) int
 	}
 
 	Reference struct {
@@ -165,7 +165,7 @@ type MediathekFullEntryResolver interface {
 	ReferencesFull(ctx context.Context, obj *model.MediathekFullEntry) ([]*model.MediathekBaseEntry, error)
 }
 type QueryResolver interface {
-	Search(ctx context.Context, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string) (*model.SearchResult, error)
+	Search(ctx context.Context, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string, sortField *string, sortOrder *string) (*model.SearchResult, error)
 	MediathekEntries(ctx context.Context, signatures []string) ([]*model.MediathekFullEntry, error)
 }
 
@@ -623,7 +623,7 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			return 0, false
 		}
 
-		return e.complexity.Query.Search(childComplexity, args["query"].(string), args["facets"].([]*model.InFacet), args["filter"].([]*model.InFilter), args["vector"].([]float64), args["first"].(*int), args["size"].(*int), args["cursor"].(*string)), true
+		return e.complexity.Query.Search(childComplexity, args["query"].(string), args["facets"].([]*model.InFacet), args["filter"].([]*model.InFilter), args["vector"].([]float64), args["first"].(*int), args["size"].(*int), args["cursor"].(*string), args["sortField"].(*string), args["sortOrder"].(*string)), true
 
 	case "Reference.signature":
 		if e.complexity.Reference.Signature == nil {
@@ -883,6 +883,24 @@ func (ec *executionContext) field_Query_search_args(ctx context.Context, rawArgs
 		}
 	}
 	args["cursor"] = arg6
+	var arg7 *string
+	if tmp, ok := rawArgs["sortField"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sortField"))
+		arg7, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["sortField"] = arg7
+	var arg8 *string
+	if tmp, ok := rawArgs["sortOrder"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("sortOrder"))
+		arg8, err = ec.unmarshalOString2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["sortOrder"] = arg8
 	return args, nil
 }
 
@@ -3635,7 +3653,7 @@ func (ec *executionContext) _Query_search(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Query().Search(rctx, fc.Args["query"].(string), fc.Args["facets"].([]*model.InFacet), fc.Args["filter"].([]*model.InFilter), fc.Args["vector"].([]float64), fc.Args["first"].(*int), fc.Args["size"].(*int), fc.Args["cursor"].(*string))
+		return ec.resolvers.Query().Search(rctx, fc.Args["query"].(string), fc.Args["facets"].([]*model.InFacet), fc.Args["filter"].([]*model.InFilter), fc.Args["vector"].([]float64), fc.Args["first"].(*int), fc.Args["size"].(*int), fc.Args["cursor"].(*string), fc.Args["sortField"].(*string), fc.Args["sortOrder"].(*string))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -6007,8 +6025,6 @@ func (ec *executionContext) unmarshalInputInFacet(ctx context.Context, obj inter
 		}
 		switch k {
 		case "term":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("term"))
 			data, err := ec.unmarshalOInFacetTerm2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐInFacetTerm(ctx, v)
 			if err != nil {
@@ -6016,8 +6032,6 @@ func (ec *executionContext) unmarshalInputInFacet(ctx context.Context, obj inter
 			}
 			it.Term = data
 		case "query":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("query"))
 			data, err := ec.unmarshalNInFilter2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐInFilter(ctx, v)
 			if err != nil {
@@ -6052,8 +6066,6 @@ func (ec *executionContext) unmarshalInputInFacetTerm(ctx context.Context, obj i
 		}
 		switch k {
 		case "field":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -6061,8 +6073,6 @@ func (ec *executionContext) unmarshalInputInFacetTerm(ctx context.Context, obj i
 			}
 			it.Field = data
 		case "name":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -6070,8 +6080,6 @@ func (ec *executionContext) unmarshalInputInFacetTerm(ctx context.Context, obj i
 			}
 			it.Name = data
 		case "minDocCount":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("minDocCount"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
@@ -6079,8 +6087,6 @@ func (ec *executionContext) unmarshalInputInFacetTerm(ctx context.Context, obj i
 			}
 			it.MinDocCount = data
 		case "size":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("size"))
 			data, err := ec.unmarshalNInt2int(ctx, v)
 			if err != nil {
@@ -6088,8 +6094,6 @@ func (ec *executionContext) unmarshalInputInFacetTerm(ctx context.Context, obj i
 			}
 			it.Size = data
 		case "include":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("include"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -6097,8 +6101,6 @@ func (ec *executionContext) unmarshalInputInFacetTerm(ctx context.Context, obj i
 			}
 			it.Include = data
 		case "exclude":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("exclude"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
@@ -6126,8 +6128,6 @@ func (ec *executionContext) unmarshalInputInFilter(ctx context.Context, obj inte
 		}
 		switch k {
 		case "boolTerm":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("boolTerm"))
 			data, err := ec.unmarshalOInFilterBoolTerm2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐInFilterBoolTerm(ctx, v)
 			if err != nil {
@@ -6159,8 +6159,6 @@ func (ec *executionContext) unmarshalInputInFilterBoolTerm(ctx context.Context, 
 		}
 		switch k {
 		case "field":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("field"))
 			data, err := ec.unmarshalNString2string(ctx, v)
 			if err != nil {
@@ -6168,8 +6166,6 @@ func (ec *executionContext) unmarshalInputInFilterBoolTerm(ctx context.Context, 
 			}
 			it.Field = data
 		case "and":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("and"))
 			data, err := ec.unmarshalNBoolean2bool(ctx, v)
 			if err != nil {
@@ -6177,8 +6173,6 @@ func (ec *executionContext) unmarshalInputInFilterBoolTerm(ctx context.Context, 
 			}
 			it.And = data
 		case "values":
-			var err error
-
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("values"))
 			data, err := ec.unmarshalOString2ᚕstringᚄ(ctx, v)
 			if err != nil {
