@@ -1,5 +1,5 @@
-query search($query: String!, $facets: [InFacet!], $filter: [InFilter!], $vector: [Float!], $first: Int, $size: Int, $cursor: String, $sortField: String, $sortOrder: String) {
-    search(query: $query, facets: $facets, filter: $filter, vector: $vector, first: $first, size: $size, cursor: $cursor, sortField: $sortField, sortOrder: $sortOrder) {
+query search($query: String!, $facets: [InFacet!], $filter: [InFilter!], $vector: [Float!], $first: Int, $size: Int, $cursor: String, $sort: [SortField!]) {
+    search(query: $query, facets: $facets, filter: $filter, vector: $vector, first: $first, size: $size, cursor: $cursor, sort: $sort) {
         totalCount
         pageInfo {
             ...PageInfoFragment

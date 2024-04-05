@@ -136,9 +136,13 @@ input InFacet {
     query: InFilter!
 }
 
+input SortField {
+    field: String!
+    order: String! = "asc"
+}
 
 
 type Query {
-  search(query: String!, facets: [InFacet!], filter: [InFilter!], vector: [Float!], first: Int, size: Int, cursor: String, sortField: String, sortOrder: String): SearchResult!
+  search(query: String!, facets: [InFacet!], filter: [InFilter!], vector: [Float!], first: Int, size: Int, cursor: String, sort: [SortField!]): SearchResult!
   mediathekEntries(signatures: [String!]!): [MediathekFullEntry!]
 }

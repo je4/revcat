@@ -16,8 +16,8 @@ func (r *mediathekFullEntryResolver) ReferencesFull(ctx context.Context, obj *mo
 }
 
 // Search is the resolver for the search field.
-func (r *queryResolver) Search(ctx context.Context, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string, sortField *string, sortOrder *string) (*model.SearchResult, error) {
-	return r.serverResolver.Search(ctx, query, facets, filter, vector, first, size, cursor, sortField, sortOrder)
+func (r *queryResolver) Search(ctx context.Context, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string, sort []*model.SortField) (*model.SearchResult, error) {
+	return r.serverResolver.Search(ctx, query, facets, filter, vector, first, size, cursor, sort)
 }
 
 // MediathekEntries is the resolver for the mediathekEntries field.

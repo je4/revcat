@@ -145,14 +145,7 @@ func (r *ElasticResolver) loadEntries(ctx context.Context, signatures []string) 
 var sortFieldRegexp = regexp.MustCompile(`^[a-zA-Z0-9_.]*$`)
 
 // Search is the resolver for the search field.
-func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string, sortField *string, sortOrder *string) (*model.SearchResult, error) {
-	var sOrder string
-	if sortOrder != nil {
-		sOrder = strings.ToLower(*sortOrder)
-	}
-	if !slices.Contains([]string{"asc", "desc"}, sOrder) {
-		sOrder = "asc"
-	}
+func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string, sort []*model.SortField) (*model.SearchResult, error) {
 
 	if errValue := ctx.Value("error"); errValue != nil {
 		return nil, errors.Errorf("%s", errValue)
@@ -352,12 +345,12 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 		}
 	}
 	sorts := []types.SortCombinations{}
-	if sortField != nil && *sortField != "" {
-		if !sortFieldRegexp.MatchString(*sortField) {
-			return nil, errors.Errorf("invalid sort field '%s'", *sortField)
+	for _, s := range sort {
+		if !sortFieldRegexp.MatchString(s.Field) {
+			return nil, errors.Errorf("invalid sort field '%s'", s.Field)
 		}
 		var order sortorder.SortOrder
-		switch sOrder {
+		switch strings.ToLower(s.Order) {
 		case "asc":
 			order = sortorder.Asc
 		case "desc":
@@ -366,7 +359,7 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 			order = sortorder.Asc
 		}
 		sort := types.SortOptions{SortOptions: map[string]types.FieldSort{
-			*sortField: {Order: &order},
+			s.Field: {Order: &order},
 		}}
 		sorts = append(sorts, sort)
 	}

@@ -58,7 +58,7 @@ func (b *badgerResolver) loadEntries(ctx context.Context, signatures []string) (
 	return result, nil
 }
 
-func (b *badgerResolver) Search(ctx context.Context, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string, sortField *string, sortOrder *string) (*model.SearchResult, error) {
+func (b *badgerResolver) Search(ctx context.Context, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string, sort []*model.SortField) (*model.SearchResult, error) {
 	return nil, errors.Errorf("badgerResolver::Search not implemented")
 }
 

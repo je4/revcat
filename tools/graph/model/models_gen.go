@@ -144,3 +144,8 @@ type SearchResult struct {
 	Edges      []*MediathekFullEntry `json:"edges"`
 	Facets     []*Facet              `json:"facets"`
 }
+
+type SortField struct {
+	Field string `json:"field"`
+	Order string `json:"order"`
+}
