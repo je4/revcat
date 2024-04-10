@@ -10,7 +10,7 @@ import (
 )
 
 func createFilterQuery(filter *model.InFilter) (*types.Query, error) {
-	if filter.BoolTerm != nil {
+	if filter.BoolTerm != nil && len(filter.BoolTerm.Values) > 0 {
 		var query = &types.Query{Bool: &types.BoolQuery{}}
 		qList := []types.Query{}
 		for _, val := range filter.BoolTerm.Values {

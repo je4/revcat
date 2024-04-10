@@ -331,16 +331,28 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 			}
 		}
 	}
-	if len(esFilter) > 0 {
-		searchRequest.Query = &types.Query{
-			Bool: &types.BoolQuery{
-				Filter: []types.Query{},
-				Must:   esMust,
-			},
+	if len(esMust) > 0 {
+		if searchRequest.Query == nil {
+			searchRequest.Query = &types.Query{
+				Bool: &types.BoolQuery{
+					Filter: []types.Query{},
+					Must:   esMust,
+				},
+			}
 		}
-		for _, f := range esFilter {
-			if f != nil {
-				searchRequest.Query.Bool.Filter = append(searchRequest.Query.Bool.Filter, *f)
+	}
+	if len(esFilter) > 0 {
+		if searchRequest.Query == nil {
+			searchRequest.Query = &types.Query{
+				Bool: &types.BoolQuery{
+					Filter: []types.Query{},
+					Must:   []types.Query{},
+				},
+			}
+			for _, f := range esFilter {
+				if f != nil {
+					searchRequest.Query.Bool.Filter = append(searchRequest.Query.Bool.Filter, *f)
+				}
 			}
 		}
 	}
