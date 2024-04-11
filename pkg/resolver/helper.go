@@ -3,23 +3,43 @@ package resolver
 import (
 	"context"
 	"emperror.dev/errors"
+	"fmt"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"github.com/gin-gonic/gin"
 	"github.com/je4/revcat/v2/pkg/sourcetype"
 	"github.com/je4/revcat/v2/tools/graph/model"
+	"regexp"
 )
+
+var nestedRegexp = regexp.MustCompile(`^\[([^\[\]]+)\]\.(.*)$`)
 
 func createFilterQuery(filter *model.InFilter) (*types.Query, error) {
 	if filter.BoolTerm != nil && len(filter.BoolTerm.Values) > 0 {
 		var query = &types.Query{Bool: &types.BoolQuery{}}
 		qList := []types.Query{}
+		matches := nestedRegexp.FindStringSubmatch(filter.BoolTerm.Field)
 		for _, val := range filter.BoolTerm.Values {
-			qList = append(qList, types.Query{Term: map[string]types.TermQuery{
-				filter.BoolTerm.Field: types.TermQuery{
-					Value: val,
+			if len(matches) == 3 {
+				qList = append(qList, types.Query{
+					Nested: &types.NestedQuery{
+						Path: matches[1],
+						Query: &types.Query{
+							Term: map[string]types.TermQuery{
+								fmt.Sprintf("%s.%s", matches[1], matches[2]): types.TermQuery{
+									Value: val,
+								},
+							},
+						},
+					},
+				})
+			} else {
+				qList = append(qList, types.Query{Term: map[string]types.TermQuery{
+					filter.BoolTerm.Field: types.TermQuery{
+						Value: val,
+					},
 				},
-			},
-			})
+				})
+			}
 		}
 		if len(qList) > 0 {
 			if filter.BoolTerm.And {
