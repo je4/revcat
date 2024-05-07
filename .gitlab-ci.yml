@@ -12,7 +12,6 @@ before_script:
   - mkdir -p $GOPATH/src/$(dirname $REPO_NAME)
   - ln -svf $CI_PROJECT_DIR $GOPATH/src/$REPO_NAME
   - cd $GOPATH/src/$REPO_NAME
-  - go mod tidy
 
 stages:
   - build
@@ -21,6 +20,7 @@ stages:
 compile:
   stage: build
   script:
+    - go mod tidy
     - go mod download
     - CGO_ENABLED=0 go build -o $CI_PROJECT_DIR/revcat ./cmd/revcat 
   artifacts:
