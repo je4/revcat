@@ -340,6 +340,12 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 				},
 			}
 		}
+	} else {
+		if searchRequest.Query == nil {
+			searchRequest.Query = &types.Query{
+				MatchAll: types.NewMatchAllQuery(),
+			}
+		}
 	}
 	if len(esFilter) > 0 {
 		if searchRequest.Query == nil {
@@ -375,6 +381,28 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 		}}
 		sorts = append(sorts, sort)
 	}
+
+	if searchRequest.Query != nil {
+		boostQuery := &types.Query{
+			Boosting: &types.BoostingQuery{
+				Positive: searchRequest.Query,
+				Negative: &types.Query{
+					Bool: &types.BoolQuery{
+						MustNot: []types.Query{
+							types.Query{
+								Exists: &types.ExistsQuery{
+									Field: "poster.uri.keyword",
+								},
+							},
+						},
+					},
+				},
+				NegativeBoost: 0.85,
+			},
+		}
+		searchRequest.Query = boostQuery
+	}
+
 	elasticQuery := r.elastic.Search().
 		Index(r.index).
 		SourceExcludes_("title_vector", "content_vector").
