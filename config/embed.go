@@ -4,5 +4,5 @@ import (
 	"embed"
 )
 
-//go:embed revcat.toml
+//go:embed revcat.toml.template
 var ConfigFS embed.FS

@@ -1,0 +1,25 @@
+logfile = ""
+loglevel = "DEBUG"
+
+localaddr = "localhost:8443"
+externaladdr = "https://localhost:8443/graphql"
+badger = ""
+zoomimageheight = 150
+aspectratio = 1.77777778
+mediaserver = ""
+collagepath = ""
+
+[elasticsearch]
+endpoint = []
+index = ""
+apikey = ""
+debug = true
+
+[[client]]
+name = ""
+apikey = ""
+groups = ["global/guest"]
+[[client.and]]
+[[client.and.or]]
+field = "category.keyword"
+values = []

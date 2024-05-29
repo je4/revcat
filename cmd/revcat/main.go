@@ -53,7 +53,7 @@ func main() {
 		cfgFile = filepath.Base(*configfile)
 	} else {
 		cfgFS = config.ConfigFS
-		cfgFile = "revcat.toml"
+		cfgFile = "revcat.toml.template"
 	}
 
 	conf := &config.RevCatConfig{
