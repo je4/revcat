@@ -8,5 +8,5 @@ RUN mkdir ./data
 RUN mkdir ./tools
 COPY data/ ./data/
 COPY tools/ ./tools/
-ENTRYPOINT ["./revcat", "-cfg", "/opt/revcat/revcat.toml"]
+ENTRYPOINT ["./revcat", "-config", "/opt/revcat/revcat.toml"]
 EXPOSE 8443
