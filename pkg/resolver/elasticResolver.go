@@ -40,7 +40,7 @@ type ElasticResolver struct {
 	client      map[string]*config.Client
 }
 
-func BuildBaseFilter(client *config.Client, groups ...string) ([]*types.Query, error) {
+func BuildBaseFilter(client *config.Client, groups ...string) ([]types.Query, error) {
 	/*
 		client, ok := r.client[clientName]
 		if !ok {
@@ -100,9 +100,9 @@ func BuildBaseFilter(client *config.Client, groups ...string) ([]*types.Query, e
 		aclQuery.MinimumShouldMatch = 0
 	}
 
-	var esFilter = []*types.Query{
-		&types.Query{Bool: &baseQuery},
-		&types.Query{Bool: &aclQuery},
+	var esFilter = []types.Query{
+		types.Query{Bool: &baseQuery},
+		types.Query{Bool: &aclQuery},
 	}
 
 	return esFilter, nil
@@ -202,7 +202,7 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 		if err != nil {
 			return nil, errors.Wrapf(err, "cannot create filter query for %v", f)
 		}
-		esFilter = append(esFilter, newFilter)
+		esFilter = append(esFilter, *newFilter)
 	}
 
 	for _, f := range facets {
@@ -212,7 +212,7 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 		}
 		if newFilter != nil {
 			if f.Query.BoolTerm != nil && f.Query.BoolTerm.And {
-				esFilter = append(esFilter, newFilter)
+				esFilter = append(esFilter, *newFilter)
 			} else {
 				esPostFilter = append(esPostFilter, newFilter)
 			}
@@ -331,35 +331,12 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 			}
 		}
 	}
-	if len(esMust) > 0 {
-		if searchRequest.Query == nil {
-			searchRequest.Query = &types.Query{
-				Bool: &types.BoolQuery{
-					Filter: []types.Query{},
-					Must:   esMust,
-				},
-			}
-		}
-	} else {
-		if searchRequest.Query == nil {
-			searchRequest.Query = &types.Query{
-				MatchAll: types.NewMatchAllQuery(),
-			}
-		}
-	}
-	if len(esFilter) > 0 {
-		if searchRequest.Query == nil {
-			searchRequest.Query = &types.Query{
-				Bool: &types.BoolQuery{
-					Filter: []types.Query{},
-					Must:   []types.Query{},
-				},
-			}
-			for _, f := range esFilter {
-				if f != nil {
-					searchRequest.Query.Bool.Filter = append(searchRequest.Query.Bool.Filter, *f)
-				}
-			}
+	if searchRequest.Query == nil {
+		searchRequest.Query = &types.Query{
+			Bool: &types.BoolQuery{
+				Filter: esFilter, // []types.Query{},
+				Must:   esMust,
+			},
 		}
 	}
 	sorts := []types.SortCombinations{}
