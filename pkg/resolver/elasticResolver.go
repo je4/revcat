@@ -294,6 +294,7 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot marshal params")
 		}
+		scriptSource := "cosineSimilarity(params.queryVector, 'content_vector')"
 		esMust = append(esMust, types.Query{
 			ScriptScore: &types.ScriptScoreQuery{
 				Query: &types.Query{
@@ -301,8 +302,8 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 						Field: "content_vector",
 					},
 				},
-				Script: &types.InlineScript{
-					Source: "cosineSimilarity(params.queryVector, 'content_vector') + 1.0",
+				Script: types.Script{
+					Source: &scriptSource,
 					Params: map[string]json.RawMessage{
 						"queryVector": vectorBytes,
 					},

@@ -24,6 +24,10 @@ fragment MediathekBaseFragment on MediathekBaseEntry {
     references {
         ...ReferenceFragment
     }
+    acl {
+        name
+        groups
+    }
 }
 
 fragment MultiLangFragment on MultiLangString {
