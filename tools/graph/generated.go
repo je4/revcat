@@ -47,6 +47,11 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	ACL struct {
+		Groups func(childComplexity int) int
+		Name   func(childComplexity int) int
+	}
+
 	Facet struct {
 		Name   func(childComplexity int) int
 		Values func(childComplexity int) int
@@ -86,6 +91,7 @@ type ComplexityRoot struct {
 	}
 
 	MediathekBaseEntry struct {
+		ACL               func(childComplexity int) int
 		Catalog           func(childComplexity int) int
 		Category          func(childComplexity int) int
 		CollectionTitle   func(childComplexity int) int
@@ -187,6 +193,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e, 0, 0, nil}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "ACL.groups":
+		if e.complexity.ACL.Groups == nil {
+			break
+		}
+
+		return e.complexity.ACL.Groups(childComplexity), true
+
+	case "ACL.name":
+		if e.complexity.ACL.Name == nil {
+			break
+		}
+
+		return e.complexity.ACL.Name(childComplexity), true
 
 	case "Facet.name":
 		if e.complexity.Facet.Name == nil {
@@ -327,6 +347,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.MediaList.Name(childComplexity), true
+
+	case "MediathekBaseEntry.acl":
+		if e.complexity.MediathekBaseEntry.ACL == nil {
+			break
+		}
+
+		return e.complexity.MediathekBaseEntry.ACL(childComplexity), true
 
 	case "MediathekBaseEntry.catalog":
 		if e.complexity.MediathekBaseEntry.Catalog == nil {
@@ -933,6 +960,94 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 // endregion ************************** directives.gotpl **************************
 
 // region    **************************** field.gotpl *****************************
+
+func (ec *executionContext) _ACL_name(ctx context.Context, field graphql.CollectedField, obj *model.ACL) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ACL_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ACL_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ACL",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ACL_groups(ctx context.Context, field graphql.CollectedField, obj *model.ACL) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ACL_groups(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Groups, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalNString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ACL_groups(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ACL",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
 
 func (ec *executionContext) _Facet_name(ctx context.Context, field graphql.CollectedField, obj *model.Facet) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Facet_name(ctx, field)
@@ -2706,6 +2821,53 @@ func (ec *executionContext) fieldContext_MediathekBaseEntry_poster(ctx context.C
 	return fc, nil
 }
 
+func (ec *executionContext) _MediathekBaseEntry_acl(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_acl(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ACL, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.ACL)
+	fc.Result = res
+	return ec.marshalOACL2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐACLᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MediathekBaseEntry_acl(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediathekBaseEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "name":
+				return ec.fieldContext_ACL_name(ctx, field)
+			case "groups":
+				return ec.fieldContext_ACL_groups(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ACL", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _MediathekFullEntry_id(ctx context.Context, field graphql.CollectedField, obj *model.MediathekFullEntry) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_MediathekFullEntry_id(ctx, field)
 	if err != nil {
@@ -2829,6 +2991,8 @@ func (ec *executionContext) fieldContext_MediathekFullEntry_base(ctx context.Con
 				return ec.fieldContext_MediathekBaseEntry_type(ctx, field)
 			case "poster":
 				return ec.fieldContext_MediathekBaseEntry_poster(ctx, field)
+			case "acl":
+				return ec.fieldContext_MediathekBaseEntry_acl(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type MediathekBaseEntry", field.Name)
 		},
@@ -3008,6 +3172,8 @@ func (ec *executionContext) fieldContext_MediathekFullEntry_referencesFull(ctx c
 				return ec.fieldContext_MediathekBaseEntry_type(ctx, field)
 			case "poster":
 				return ec.fieldContext_MediathekBaseEntry_poster(ctx, field)
+			case "acl":
+				return ec.fieldContext_MediathekBaseEntry_acl(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type MediathekBaseEntry", field.Name)
 		},
@@ -6246,6 +6412,50 @@ func (ec *executionContext) _FacetValue(ctx context.Context, sel ast.SelectionSe
 
 // region    **************************** object.gotpl ****************************
 
+var aCLImplementors = []string{"ACL"}
+
+func (ec *executionContext) _ACL(ctx context.Context, sel ast.SelectionSet, obj *model.ACL) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, aCLImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ACL")
+		case "name":
+			out.Values[i] = ec._ACL_name(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "groups":
+			out.Values[i] = ec._ACL_groups(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var facetImplementors = []string{"Facet"}
 
 func (ec *executionContext) _Facet(ctx context.Context, sel ast.SelectionSet, obj *model.Facet) graphql.Marshaler {
@@ -6607,6 +6817,8 @@ func (ec *executionContext) _MediathekBaseEntry(ctx context.Context, sel ast.Sel
 			out.Values[i] = ec._MediathekBaseEntry_type(ctx, field, obj)
 		case "poster":
 			out.Values[i] = ec._MediathekBaseEntry_poster(ctx, field, obj)
+		case "acl":
+			out.Values[i] = ec._MediathekBaseEntry_acl(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -7419,6 +7631,16 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) marshalNACL2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐACL(ctx context.Context, sel ast.SelectionSet, v *model.ACL) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ACL(ctx, sel, v)
+}
+
 func (ec *executionContext) unmarshalNBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -8102,6 +8324,53 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalOACL2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐACLᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.ACL) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNACL2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐACL(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {

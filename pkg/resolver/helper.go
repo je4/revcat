@@ -136,6 +136,13 @@ func sourceToMediathekBaseEntry(src *sourcetype.SourceData) *model.MediathekBase
 		Type:              &src.Type,
 		References:        make([]*model.Reference, 0),
 		Poster:            sourceMediaToMedia(src.Poster),
+		ACL:               make([]*model.ACL, 0),
+	}
+	for name, acls := range src.ACL {
+		entry.ACL = append(entry.ACL, &model.ACL{
+			Name:   name,
+			Groups: acls,
+		})
 	}
 	for _, person := range src.Persons {
 		p := &model.Person{
