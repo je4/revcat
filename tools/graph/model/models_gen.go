@@ -45,13 +45,18 @@ type InFacetTerm struct {
 }
 
 type InFilter struct {
-	BoolTerm *InFilterBoolTerm `json:"boolTerm,omitempty"`
+	BoolTerm   *InFilterBoolTerm   `json:"boolTerm,omitempty"`
+	ExistsTerm *InFilterExistsTerm `json:"existsTerm,omitempty"`
 }
 
 type InFilterBoolTerm struct {
 	Field  string   `json:"field"`
 	And    bool     `json:"and"`
 	Values []string `json:"values,omitempty"`
+}
+
+type InFilterExistsTerm struct {
+	Field string `json:"field"`
 }
 
 type KeyValue struct {

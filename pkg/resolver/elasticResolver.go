@@ -213,6 +213,8 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 		if newFilter != nil {
 			if f.Query.BoolTerm != nil && f.Query.BoolTerm.And {
 				esFilter = append(esFilter, *newFilter)
+			} else if f.Query.ExistsTerm != nil {
+				esFilter = append(esFilter, *newFilter)
 			} else {
 				esPostFilter = append(esPostFilter, newFilter)
 			}
@@ -369,7 +371,7 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 						MustNot: []types.Query{
 							types.Query{
 								Exists: &types.ExistsQuery{
-									Field: "poster.uri.keyword",
+									Field: "poster",
 								},
 							},
 						},

@@ -14,7 +14,12 @@ import (
 var nestedRegexp = regexp.MustCompile(`^\[([^\[\]]+)\]\.(.*)$`)
 
 func createFilterQuery(filter *model.InFilter) (*types.Query, error) {
-	if filter.BoolTerm != nil && len(filter.BoolTerm.Values) > 0 {
+	if filter.ExistsTerm != nil {
+		var query = &types.Query{Exists: &types.ExistsQuery{
+			Field: filter.ExistsTerm.Field,
+		}}
+		return query, nil
+	} else if filter.BoolTerm != nil && len(filter.BoolTerm.Values) > 0 {
 		var query = &types.Query{Bool: &types.BoolQuery{}}
 		qList := []types.Query{}
 		matches := nestedRegexp.FindStringSubmatch(filter.BoolTerm.Field)
