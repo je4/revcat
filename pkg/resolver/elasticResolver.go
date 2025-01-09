@@ -16,6 +16,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"time"
 )
 
 func NewElasticResolver(elastic *elasticsearch.TypedClient, index string, clients []*config.Client, logger zLogger.ZLogger) *ElasticResolver {
@@ -38,6 +39,9 @@ type ElasticResolver struct {
 	index       string
 	objectCache gcache.Cache
 	client      map[string]*config.Client
+	jwtKey      string
+	jwtAlgs     []string
+	jwtMaxAge   time.Duration
 }
 
 func BuildBaseFilter(client *config.Client, groups ...string) ([]types.Query, error) {
@@ -87,7 +91,7 @@ func BuildBaseFilter(client *config.Client, groups ...string) ([]types.Query, er
 	slices.Sort(grps)
 	grps = slices.Compact(grps)
 	for _, grp := range grps {
-		aclQuery.Must = append(aclQuery.Must, types.Query{
+		aclQuery.Should = append(aclQuery.Should, types.Query{
 			Term: map[string]types.TermQuery{
 				"acl.meta.keyword": {
 					Value: grp,
@@ -130,6 +134,9 @@ func (r *ElasticResolver) loadEntries(ctx context.Context, signatures []string) 
 			if !ok {
 				return nil, errors.Errorf("cannot convert doc %v to map", docInt)
 			}
+			if doc.Source_ == nil {
+				return nil, errors.Errorf("source of doc %v is nil", doc)
+			}
 			jsonBytes := doc.Source_
 			source := sourcetype.SourceData{ID: doc.Id_}
 			if err := json.Unmarshal(jsonBytes, &source); err != nil {
@@ -146,7 +153,6 @@ var sortFieldRegexp = regexp.MustCompile(`^[a-zA-Z0-9_.]*$`)
 
 // Search is the resolver for the search field.
 func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string, sort []*model.SortField) (*model.SearchResult, error) {
-
 	if errValue := ctx.Value("error"); errValue != nil {
 		return nil, errors.Errorf("%s", errValue)
 	}

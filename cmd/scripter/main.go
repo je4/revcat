@@ -173,7 +173,22 @@ func main() {
 
 					}
 					if matches := mediaserverUriRegexp.FindStringSubmatch(media.Uri); matches != nil {
-						fmt.Printf("%s;%s\n", matches[1], matches[2])
+						var collid int64
+						switch matches[1] {
+						case "act":
+							collid = 25
+						case "zotero_2486551":
+							collid = 41
+						}
+						var sqlstr string
+						if collid > 0 {
+							sqlstr = fmt.Sprintf("UPDATE master SET public=true WHERE collectionid=%d AND signature = '%s';", collid, matches[2])
+							fmt.Println(sqlstr)
+							sqlstr = fmt.Sprintf("UPDATE master SET public=true WHERE collectionid=%d AND signature LIKE '%s$$%%';", collid, matches[2])
+							fmt.Println(sqlstr)
+						}
+						//fmt.Printf("%s;%s;https://mediathek.hgk.fhnw.ch/amp/detail/%s;%s\n", matches[1], matches[2], source.Signature, sqlstr)
+						//fmt.Println(sqlstr)
 					}
 				}
 			}

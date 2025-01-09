@@ -20,9 +20,11 @@ type ClientANDQuery struct {
 type Client struct {
 	Name      string           `toml:"name"`
 	Apikey    string           `toml:"apikey"`
-	JWTSecret string           `toml:"jwtsecret"`
 	Groups    []string         `toml:"groups"`
 	AND       []ClientANDQuery `toml:"and"`
+	JWTKey    string           `toml:"jwtkey"`
+	JWTAlgs   []string         `toml:"jwtalg"`
+	JWTMaxAge config.Duration  `toml:"jwtmaxage"`
 }
 
 type ElasticSearchConfig struct {

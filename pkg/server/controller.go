@@ -62,7 +62,7 @@ func NewController(localAddr, externalAddr string, cert *tls.Certificate, server
 
 	checkAuthMiddleware := func() gin.HandlerFunc {
 		type groupClaims struct {
-			Groups []string `json:"groups"`
+			Groups string `json:"groups"`
 			jwt.RegisteredClaims
 		}
 		return func(c *gin.Context) {
@@ -102,9 +102,9 @@ func NewController(localAddr, externalAddr string, cert *tls.Certificate, server
 				return
 			}
 
-			token, err := jwt.ParseWithClaims(tokenString, &groupClaims{}, func(token *jwt.Token) (interface{}, error) {
-				return []byte(client.JWTSecret), nil
-			}, jwt.WithLeeway(5*time.Second))
+			token, err := jwt.ParseWithClaims(parts[1], &groupClaims{}, func(token *jwt.Token) (interface{}, error) {
+				return []byte(client.JWTKey), nil
+			}, jwt.WithLeeway(5*time.Second), jwt.WithExpirationRequired(), jwt.WithIssuedAt())
 			if err != nil {
 				logger.Info().Err(err).Msgf("cannot parse token '%s'", tokenString)
 				//c.AbortWithStatusJSON(http.StatusUnauthorized, fmt.Sprintf("cannot parse token '%s': %v", tokenString, err))
@@ -130,7 +130,37 @@ func NewController(localAddr, externalAddr string, cert *tls.Certificate, server
 				c.Next()
 				return
 			}
-			ctx := context.WithValue(c.Request.Context(), "groups", claims.Groups)
+			exp, err := claims.GetExpirationTime()
+			if err != nil {
+				logger.Info().Err(err).Msgf("cannot get expiration time '%s'", tokenString)
+				//c.AbortWithStatusJSON(http.StatusUnauthorized, fmt.Sprintf("cannot get expiration time '%s': %v", tokenString, err))
+				ctx := context.WithValue(c.Request.Context(), "error", fmt.Sprintf("cannot get expiration time '%s': %v", tokenString, err))
+				c.Request = c.Request.WithContext(ctx)
+				c.Next()
+				return
+			}
+			iat, err := claims.GetIssuedAt()
+			if err != nil {
+				logger.Info().Err(err).Msgf("cannot get issued at time '%s'", tokenString)
+				//c.AbortWithStatusJSON(http.StatusUnauthorized, fmt.Sprintf("cannot get issued at time '%s': %v", tokenString, err))
+				ctx := context.WithValue(c.Request.Context(), "error", fmt.Sprintf("cannot get issued at time '%s': %v", tokenString, err))
+				c.Request = c.Request.WithContext(ctx)
+				c.Next()
+				return
+			}
+			if iat.Time.Add(time.Duration(client.JWTMaxAge)).Before(exp.Time) {
+				logger.Info().Msgf("token '%s' has more lifetime than allowed (%s)", tokenString, client.JWTMaxAge.String())
+				ctx := context.WithValue(c.Request.Context(), "error", fmt.Sprintf("token '%s' has more lifetime than allowed (%s)", tokenString, client.JWTMaxAge.String()))
+				c.Request = c.Request.WithContext(ctx)
+				c.Next()
+				return
+
+			}
+			groups := []string{}
+			if strings.TrimSpace(claims.Groups) != "" {
+				groups = strings.Split(claims.Groups, ";")
+			}
+			ctx := context.WithValue(c.Request.Context(), "groups", groups)
 			ctx = context.WithValue(ctx, "client", client.Name)
 			c.Request = c.Request.WithContext(ctx)
 			c.Next()

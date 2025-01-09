@@ -6,10 +6,52 @@ import (
 	"fmt"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/je4/revcat/v2/pkg/sourcetype"
 	"github.com/je4/revcat/v2/tools/graph/model"
 	"regexp"
+	"time"
 )
+
+func CheckJWTValid(tokenstring string, secret string, alg []string, maxAge time.Duration) (map[string]interface{}, error) {
+	token, err := jwt.Parse(tokenstring, func(token *jwt.Token) (interface{}, error) {
+		talg := token.Method.Alg()
+		algOK := false
+		for _, a := range alg {
+			if talg == a {
+				algOK = true
+				break
+			}
+		}
+		if !algOK {
+			return false, fmt.Errorf("unexpected signing method (allowed are %v): %v", alg, token.Header["alg"])
+		}
+
+		return []byte(secret), nil
+	}, jwt.WithExpirationRequired(), jwt.WithIssuedAt())
+	if err != nil {
+		return map[string]interface{}{}, fmt.Errorf("invalid token: %v", err)
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		if !ok {
+			return map[string]interface{}{}, fmt.Errorf("cannot get claims from token %s", tokenstring)
+		}
+		iat, ok := claims["iat"].(float64)
+		if !ok {
+			return map[string]interface{}{}, fmt.Errorf("no iat claim in token")
+		}
+		exp, ok := claims["exp"].(float64)
+		if !ok {
+			return map[string]interface{}{}, fmt.Errorf("no exp claim in token")
+		}
+		if time.Unix(int64(iat), 0).Add(maxAge).Before(time.Unix(int64(exp), 0)) {
+			return map[string]interface{}{}, fmt.Errorf("token lifetime longer thant %v", maxAge)
+		}
+		return claims, nil
+	}
+	return map[string]interface{}{}, fmt.Errorf("token %s not valid", tokenstring)
+}
 
 var nestedRegexp = regexp.MustCompile(`^\[([^\[\]]+)\]\.(.*)$`)
 
@@ -226,4 +268,16 @@ func sourceToMediathekFullEntry(src *sourcetype.SourceData) *model.MediathekFull
 		}
 	}
 	return entry
+}
+
+func GetClaim(claim map[string]interface{}, name string) (string, error) {
+	val, ok := claim[name]
+	if !ok {
+		return "", fmt.Errorf("no claim %s found", name)
+	}
+	valstr, ok := val.(string)
+	if !ok {
+		return "", fmt.Errorf("claim %s not a string", name)
+	}
+	return valstr, nil
 }
