@@ -62,6 +62,78 @@ func (b *badgerResolver) Search(ctx context.Context, query string, facets []*mod
 	return nil, errors.Errorf("badgerResolver::Search not implemented")
 }
 
+func (b *badgerResolver) sourceToMediathekFullEntry(src *sourcetype.SourceData) *model.MediathekFullEntry {
+	entry := &model.MediathekFullEntry{
+		ID:             src.ID,
+		Base:           sourceToMediathekBaseEntry(src),
+		Notes:          []*model.Note{},
+		Abstract:       []*model.MultiLangString{}, //&src.Abstract,
+		ReferencesFull: []*model.MediathekBaseEntry{},
+		Extra:          []*model.KeyValue{},
+		Media:          []*model.MediaList{},
+	}
+	var refSignatures = make([]string, 0)
+	for _, ref := range src.References {
+		if ref.Type == "signature" {
+			refSignatures = append(refSignatures, ref.Signature)
+		}
+	}
+	if len(refSignatures) > 0 {
+		refs, err := b.loadEntries(context.Background(), refSignatures)
+		if err != nil {
+			b.logger.Error().Err(err).Msgf("cannot load references %v", refSignatures)
+		}
+		for _, ref := range refs {
+			if ref.Signature == src.Signature {
+				// prevent recursion
+				continue
+			}
+			entry.ReferencesFull = append(entry.ReferencesFull, sourceToMediathekBaseEntry(&ref))
+		}
+	}
+	for _, lang := range src.Abstract.GetNativeLanguages() {
+		entry.Abstract = append(entry.Abstract, &model.MultiLangString{
+			Lang:       lang.String(),
+			Value:      src.Abstract.Get(lang),
+			Translated: false,
+		})
+	}
+	for _, lang := range src.Abstract.GetTranslatedLanguages() {
+		entry.Abstract = append(entry.Abstract, &model.MultiLangString{
+			Lang:       lang.String(),
+			Value:      src.Abstract.Get(lang),
+			Translated: true,
+		})
+	}
+	for _, note := range src.Notes {
+		entry.Notes = append(entry.Notes, &model.Note{
+			Title: &note.Title,
+			Text:  string(note.Note),
+		})
+	}
+	if src.Extra != nil {
+		for key, val := range *src.Extra {
+			entry.Extra = append(entry.Extra, &model.KeyValue{
+				Key:   key,
+				Value: val,
+			})
+		}
+	}
+	if src.Media != nil {
+		for key, ml := range src.Media {
+			mediaList := &model.MediaList{
+				Name:  key,
+				Items: make([]*model.Media, 0),
+			}
+			for _, media := range ml {
+				mediaList.Items = append(mediaList.Items, sourceMediaToMedia(&media))
+			}
+			entry.Media = append(entry.Media, mediaList)
+		}
+	}
+	return entry
+}
+
 func (b *badgerResolver) MediathekEntries(ctx context.Context, signatures []string) ([]*model.MediathekFullEntry, error) {
 	var result = []*model.MediathekFullEntry{}
 	docs, err := b.loadEntries(ctx, signatures)
@@ -69,7 +141,7 @@ func (b *badgerResolver) MediathekEntries(ctx context.Context, signatures []stri
 		return nil, errors.Wrapf(err, "cannot load entries %v", signatures)
 	}
 	for _, doc := range docs {
-		result = append(result, sourceToMediathekFullEntry(&doc))
+		result = append(result, b.sourceToMediathekFullEntry(&doc))
 	}
 	return result, nil
 }

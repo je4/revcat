@@ -217,59 +217,6 @@ func sourceToMediathekBaseEntry(src *sourcetype.SourceData) *model.MediathekBase
 	return entry
 }
 
-func sourceToMediathekFullEntry(src *sourcetype.SourceData) *model.MediathekFullEntry {
-	entry := &model.MediathekFullEntry{
-		ID:             src.ID,
-		Base:           sourceToMediathekBaseEntry(src),
-		Notes:          []*model.Note{},
-		Abstract:       []*model.MultiLangString{}, //&src.Abstract,
-		ReferencesFull: []*model.MediathekBaseEntry{},
-		Extra:          []*model.KeyValue{},
-		Media:          []*model.MediaList{},
-	}
-	for _, lang := range src.Abstract.GetNativeLanguages() {
-		entry.Abstract = append(entry.Abstract, &model.MultiLangString{
-			Lang:       lang.String(),
-			Value:      src.Abstract.Get(lang),
-			Translated: false,
-		})
-	}
-	for _, lang := range src.Abstract.GetTranslatedLanguages() {
-		entry.Abstract = append(entry.Abstract, &model.MultiLangString{
-			Lang:       lang.String(),
-			Value:      src.Abstract.Get(lang),
-			Translated: true,
-		})
-	}
-	for _, note := range src.Notes {
-		entry.Notes = append(entry.Notes, &model.Note{
-			Title: &note.Title,
-			Text:  string(note.Note),
-		})
-	}
-	if src.Extra != nil {
-		for key, val := range *src.Extra {
-			entry.Extra = append(entry.Extra, &model.KeyValue{
-				Key:   key,
-				Value: val,
-			})
-		}
-	}
-	if src.Media != nil {
-		for key, ml := range src.Media {
-			mediaList := &model.MediaList{
-				Name:  key,
-				Items: make([]*model.Media, 0),
-			}
-			for _, media := range ml {
-				mediaList.Items = append(mediaList.Items, sourceMediaToMedia(&media))
-			}
-			entry.Media = append(entry.Media, mediaList)
-		}
-	}
-	return entry
-}
-
 func GetClaim(claim map[string]interface{}, name string) (string, error) {
 	val, ok := claim[name]
 	if !ok {

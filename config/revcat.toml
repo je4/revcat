@@ -9,6 +9,7 @@ aspectratio = 1.77777778
 mediaserver = "https://ba14ns21403-sec1.fhnw.ch/mediasrv"
 collagepath = "c:/temp/performance/collage"
 
+
 [elasticsearch]
 # endpoint = ["http://localhost:9201", "http://localhost:9200"]
 endpoint = ["https://elastic.med.campusderkuenste.ch/"]
@@ -20,6 +21,10 @@ debug = true
 name = "test"
 apikey = "laksedjpwo43iucn45i"
 groups = ["global/guest"]
+jwtkey = "xo5poi24ajoai36fjoaej2fe4aoij" # ":Xf/#|IKYrDsNi4]LN*o(W7;:"
+jwtalg = ["HS256","HS384","HS512"]
+jwtmaxage = "10m"
+
 [[client.and]]
 [[client.and.or]]
 field = "category.keyword"
