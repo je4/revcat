@@ -367,27 +367,29 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 		}}
 		sorts = append(sorts, sort)
 	}
-
-	if searchRequest.Query != nil {
-		boostQuery := &types.Query{
-			Boosting: &types.BoostingQuery{
-				Positive: searchRequest.Query,
-				Negative: &types.Query{
-					Bool: &types.BoolQuery{
-						MustNot: []types.Query{
-							types.Query{
-								Exists: &types.ExistsQuery{
-									Field: "poster",
+	/*
+		if searchRequest.Query != nil {
+			boostQuery := &types.Query{
+				Boosting: &types.BoostingQuery{
+					Positive: searchRequest.Query,
+					Negative: &types.Query{
+						Bool: &types.BoolQuery{
+							MustNot: []types.Query{
+								types.Query{
+									Exists: &types.ExistsQuery{
+										Field: "poster",
+									},
 								},
 							},
 						},
 					},
+					NegativeBoost: 0.85,
 				},
-				NegativeBoost: 0.85,
-			},
+			}
+			searchRequest.Query = boostQuery
 		}
-		searchRequest.Query = boostQuery
-	}
+
+	*/
 
 	elasticQuery := r.elastic.Search().
 		Index(r.index).
@@ -595,6 +597,22 @@ func (r *ElasticResolver) ReferencesFull(ctx context.Context, obj *model.Mediath
 	if errValue := ctx.Value("error"); errValue != nil {
 		return nil, errors.Errorf("%s", errValue)
 	}
+	var result = make([]*model.MediathekBaseEntry, 0)
+	sr, err := r.Search(ctx, "", nil, []*model.InFilter{
+		{
+			BoolTerm: &model.InFilterBoolTerm{
+				Field:  "[references].signature.keyword",
+				And:    true,
+				Values: []string{obj.ID},
+			},
+		},
+	}, nil, nil, nil, nil, nil)
+	if err == nil {
+		for _, edge := range sr.Edges {
+			result = append(result, edge.Base)
+		}
+	}
+
 	var refSignatures = make([]string, 0)
 	for _, extra := range obj.Extra {
 		if extra.Key == "references" {
@@ -611,9 +629,8 @@ func (r *ElasticResolver) ReferencesFull(ctx context.Context, obj *model.Mediath
 		}
 	}
 	if len(refSignatures) == 0 {
-		return make([]*model.MediathekBaseEntry, 0), nil
+		return result, nil
 	}
-	var result = make([]*model.MediathekBaseEntry, 0)
 	docs, err := r.loadEntries(ctx, refSignatures)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot load entries %v", refSignatures)
