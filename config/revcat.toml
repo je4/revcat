@@ -3,23 +3,22 @@ loglevel = "DEBUG"
 
 localaddr = "localhost:8443"
 externaladdr = "https://localhost:8443/graphql"
-badger = "c:/temp/performance/badger"
+badger = ""
 zoomimageheight = 150
 aspectratio = 1.77777778
-mediaserver = "https://ba14ns21403-sec1.fhnw.ch/mediasrv"
-collagepath = "c:/temp/performance/collage"
+mediaserver = ""
+collagepath = ""
 
 
 [elasticsearch]
-# endpoint = ["http://localhost:9201", "http://localhost:9200"]
-endpoint = ["https://elastic.med.campusderkuenste.ch/"]
-index = "fhnw_ink"
-apikey = "%%ELASTIC_APIKEY%%"
+endpoint = []
+index = ""
+apikey = ""
 debug = true
 
 [[client]]
-name = "test"
-apikey = "laksedjpwo43iucn45i"
+name = ""
+apikey = ""
 groups = ["global/guest"]
 jwtkey = "xo5poi24ajoai36fjoaej2fe4aoij" # ":Xf/#|IKYrDsNi4]LN*o(W7;:"
 jwtalg = ["HS256","HS384","HS512"]
@@ -28,15 +27,4 @@ jwtmaxage = "10m"
 [[client.and]]
 [[client.and.or]]
 field = "category.keyword"
-values = [
-    "zotero2!!PCB_Basel",
-    "zotero2!!ACT Performance Festival",
-    "zotero2!!Performance Art!!6x2 Performance-Duos",
-    "zotero2!!Archive des Ephemeren",
-    "bangbang",
-    "zotero2!!Kaskadenkondensator_ Basel!!Kasko-Videodokumentationen",
-    "zotero2!!Performance Art!!Doce en Diciembre",
-    "zotero2!!Performance Art!!Together Elsewhere",
-    "zotero2!!Interviews Archiv Performativ",
-    "zotero2!!Perf en Bref"
-]
+values = []
