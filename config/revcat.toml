@@ -9,6 +9,7 @@ aspectratio = 1.77777778
 mediaserver = ""
 collagepath = ""
 
+
 [elasticsearch]
 endpoint = []
 index = ""
@@ -19,6 +20,10 @@ debug = true
 name = ""
 apikey = ""
 groups = ["global/guest"]
+jwtkey = "xo5poi24ajoai36fjoaej2fe4aoij" # ":Xf/#|IKYrDsNi4]LN*o(W7;:"
+jwtalg = ["HS256","HS384","HS512"]
+jwtmaxage = "10m"
+
 [[client.and]]
 [[client.and.or]]
 field = "category.keyword"

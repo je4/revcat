@@ -6,6 +6,11 @@ type FacetValue interface {
 	IsFacetValue()
 }
 
+type ACL struct {
+	Name   string   `json:"name"`
+	Groups []string `json:"groups"`
+}
+
 type Facet struct {
 	Name   string       `json:"name"`
 	Values []FacetValue `json:"values,omitempty"`
@@ -40,13 +45,18 @@ type InFacetTerm struct {
 }
 
 type InFilter struct {
-	BoolTerm *InFilterBoolTerm `json:"boolTerm,omitempty"`
+	BoolTerm   *InFilterBoolTerm   `json:"boolTerm,omitempty"`
+	ExistsTerm *InFilterExistsTerm `json:"existsTerm,omitempty"`
 }
 
 type InFilterBoolTerm struct {
 	Field  string   `json:"field"`
 	And    bool     `json:"and"`
 	Values []string `json:"values,omitempty"`
+}
+
+type InFilterExistsTerm struct {
+	Field string `json:"field"`
 }
 
 type KeyValue struct {
@@ -93,6 +103,7 @@ type MediathekBaseEntry struct {
 	References        []*Reference       `json:"references,omitempty"`
 	Type              *string            `json:"type,omitempty"`
 	Poster            *Media             `json:"poster,omitempty"`
+	ACL               []*ACL             `json:"acl,omitempty"`
 }
 
 type MediathekFullEntry struct {

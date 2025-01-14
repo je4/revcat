@@ -47,6 +47,11 @@ type MultiLangString {
     translated: Boolean!
 }
 
+type ACL {
+    name: String!
+    groups: [String!]!
+}
+
 type MediathekBaseEntry {
     id: ID!
     signature: String!
@@ -68,6 +73,7 @@ type MediathekBaseEntry {
     references: [Reference!]
     type: String
     poster: Media
+    acl: [ACL!]
 }
 
 type MediathekFullEntry {
@@ -118,8 +124,13 @@ input InFilterBoolTerm {
     values: [String!]
 }
 
+input InFilterExistsTerm {
+    field: String!
+}
+
 input InFilter {
     boolTerm: InFilterBoolTerm
+    existsTerm: InFilterExistsTerm
 }
 
 input InFacetTerm {

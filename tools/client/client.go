@@ -4,7 +4,6 @@ package client
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/Yamashou/gqlgenc/clientv2"
 )
@@ -18,28 +17,29 @@ type Client struct {
 	Client *clientv2.Client
 }
 
-func NewClient(cli *http.Client, baseURL string, options *clientv2.Options, interceptors ...clientv2.RequestInterceptor) RevCatGraphQLClient {
+func NewClient(cli clientv2.HttpClient, baseURL string, options *clientv2.Options, interceptors ...clientv2.RequestInterceptor) RevCatGraphQLClient {
 	return &Client{Client: clientv2.NewClient(cli, baseURL, options, interceptors...)}
 }
 
 type MediathekBaseFragment struct {
-	Signature       string               "json:\"signature\" graphql:\"signature\""
-	CollectionTitle *string              "json:\"collectionTitle,omitempty\" graphql:\"collectionTitle\""
-	Source          string               "json:\"source\" graphql:\"source\""
-	Title           []*MultiLangFragment "json:\"title\" graphql:\"title\""
-	Person          []*PersonFragment    "json:\"person,omitempty\" graphql:\"person\""
-	Series          *string              "json:\"series,omitempty\" graphql:\"series\""
-	Place           *string              "json:\"place,omitempty\" graphql:\"place\""
-	Date            *string              "json:\"date,omitempty\" graphql:\"date\""
-	Category        []string             "json:\"category,omitempty\" graphql:\"category\""
-	Tags            []string             "json:\"tags,omitempty\" graphql:\"tags\""
-	URL             *string              "json:\"url,omitempty\" graphql:\"url\""
-	Publisher       *string              "json:\"publisher,omitempty\" graphql:\"publisher\""
-	Rights          *string              "json:\"rights,omitempty\" graphql:\"rights\""
-	License         *string              "json:\"license,omitempty\" graphql:\"license\""
-	Type            *string              "json:\"type,omitempty\" graphql:\"type\""
-	Poster          *MediaItemFragment   "json:\"poster,omitempty\" graphql:\"poster\""
-	References      []*ReferenceFragment "json:\"references,omitempty\" graphql:\"references\""
+	Signature       string                       "json:\"signature\" graphql:\"signature\""
+	CollectionTitle *string                      "json:\"collectionTitle,omitempty\" graphql:\"collectionTitle\""
+	Source          string                       "json:\"source\" graphql:\"source\""
+	Title           []*MultiLangFragment         "json:\"title\" graphql:\"title\""
+	Person          []*PersonFragment            "json:\"person,omitempty\" graphql:\"person\""
+	Series          *string                      "json:\"series,omitempty\" graphql:\"series\""
+	Place           *string                      "json:\"place,omitempty\" graphql:\"place\""
+	Date            *string                      "json:\"date,omitempty\" graphql:\"date\""
+	Category        []string                     "json:\"category,omitempty\" graphql:\"category\""
+	Tags            []string                     "json:\"tags,omitempty\" graphql:\"tags\""
+	URL             *string                      "json:\"url,omitempty\" graphql:\"url\""
+	Publisher       *string                      "json:\"publisher,omitempty\" graphql:\"publisher\""
+	Rights          *string                      "json:\"rights,omitempty\" graphql:\"rights\""
+	License         *string                      "json:\"license,omitempty\" graphql:\"license\""
+	Type            *string                      "json:\"type,omitempty\" graphql:\"type\""
+	Poster          *MediaItemFragment           "json:\"poster,omitempty\" graphql:\"poster\""
+	References      []*ReferenceFragment         "json:\"references,omitempty\" graphql:\"references\""
+	ACL             []*MediathekBaseFragment_ACL "json:\"acl,omitempty\" graphql:\"acl\""
 }
 
 func (t *MediathekBaseFragment) GetSignature() string {
@@ -143,6 +143,12 @@ func (t *MediathekBaseFragment) GetReferences() []*ReferenceFragment {
 		t = &MediathekBaseFragment{}
 	}
 	return t.References
+}
+func (t *MediathekBaseFragment) GetACL() []*MediathekBaseFragment_ACL {
+	if t == nil {
+		t = &MediathekBaseFragment{}
+	}
+	return t.ACL
 }
 
 type MultiLangFragment struct {
@@ -438,34 +444,76 @@ func (t *PersonFragment) GetRole() *string {
 	return t.Role
 }
 
-type MediathekEntries_MediathekEntries struct {
-	ID             string                   "json:\"id\" graphql:\"id\""
-	Base           *MediathekBaseFragment   "json:\"base\" graphql:\"base\""
-	Notes          []*NoteFragment          "json:\"notes,omitempty\" graphql:\"notes\""
-	Abstract       []*MultiLangFragment     "json:\"abstract,omitempty\" graphql:\"abstract\""
-	Extra          []*KeyValueFragment      "json:\"extra,omitempty\" graphql:\"extra\""
-	Media          []*MediaListFragment     "json:\"media,omitempty\" graphql:\"media\""
-	ReferencesFull []*MediathekBaseFragment "json:\"referencesFull,omitempty\" graphql:\"referencesFull\""
-	Typename       *string                  "json:\"__typename,omitempty\" graphql:\"__typename\""
+type MediathekBaseFragment_ACL struct {
+	Groups []string "json:\"groups\" graphql:\"groups\""
+	Name   string   "json:\"name\" graphql:\"name\""
 }
 
-func (t *MediathekEntries_MediathekEntries) GetID() string {
+func (t *MediathekBaseFragment_ACL) GetGroups() []string {
 	if t == nil {
-		t = &MediathekEntries_MediathekEntries{}
+		t = &MediathekBaseFragment_ACL{}
 	}
-	return t.ID
+	return t.Groups
 }
-func (t *MediathekEntries_MediathekEntries) GetBase() *MediathekBaseFragment {
+func (t *MediathekBaseFragment_ACL) GetName() string {
 	if t == nil {
-		t = &MediathekEntries_MediathekEntries{}
+		t = &MediathekBaseFragment_ACL{}
 	}
-	return t.Base
+	return t.Name
 }
-func (t *MediathekEntries_MediathekEntries) GetNotes() []*NoteFragment {
+
+type MediathekEntries_MediathekEntries_Base_MediathekBaseFragment_ACL struct {
+	Groups []string "json:\"groups\" graphql:\"groups\""
+	Name   string   "json:\"name\" graphql:\"name\""
+}
+
+func (t *MediathekEntries_MediathekEntries_Base_MediathekBaseFragment_ACL) GetGroups() []string {
+	if t == nil {
+		t = &MediathekEntries_MediathekEntries_Base_MediathekBaseFragment_ACL{}
+	}
+	return t.Groups
+}
+func (t *MediathekEntries_MediathekEntries_Base_MediathekBaseFragment_ACL) GetName() string {
+	if t == nil {
+		t = &MediathekEntries_MediathekEntries_Base_MediathekBaseFragment_ACL{}
+	}
+	return t.Name
+}
+
+type MediathekEntries_MediathekEntries_ReferencesFull_MediathekBaseFragment_ACL struct {
+	Groups []string "json:\"groups\" graphql:\"groups\""
+	Name   string   "json:\"name\" graphql:\"name\""
+}
+
+func (t *MediathekEntries_MediathekEntries_ReferencesFull_MediathekBaseFragment_ACL) GetGroups() []string {
+	if t == nil {
+		t = &MediathekEntries_MediathekEntries_ReferencesFull_MediathekBaseFragment_ACL{}
+	}
+	return t.Groups
+}
+func (t *MediathekEntries_MediathekEntries_ReferencesFull_MediathekBaseFragment_ACL) GetName() string {
+	if t == nil {
+		t = &MediathekEntries_MediathekEntries_ReferencesFull_MediathekBaseFragment_ACL{}
+	}
+	return t.Name
+}
+
+type MediathekEntries_MediathekEntries struct {
+	Typename       *string                  "json:\"__typename,omitempty\" graphql:\"__typename\""
+	Abstract       []*MultiLangFragment     "json:\"abstract,omitempty\" graphql:\"abstract\""
+	Base           *MediathekBaseFragment   "json:\"base\" graphql:\"base\""
+	Extra          []*KeyValueFragment      "json:\"extra,omitempty\" graphql:\"extra\""
+	ID             string                   "json:\"id\" graphql:\"id\""
+	Media          []*MediaListFragment     "json:\"media,omitempty\" graphql:\"media\""
+	Notes          []*NoteFragment          "json:\"notes,omitempty\" graphql:\"notes\""
+	ReferencesFull []*MediathekBaseFragment "json:\"referencesFull,omitempty\" graphql:\"referencesFull\""
+}
+
+func (t *MediathekEntries_MediathekEntries) GetTypename() *string {
 	if t == nil {
 		t = &MediathekEntries_MediathekEntries{}
 	}
-	return t.Notes
+	return t.Typename
 }
 func (t *MediathekEntries_MediathekEntries) GetAbstract() []*MultiLangFragment {
 	if t == nil {
@@ -473,11 +521,23 @@ func (t *MediathekEntries_MediathekEntries) GetAbstract() []*MultiLangFragment {
 	}
 	return t.Abstract
 }
+func (t *MediathekEntries_MediathekEntries) GetBase() *MediathekBaseFragment {
+	if t == nil {
+		t = &MediathekEntries_MediathekEntries{}
+	}
+	return t.Base
+}
 func (t *MediathekEntries_MediathekEntries) GetExtra() []*KeyValueFragment {
 	if t == nil {
 		t = &MediathekEntries_MediathekEntries{}
 	}
 	return t.Extra
+}
+func (t *MediathekEntries_MediathekEntries) GetID() string {
+	if t == nil {
+		t = &MediathekEntries_MediathekEntries{}
+	}
+	return t.ID
 }
 func (t *MediathekEntries_MediathekEntries) GetMedia() []*MediaListFragment {
 	if t == nil {
@@ -485,47 +545,71 @@ func (t *MediathekEntries_MediathekEntries) GetMedia() []*MediaListFragment {
 	}
 	return t.Media
 }
+func (t *MediathekEntries_MediathekEntries) GetNotes() []*NoteFragment {
+	if t == nil {
+		t = &MediathekEntries_MediathekEntries{}
+	}
+	return t.Notes
+}
 func (t *MediathekEntries_MediathekEntries) GetReferencesFull() []*MediathekBaseFragment {
 	if t == nil {
 		t = &MediathekEntries_MediathekEntries{}
 	}
 	return t.ReferencesFull
 }
-func (t *MediathekEntries_MediathekEntries) GetTypename() *string {
+
+type Search_Search_Edges_Base_MediathekBaseFragment_ACL struct {
+	Groups []string "json:\"groups\" graphql:\"groups\""
+	Name   string   "json:\"name\" graphql:\"name\""
+}
+
+func (t *Search_Search_Edges_Base_MediathekBaseFragment_ACL) GetGroups() []string {
 	if t == nil {
-		t = &MediathekEntries_MediathekEntries{}
+		t = &Search_Search_Edges_Base_MediathekBaseFragment_ACL{}
 	}
-	return t.Typename
+	return t.Groups
+}
+func (t *Search_Search_Edges_Base_MediathekBaseFragment_ACL) GetName() string {
+	if t == nil {
+		t = &Search_Search_Edges_Base_MediathekBaseFragment_ACL{}
+	}
+	return t.Name
+}
+
+type Search_Search_Edges_ReferencesFull_MediathekBaseFragment_ACL struct {
+	Groups []string "json:\"groups\" graphql:\"groups\""
+	Name   string   "json:\"name\" graphql:\"name\""
+}
+
+func (t *Search_Search_Edges_ReferencesFull_MediathekBaseFragment_ACL) GetGroups() []string {
+	if t == nil {
+		t = &Search_Search_Edges_ReferencesFull_MediathekBaseFragment_ACL{}
+	}
+	return t.Groups
+}
+func (t *Search_Search_Edges_ReferencesFull_MediathekBaseFragment_ACL) GetName() string {
+	if t == nil {
+		t = &Search_Search_Edges_ReferencesFull_MediathekBaseFragment_ACL{}
+	}
+	return t.Name
 }
 
 type Search_Search_Edges struct {
-	ID             string                   "json:\"id\" graphql:\"id\""
-	Base           *MediathekBaseFragment   "json:\"base\" graphql:\"base\""
-	Notes          []*NoteFragment          "json:\"notes,omitempty\" graphql:\"notes\""
-	Abstract       []*MultiLangFragment     "json:\"abstract,omitempty\" graphql:\"abstract\""
-	Extra          []*KeyValueFragment      "json:\"extra,omitempty\" graphql:\"extra\""
-	Media          []*MediaListFragment     "json:\"media,omitempty\" graphql:\"media\""
-	ReferencesFull []*MediathekBaseFragment "json:\"referencesFull,omitempty\" graphql:\"referencesFull\""
 	Typename       *string                  "json:\"__typename,omitempty\" graphql:\"__typename\""
+	Abstract       []*MultiLangFragment     "json:\"abstract,omitempty\" graphql:\"abstract\""
+	Base           *MediathekBaseFragment   "json:\"base\" graphql:\"base\""
+	Extra          []*KeyValueFragment      "json:\"extra,omitempty\" graphql:\"extra\""
+	ID             string                   "json:\"id\" graphql:\"id\""
+	Media          []*MediaListFragment     "json:\"media,omitempty\" graphql:\"media\""
+	Notes          []*NoteFragment          "json:\"notes,omitempty\" graphql:\"notes\""
+	ReferencesFull []*MediathekBaseFragment "json:\"referencesFull,omitempty\" graphql:\"referencesFull\""
 }
 
-func (t *Search_Search_Edges) GetID() string {
+func (t *Search_Search_Edges) GetTypename() *string {
 	if t == nil {
 		t = &Search_Search_Edges{}
 	}
-	return t.ID
-}
-func (t *Search_Search_Edges) GetBase() *MediathekBaseFragment {
-	if t == nil {
-		t = &Search_Search_Edges{}
-	}
-	return t.Base
-}
-func (t *Search_Search_Edges) GetNotes() []*NoteFragment {
-	if t == nil {
-		t = &Search_Search_Edges{}
-	}
-	return t.Notes
+	return t.Typename
 }
 func (t *Search_Search_Edges) GetAbstract() []*MultiLangFragment {
 	if t == nil {
@@ -533,11 +617,23 @@ func (t *Search_Search_Edges) GetAbstract() []*MultiLangFragment {
 	}
 	return t.Abstract
 }
+func (t *Search_Search_Edges) GetBase() *MediathekBaseFragment {
+	if t == nil {
+		t = &Search_Search_Edges{}
+	}
+	return t.Base
+}
 func (t *Search_Search_Edges) GetExtra() []*KeyValueFragment {
 	if t == nil {
 		t = &Search_Search_Edges{}
 	}
 	return t.Extra
+}
+func (t *Search_Search_Edges) GetID() string {
+	if t == nil {
+		t = &Search_Search_Edges{}
+	}
+	return t.ID
 }
 func (t *Search_Search_Edges) GetMedia() []*MediaListFragment {
 	if t == nil {
@@ -545,38 +641,32 @@ func (t *Search_Search_Edges) GetMedia() []*MediaListFragment {
 	}
 	return t.Media
 }
+func (t *Search_Search_Edges) GetNotes() []*NoteFragment {
+	if t == nil {
+		t = &Search_Search_Edges{}
+	}
+	return t.Notes
+}
 func (t *Search_Search_Edges) GetReferencesFull() []*MediathekBaseFragment {
 	if t == nil {
 		t = &Search_Search_Edges{}
 	}
 	return t.ReferencesFull
 }
-func (t *Search_Search_Edges) GetTypename() *string {
-	if t == nil {
-		t = &Search_Search_Edges{}
-	}
-	return t.Typename
-}
 
 type Search_Search struct {
-	TotalCount int64                  "json:\"totalCount\" graphql:\"totalCount\""
-	PageInfo   *PageInfoFragment      "json:\"pageInfo\" graphql:\"pageInfo\""
+	Typename   *string                "json:\"__typename,omitempty\" graphql:\"__typename\""
 	Edges      []*Search_Search_Edges "json:\"edges\" graphql:\"edges\""
 	Facets     []*FacetFragment       "json:\"facets\" graphql:\"facets\""
-	Typename   *string                "json:\"__typename,omitempty\" graphql:\"__typename\""
+	PageInfo   *PageInfoFragment      "json:\"pageInfo\" graphql:\"pageInfo\""
+	TotalCount int64                  "json:\"totalCount\" graphql:\"totalCount\""
 }
 
-func (t *Search_Search) GetTotalCount() int64 {
+func (t *Search_Search) GetTypename() *string {
 	if t == nil {
 		t = &Search_Search{}
 	}
-	return t.TotalCount
-}
-func (t *Search_Search) GetPageInfo() *PageInfoFragment {
-	if t == nil {
-		t = &Search_Search{}
-	}
-	return t.PageInfo
+	return t.Typename
 }
 func (t *Search_Search) GetEdges() []*Search_Search_Edges {
 	if t == nil {
@@ -590,11 +680,17 @@ func (t *Search_Search) GetFacets() []*FacetFragment {
 	}
 	return t.Facets
 }
-func (t *Search_Search) GetTypename() *string {
+func (t *Search_Search) GetPageInfo() *PageInfoFragment {
 	if t == nil {
 		t = &Search_Search{}
 	}
-	return t.Typename
+	return t.PageInfo
+}
+func (t *Search_Search) GetTotalCount() int64 {
+	if t == nil {
+		t = &Search_Search{}
+	}
+	return t.TotalCount
 }
 
 type MediathekEntries struct {
@@ -669,6 +765,10 @@ fragment MediathekBaseFragment on MediathekBaseEntry {
 	references {
 		... ReferenceFragment
 	}
+	acl {
+		name
+		groups
+	}
 }
 fragment MultiLangFragment on MultiLangString {
 	lang
@@ -711,7 +811,7 @@ fragment MediaListFragment on MediaList {
 `
 
 func (c *Client) MediathekEntries(ctx context.Context, signatures []string, interceptors ...clientv2.RequestInterceptor) (*MediathekEntries, error) {
-	vars := map[string]interface{}{
+	vars := map[string]any{
 		"signatures": signatures,
 	}
 
@@ -794,6 +894,10 @@ fragment MediathekBaseFragment on MediathekBaseEntry {
 	references {
 		... ReferenceFragment
 	}
+	acl {
+		name
+		groups
+	}
 }
 fragment MultiLangFragment on MultiLangString {
 	lang
@@ -858,7 +962,7 @@ fragment FacetValueIntFragment on FacetValueInt {
 `
 
 func (c *Client) Search(ctx context.Context, query string, facets []*InFacet, filter []*InFilter, vector []float64, first *int64, size *int64, cursor *string, sort []*SortField, interceptors ...clientv2.RequestInterceptor) (*Search, error) {
-	vars := map[string]interface{}{
+	vars := map[string]any{
 		"query":  query,
 		"facets": facets,
 		"filter": filter,
