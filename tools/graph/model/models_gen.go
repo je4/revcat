@@ -77,8 +77,13 @@ type Media struct {
 	Length      int     `json:"length"`
 }
 
+type MediaCount struct {
+	Type  string `json:"type"`
+	Count int    `json:"count"`
+}
+
 type MediaList struct {
-	Name  string   `json:"name"`
+	Type  string   `json:"type"`
 	Items []*Media `json:"items"`
 }
 
@@ -104,6 +109,9 @@ type MediathekBaseEntry struct {
 	Type              *string            `json:"type,omitempty"`
 	Poster            *Media             `json:"poster,omitempty"`
 	ACL               []*ACL             `json:"acl,omitempty"`
+	MediaCount        []*MediaCount      `json:"mediaCount,omitempty"`
+	MediaVisible      bool               `json:"mediaVisible"`
+	MediaProtected    bool               `json:"mediaProtected"`
 }
 
 type MediathekFullEntry struct {

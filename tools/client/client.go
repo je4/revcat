@@ -37,6 +37,9 @@ type MediathekBaseFragment struct {
 	Rights          *string                      "json:\"rights,omitempty\" graphql:\"rights\""
 	License         *string                      "json:\"license,omitempty\" graphql:\"license\""
 	Type            *string                      "json:\"type,omitempty\" graphql:\"type\""
+	MediaCount      []*MediaCountFragment        "json:\"mediaCount,omitempty\" graphql:\"mediaCount\""
+	MediaVisible    bool                         "json:\"mediaVisible\" graphql:\"mediaVisible\""
+	MediaProtected  bool                         "json:\"mediaProtected\" graphql:\"mediaProtected\""
 	Poster          *MediaItemFragment           "json:\"poster,omitempty\" graphql:\"poster\""
 	References      []*ReferenceFragment         "json:\"references,omitempty\" graphql:\"references\""
 	ACL             []*MediathekBaseFragment_ACL "json:\"acl,omitempty\" graphql:\"acl\""
@@ -132,6 +135,24 @@ func (t *MediathekBaseFragment) GetType() *string {
 	}
 	return t.Type
 }
+func (t *MediathekBaseFragment) GetMediaCount() []*MediaCountFragment {
+	if t == nil {
+		t = &MediathekBaseFragment{}
+	}
+	return t.MediaCount
+}
+func (t *MediathekBaseFragment) GetMediaVisible() bool {
+	if t == nil {
+		t = &MediathekBaseFragment{}
+	}
+	return t.MediaVisible
+}
+func (t *MediathekBaseFragment) GetMediaProtected() bool {
+	if t == nil {
+		t = &MediathekBaseFragment{}
+	}
+	return t.MediaProtected
+}
 func (t *MediathekBaseFragment) GetPoster() *MediaItemFragment {
 	if t == nil {
 		t = &MediathekBaseFragment{}
@@ -219,6 +240,24 @@ func (t *ReferenceFragment) GetSignature() string {
 	return t.Signature
 }
 
+type MediaCountFragment struct {
+	Type  string "json:\"type\" graphql:\"type\""
+	Count int64  "json:\"count\" graphql:\"count\""
+}
+
+func (t *MediaCountFragment) GetType() string {
+	if t == nil {
+		t = &MediaCountFragment{}
+	}
+	return t.Type
+}
+func (t *MediaCountFragment) GetCount() int64 {
+	if t == nil {
+		t = &MediaCountFragment{}
+	}
+	return t.Count
+}
+
 type MediaItemFragment struct {
 	Name        string  "json:\"name\" graphql:\"name\""
 	Mimetype    string  "json:\"mimetype\" graphql:\"mimetype\""
@@ -280,15 +319,15 @@ func (t *MediaItemFragment) GetHeight() int64 {
 }
 
 type MediaListFragment struct {
-	Name  string               "json:\"name\" graphql:\"name\""
+	Type  string               "json:\"type\" graphql:\"type\""
 	Items []*MediaItemFragment "json:\"items\" graphql:\"items\""
 }
 
-func (t *MediaListFragment) GetName() string {
+func (t *MediaListFragment) GetType() string {
 	if t == nil {
 		t = &MediaListFragment{}
 	}
-	return t.Name
+	return t.Type
 }
 func (t *MediaListFragment) GetItems() []*MediaItemFragment {
 	if t == nil {
@@ -759,6 +798,11 @@ fragment MediathekBaseFragment on MediathekBaseEntry {
 	rights
 	license
 	type
+	mediaCount {
+		... MediaCountFragment
+	}
+	mediaVisible
+	mediaProtected
 	poster {
 		... MediaItemFragment
 	}
@@ -778,6 +822,10 @@ fragment MultiLangFragment on MultiLangString {
 fragment PersonFragment on Person {
 	name
 	role
+}
+fragment MediaCountFragment on MediaCount {
+	type
+	count
 }
 fragment MediaItemFragment on Media {
 	name
@@ -803,7 +851,7 @@ fragment KeyValueFragment on KeyValue {
 	value
 }
 fragment MediaListFragment on MediaList {
-	name
+	type
 	items {
 		... MediaItemFragment
 	}
@@ -888,6 +936,11 @@ fragment MediathekBaseFragment on MediathekBaseEntry {
 	rights
 	license
 	type
+	mediaCount {
+		... MediaCountFragment
+	}
+	mediaVisible
+	mediaProtected
 	poster {
 		... MediaItemFragment
 	}
@@ -907,6 +960,10 @@ fragment MultiLangFragment on MultiLangString {
 fragment PersonFragment on Person {
 	name
 	role
+}
+fragment MediaCountFragment on MediaCount {
+	type
+	count
 }
 fragment MediaItemFragment on Media {
 	name
@@ -932,7 +989,7 @@ fragment KeyValueFragment on KeyValue {
 	value
 }
 fragment MediaListFragment on MediaList {
-	name
+	type
 	items {
 		... MediaItemFragment
 	}

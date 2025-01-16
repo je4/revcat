@@ -85,9 +85,14 @@ type ComplexityRoot struct {
 		Width       func(childComplexity int) int
 	}
 
+	MediaCount struct {
+		Count func(childComplexity int) int
+		Type  func(childComplexity int) int
+	}
+
 	MediaList struct {
 		Items func(childComplexity int) int
-		Name  func(childComplexity int) int
+		Type  func(childComplexity int) int
 	}
 
 	MediathekBaseEntry struct {
@@ -98,6 +103,9 @@ type ComplexityRoot struct {
 		Date              func(childComplexity int) int
 		ID                func(childComplexity int) int
 		License           func(childComplexity int) int
+		MediaCount        func(childComplexity int) int
+		MediaProtected    func(childComplexity int) int
+		MediaVisible      func(childComplexity int) int
 		Person            func(childComplexity int) int
 		Place             func(childComplexity int) int
 		Poster            func(childComplexity int) int
@@ -334,6 +342,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Media.Width(childComplexity), true
 
+	case "MediaCount.count":
+		if e.complexity.MediaCount.Count == nil {
+			break
+		}
+
+		return e.complexity.MediaCount.Count(childComplexity), true
+
+	case "MediaCount.type":
+		if e.complexity.MediaCount.Type == nil {
+			break
+		}
+
+		return e.complexity.MediaCount.Type(childComplexity), true
+
 	case "MediaList.items":
 		if e.complexity.MediaList.Items == nil {
 			break
@@ -341,12 +363,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.MediaList.Items(childComplexity), true
 
-	case "MediaList.name":
-		if e.complexity.MediaList.Name == nil {
+	case "MediaList.type":
+		if e.complexity.MediaList.Type == nil {
 			break
 		}
 
-		return e.complexity.MediaList.Name(childComplexity), true
+		return e.complexity.MediaList.Type(childComplexity), true
 
 	case "MediathekBaseEntry.acl":
 		if e.complexity.MediathekBaseEntry.ACL == nil {
@@ -396,6 +418,27 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.MediathekBaseEntry.License(childComplexity), true
+
+	case "MediathekBaseEntry.mediaCount":
+		if e.complexity.MediathekBaseEntry.MediaCount == nil {
+			break
+		}
+
+		return e.complexity.MediathekBaseEntry.MediaCount(childComplexity), true
+
+	case "MediathekBaseEntry.mediaProtected":
+		if e.complexity.MediathekBaseEntry.MediaProtected == nil {
+			break
+		}
+
+		return e.complexity.MediathekBaseEntry.MediaProtected(childComplexity), true
+
+	case "MediathekBaseEntry.mediaVisible":
+		if e.complexity.MediathekBaseEntry.MediaVisible == nil {
+			break
+		}
+
+		return e.complexity.MediathekBaseEntry.MediaVisible(childComplexity), true
 
 	case "MediathekBaseEntry.person":
 		if e.complexity.MediathekBaseEntry.Person == nil {
@@ -1996,8 +2039,8 @@ func (ec *executionContext) fieldContext_Media_length(_ context.Context, field g
 	return fc, nil
 }
 
-func (ec *executionContext) _MediaList_name(ctx context.Context, field graphql.CollectedField, obj *model.MediaList) (ret graphql.Marshaler) {
-	fc, err := ec.fieldContext_MediaList_name(ctx, field)
+func (ec *executionContext) _MediaCount_type(ctx context.Context, field graphql.CollectedField, obj *model.MediaCount) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediaCount_type(ctx, field)
 	if err != nil {
 		return graphql.Null
 	}
@@ -2010,7 +2053,7 @@ func (ec *executionContext) _MediaList_name(ctx context.Context, field graphql.C
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Name, nil
+		return obj.Type, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2027,7 +2070,95 @@ func (ec *executionContext) _MediaList_name(ctx context.Context, field graphql.C
 	return ec.marshalNString2string(ctx, field.Selections, res)
 }
 
-func (ec *executionContext) fieldContext_MediaList_name(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+func (ec *executionContext) fieldContext_MediaCount_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediaCount",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediaCount_count(ctx context.Context, field graphql.CollectedField, obj *model.MediaCount) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediaCount_count(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Count, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(int)
+	fc.Result = res
+	return ec.marshalNInt2int(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MediaCount_count(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediaCount",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediaList_type(ctx context.Context, field graphql.CollectedField, obj *model.MediaList) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediaList_type(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Type, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MediaList_type(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "MediaList",
 		Field:      field,
@@ -3032,6 +3163,141 @@ func (ec *executionContext) fieldContext_MediathekBaseEntry_acl(_ context.Contex
 	return fc, nil
 }
 
+func (ec *executionContext) _MediathekBaseEntry_mediaCount(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_mediaCount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MediaCount, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]*model.MediaCount)
+	fc.Result = res
+	return ec.marshalOMediaCount2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediaCountᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MediathekBaseEntry_mediaCount(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediathekBaseEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "type":
+				return ec.fieldContext_MediaCount_type(ctx, field)
+			case "count":
+				return ec.fieldContext_MediaCount_count(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type MediaCount", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediathekBaseEntry_mediaVisible(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_mediaVisible(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MediaVisible, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MediathekBaseEntry_mediaVisible(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediathekBaseEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _MediathekBaseEntry_mediaProtected(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_MediathekBaseEntry_mediaProtected(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.MediaProtected, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_MediathekBaseEntry_mediaProtected(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "MediathekBaseEntry",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _MediathekFullEntry_id(ctx context.Context, field graphql.CollectedField, obj *model.MediathekFullEntry) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_MediathekFullEntry_id(ctx, field)
 	if err != nil {
@@ -3157,6 +3423,12 @@ func (ec *executionContext) fieldContext_MediathekFullEntry_base(_ context.Conte
 				return ec.fieldContext_MediathekBaseEntry_poster(ctx, field)
 			case "acl":
 				return ec.fieldContext_MediathekBaseEntry_acl(ctx, field)
+			case "mediaCount":
+				return ec.fieldContext_MediathekBaseEntry_mediaCount(ctx, field)
+			case "mediaVisible":
+				return ec.fieldContext_MediathekBaseEntry_mediaVisible(ctx, field)
+			case "mediaProtected":
+				return ec.fieldContext_MediathekBaseEntry_mediaProtected(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type MediathekBaseEntry", field.Name)
 		},
@@ -3338,6 +3610,12 @@ func (ec *executionContext) fieldContext_MediathekFullEntry_referencesFull(_ con
 				return ec.fieldContext_MediathekBaseEntry_poster(ctx, field)
 			case "acl":
 				return ec.fieldContext_MediathekBaseEntry_acl(ctx, field)
+			case "mediaCount":
+				return ec.fieldContext_MediathekBaseEntry_mediaCount(ctx, field)
+			case "mediaVisible":
+				return ec.fieldContext_MediathekBaseEntry_mediaVisible(ctx, field)
+			case "mediaProtected":
+				return ec.fieldContext_MediathekBaseEntry_mediaProtected(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type MediathekBaseEntry", field.Name)
 		},
@@ -3428,8 +3706,8 @@ func (ec *executionContext) fieldContext_MediathekFullEntry_media(_ context.Cont
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "name":
-				return ec.fieldContext_MediaList_name(ctx, field)
+			case "type":
+				return ec.fieldContext_MediaList_type(ctx, field)
 			case "items":
 				return ec.fieldContext_MediaList_items(ctx, field)
 			}
@@ -6905,6 +7183,50 @@ func (ec *executionContext) _Media(ctx context.Context, sel ast.SelectionSet, ob
 	return out
 }
 
+var mediaCountImplementors = []string{"MediaCount"}
+
+func (ec *executionContext) _MediaCount(ctx context.Context, sel ast.SelectionSet, obj *model.MediaCount) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, mediaCountImplementors)
+
+	out := graphql.NewFieldSet(fields)
+	deferred := make(map[string]*graphql.FieldSet)
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("MediaCount")
+		case "type":
+			out.Values[i] = ec._MediaCount_type(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "count":
+			out.Values[i] = ec._MediaCount_count(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch(ctx)
+	if out.Invalids > 0 {
+		return graphql.Null
+	}
+
+	atomic.AddInt32(&ec.deferred, int32(len(deferred)))
+
+	for label, dfs := range deferred {
+		ec.processDeferredGroup(graphql.DeferredGroup{
+			Label:    label,
+			Path:     graphql.GetPath(ctx),
+			FieldSet: dfs,
+			Context:  ctx,
+		})
+	}
+
+	return out
+}
+
 var mediaListImplementors = []string{"MediaList"}
 
 func (ec *executionContext) _MediaList(ctx context.Context, sel ast.SelectionSet, obj *model.MediaList) graphql.Marshaler {
@@ -6916,8 +7238,8 @@ func (ec *executionContext) _MediaList(ctx context.Context, sel ast.SelectionSet
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("MediaList")
-		case "name":
-			out.Values[i] = ec._MediaList_name(ctx, field, obj)
+		case "type":
+			out.Values[i] = ec._MediaList_type(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
 				out.Invalids++
 			}
@@ -7017,6 +7339,18 @@ func (ec *executionContext) _MediathekBaseEntry(ctx context.Context, sel ast.Sel
 			out.Values[i] = ec._MediathekBaseEntry_poster(ctx, field, obj)
 		case "acl":
 			out.Values[i] = ec._MediathekBaseEntry_acl(ctx, field, obj)
+		case "mediaCount":
+			out.Values[i] = ec._MediathekBaseEntry_mediaCount(ctx, field, obj)
+		case "mediaVisible":
+			out.Values[i] = ec._MediathekBaseEntry_mediaVisible(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
+		case "mediaProtected":
+			out.Values[i] = ec._MediathekBaseEntry_mediaProtected(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				out.Invalids++
+			}
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -8037,6 +8371,16 @@ func (ec *executionContext) marshalNMedia2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋ
 	return ec._Media(ctx, sel, v)
 }
 
+func (ec *executionContext) marshalNMediaCount2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediaCount(ctx context.Context, sel ast.SelectionSet, v *model.MediaCount) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._MediaCount(ctx, sel, v)
+}
+
 func (ec *executionContext) marshalNMediaList2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediaList(ctx context.Context, sel ast.SelectionSet, v *model.MediaList) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -8814,6 +9158,53 @@ func (ec *executionContext) marshalOMedia2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋ
 		return graphql.Null
 	}
 	return ec._Media(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalOMediaCount2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediaCountᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MediaCount) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNMediaCount2ᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediaCount(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalOMediaList2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐMediaListᚄ(ctx context.Context, sel ast.SelectionSet, v []*model.MediaList) graphql.Marshaler {

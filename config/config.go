@@ -19,10 +19,10 @@ type ClientANDQuery struct {
 
 type Client struct {
 	Name      string           `toml:"name"`
-	Apikey    string           `toml:"apikey"`
+	Apikey    config.EnvString `toml:"apikey"`
 	Groups    []string         `toml:"groups"`
 	AND       []ClientANDQuery `toml:"and"`
-	JWTKey    string           `toml:"jwtkey"`
+	JWTKey    config.EnvString `toml:"jwtkey"`
 	JWTAlgs   []string         `toml:"jwtalg"`
 	JWTMaxAge config.Duration  `toml:"jwtmaxage"`
 }

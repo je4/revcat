@@ -180,7 +180,7 @@ func sourceToMediathekFullEntry(src *sourcetype.SourceData) *model.MediathekFull
 	if src.Media != nil {
 		for key, ml := range src.Media {
 			mediaList := &model.MediaList{
-				Name:  key,
+				Type:  key,
 				Items: make([]*model.Media, 0),
 			}
 			for _, media := range ml {

@@ -21,7 +21,7 @@ type Media {
 }
 
 type MediaList {
-  name: String!
+  type: String!
   items: [Media!]!
 }
 
@@ -52,6 +52,11 @@ type ACL {
     groups: [String!]!
 }
 
+type MediaCount {
+    type: String!
+    count: Int!
+}
+
 type MediathekBaseEntry {
     id: ID!
     signature: String!
@@ -74,6 +79,9 @@ type MediathekBaseEntry {
     type: String
     poster: Media
     acl: [ACL!]
+    mediaCount: [MediaCount!]
+    mediaVisible: Boolean!
+    mediaProtected: Boolean!
 }
 
 type MediathekFullEntry {
