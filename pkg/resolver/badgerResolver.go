@@ -122,7 +122,7 @@ func (b *badgerResolver) sourceToMediathekFullEntry(src *sourcetype.SourceData) 
 	if src.Media != nil {
 		for key, ml := range src.Media {
 			mediaList := &model.MediaList{
-				Name:  key,
+				Type:  key,
 				Items: make([]*model.Media, 0),
 			}
 			for _, media := range ml {

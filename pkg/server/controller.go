@@ -42,7 +42,7 @@ func NewController(localAddr, externalAddr string, cert *tls.Certificate, server
 	// for faster access
 	clientByApiKey := make(map[string]*config.Client)
 	for _, client := range clients {
-		clientByApiKey[client.Apikey] = client
+		clientByApiKey[string(client.Apikey)] = client
 	}
 
 	ctrl := &Controller{

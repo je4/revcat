@@ -152,7 +152,14 @@ func (r *ElasticResolver) loadEntries(ctx context.Context, signatures []string) 
 var sortFieldRegexp = regexp.MustCompile(`^[a-zA-Z0-9_.]*$`)
 
 // Search is the resolver for the search field.
-func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string, sort []*model.SortField) (*model.SearchResult, error) {
+func (r *ElasticResolver) Search(
+	ctx context.Context,
+	query string,
+	facets []*model.InFacet,
+	filter []*model.InFilter,
+	vector []float64,
+	first *int, size *int, cursor *string,
+	sort []*model.SortField) (*model.SearchResult, error) {
 	if errValue := ctx.Value("error"); errValue != nil {
 		return nil, errors.Errorf("%s", errValue)
 	}
@@ -480,13 +487,29 @@ func (r *ElasticResolver) Search(ctx context.Context, query string, facets []*mo
 		if err := json.Unmarshal(hit.Source_, source); err != nil {
 			return nil, errors.Wrapf(err, "cannot unmarshal hit %v", hit)
 		}
-		entry := r.sourceToMediathekFullEntry(nil, source)
-		result.Edges = append(result.Edges, entry)
+		var access = make(map[string]bool)
+		var mediaProtected = false
+		for t, acls := range source.ACL {
+			t = strings.ToLower(t)
+			if t == "content" {
+				mediaProtected = !slices.Contains(acls, "global/guest")
+			}
+			for _, group := range groups {
+				if slices.Contains(acls, group) {
+					access[t] = true
+					break
+				}
+			}
+		}
+		if ok, found := access["meta"]; ok && found {
+			entry := r.sourceToMediathekFullEntry(nil, source, access["content"], mediaProtected)
+			result.Edges = append(result.Edges, entry)
+		}
 	}
 	return result, nil
 }
 
-func (r *ElasticResolver) sourceToMediathekFullEntry(ctx context.Context, src *sourcetype.SourceData) *model.MediathekFullEntry {
+func (r *ElasticResolver) sourceToMediathekFullEntry(ctx context.Context, src *sourcetype.SourceData, mediaVisible, mediaProtected bool) *model.MediathekFullEntry {
 	entry := &model.MediathekFullEntry{
 		ID:             src.ID,
 		Base:           sourceToMediathekBaseEntry(src),
@@ -545,10 +568,17 @@ func (r *ElasticResolver) sourceToMediathekFullEntry(ctx context.Context, src *s
 			})
 		}
 	}
+	entry.Base.MediaVisible = mediaVisible
+	entry.Base.MediaProtected = mediaProtected
+	entry.Base.MediaCount = []*model.MediaCount{}
 	if src.Media != nil {
 		for key, ml := range src.Media {
+			entry.Base.MediaCount = append(entry.Base.MediaCount, &model.MediaCount{
+				Type:  key,
+				Count: len(ml),
+			})
 			mediaList := &model.MediaList{
-				Name:  key,
+				Type:  key,
 				Items: make([]*model.Media, 0),
 			}
 			for _, media := range ml {
@@ -557,6 +587,7 @@ func (r *ElasticResolver) sourceToMediathekFullEntry(ctx context.Context, src *s
 			entry.Media = append(entry.Media, mediaList)
 		}
 	}
+
 	return entry
 }
 
@@ -576,17 +607,22 @@ func (r *ElasticResolver) MediathekEntries(ctx context.Context, signatures []str
 	if err != nil {
 		return nil, errors.Wrap(err, "cannot get groups from context")
 	}
+	var mediaProtected = false
 	for _, doc := range docs {
 		for t, acls := range doc.ACL {
+			t = strings.ToLower(t)
+			if t == "content" {
+				mediaProtected = !slices.Contains(acls, "global/guest")
+			}
 			for _, group := range groups {
 				if slices.Contains(acls, group) {
-					access[strings.ToLower(t)] = true
+					access[t] = true
 					break
 				}
 			}
 		}
 		if ok, found := access["meta"]; ok && found {
-			entry := r.sourceToMediathekFullEntry(ctx, &doc)
+			entry := r.sourceToMediathekFullEntry(ctx, &doc, access["content"], mediaProtected)
 			entries = append(entries, entry)
 		}
 	}

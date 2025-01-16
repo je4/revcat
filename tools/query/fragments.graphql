@@ -18,6 +18,11 @@ fragment MediathekBaseFragment on MediathekBaseEntry {
     rights
     license
     type
+    mediaCount {
+        ...MediaCountFragment
+    }
+    mediaVisible
+    mediaProtected
     poster {
         ...MediaItemFragment
     }
@@ -47,6 +52,10 @@ fragment ReferenceFragment on Reference {
     signature
 }
 
+fragment MediaCountFragment on MediaCount {
+    type
+    count
+}
 
 fragment MediaItemFragment on Media {
     name
@@ -59,7 +68,7 @@ fragment MediaItemFragment on Media {
     height
 }
 fragment MediaListFragment on MediaList {
-    name
+    type
     items {
         ...MediaItemFragment
     }
