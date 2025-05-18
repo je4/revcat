@@ -93,6 +93,7 @@ func NewController(localAddr, externalAddr string, cert *tls.Certificate, server
 				return
 
 			}
+			logger.Debug().Msgf("client: %s", client.Name)
 			if len(parts) != 2 {
 				// we only have an application key
 				ctx := context.WithValue(c.Request.Context(), "groups", client.Groups)

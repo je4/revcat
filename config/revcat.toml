@@ -17,7 +17,7 @@ apikey = "%%ELASTIC_APIKEY%%"
 debug = true
 
 [[client]]
-name = "test"
+name = "performance"
 apikey = "%%TEST.APIKEY%%"
 groups = ["global/guest"]
 jwtkey = "%%TEST.JWTKEY%%" # ":Xf/#|IKYrDsNi4]LN*o(W7;:"
@@ -32,9 +32,19 @@ values = [
     "zotero2!!Performance Art!!6x2 Performance-Duos",
     "zotero2!!Archive des Ephemeren",
     "bangbang",
-    "zotero2!!Kaskadenkondensator_ Basel!!Kasko-Videodokumentationen",
+    "zotero2!!Kaskadenkondensator Basel!!Kasko-Videodokumentationen",
     "zotero2!!Performance Art!!Doce en Diciembre",
     "zotero2!!Performance Art!!Together Elsewhere",
     "zotero2!!Interviews Archiv Performativ",
-    "zotero2!!Perf en Bref"
+    "zotero2!!Perf en Bref",
+    "zotero2!!Performance Art!!Must or Not",
+    "zotero2!!Performance Art!!Partout"
 ]
+
+[[client]]
+name = "ink"
+apikey = "%%INK.APIKEY%%"
+groups = ["global/guest"]
+jwtkey = "%%TEST.JWTKEY%%" # ":Xf/#|IKYrDsNi4]LN*o(W7;:"
+jwtalg = ["HS256","HS384","HS512"]
+jwtmaxage = "10m"

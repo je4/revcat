@@ -104,9 +104,12 @@ func BuildBaseFilter(client *config.Client, groups ...string) ([]types.Query, er
 		aclQuery.MinimumShouldMatch = 0
 	}
 
-	var esFilter = []types.Query{
-		types.Query{Bool: &baseQuery},
-		types.Query{Bool: &aclQuery},
+	var esFilter = []types.Query{}
+	if len(baseQuery.Must) > 0 || len(baseQuery.Should) > 0 {
+		esFilter = append(esFilter, types.Query{Bool: &baseQuery})
+	}
+	if len(aclQuery.Must) > 0 || len(aclQuery.Should) > 0 {
+		esFilter = append(esFilter, types.Query{Bool: &aclQuery})
 	}
 
 	return esFilter, nil

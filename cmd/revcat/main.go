@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"syscall"
+	"time"
 )
 
 var configfile = flag.String("config", "", "location of toml configuration file")
@@ -82,8 +83,8 @@ func main() {
 		out = fp
 	}
 
-	//	output := zerolog.ConsoleWriter{Out: out, TimeFormat: time.RFC3339}
-	_logger := zerolog.New(out).With().Timestamp().Logger()
+	output := zerolog.ConsoleWriter{Out: out, TimeFormat: time.RFC3339}
+	_logger := zerolog.New(out).With().Timestamp().Logger().Output(output)
 	_logger.Level(zLogger.LogLevel(conf.LogLevel))
 	var logger zLogger.ZLogger = &_logger
 

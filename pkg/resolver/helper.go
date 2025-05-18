@@ -81,7 +81,7 @@ func createFilterQuery(filter *model.InFilter) (*types.Query, error) {
 				})
 			} else {
 				qList = append(qList, types.Query{Term: map[string]types.TermQuery{
-					filter.BoolTerm.Field: types.TermQuery{
+					filter.BoolTerm.Field: {
 						Value: val,
 					},
 				},
