@@ -70,7 +70,7 @@ func createFilterQuery(filter *model.InFilter) (*types.Query, error) {
 				qList = append(qList, types.Query{
 					Nested: &types.NestedQuery{
 						Path: matches[1],
-						Query: &types.Query{
+						Query: types.Query{
 							Term: map[string]types.TermQuery{
 								fmt.Sprintf("%s.%s", matches[1], matches[2]): types.TermQuery{
 									Value: val,

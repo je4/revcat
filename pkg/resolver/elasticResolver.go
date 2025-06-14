@@ -154,6 +154,17 @@ func (r *ElasticResolver) loadEntries(ctx context.Context, signatures []string) 
 
 var sortFieldRegexp = regexp.MustCompile(`^[a-zA-Z0-9_.]*$`)
 
+type _sortField struct {
+	a any
+}
+
+func (s *_sortField) SortCombinationsCaster() *types.SortCombinations {
+	var sortCombinations types.SortCombinations = any(s.a)
+	return &sortCombinations
+}
+
+var _ types.SortCombinationsVariant = (*_sortField)(nil)
+
 // Search is the resolver for the search field.
 func (r *ElasticResolver) Search(
 	ctx context.Context,
@@ -315,7 +326,7 @@ func (r *ElasticResolver) Search(
 		scriptSource := "cosineSimilarity(params.queryVector, 'content_vector')"
 		esMust = append(esMust, types.Query{
 			ScriptScore: &types.ScriptScoreQuery{
-				Query: &types.Query{
+				Query: types.Query{
 					Exists: &types.ExistsQuery{
 						Field: "content_vector",
 					},
@@ -358,7 +369,7 @@ func (r *ElasticResolver) Search(
 			},
 		}
 	}
-	sorts := []types.SortCombinations{}
+	sorts := []*types.SortOptions{}
 	for _, s := range sort {
 		if !sortFieldRegexp.MatchString(s.Field) {
 			return nil, errors.Errorf("invalid sort field '%s'", s.Field)
@@ -372,7 +383,7 @@ func (r *ElasticResolver) Search(
 		default:
 			order = sortorder.Asc
 		}
-		sort := types.SortOptions{SortOptions: map[string]types.FieldSort{
+		sort := &types.SortOptions{SortOptions: map[string]types.FieldSort{
 			s.Field: {Order: &order},
 		}}
 		sorts = append(sorts, sort)
@@ -409,7 +420,11 @@ func (r *ElasticResolver) Search(
 		Size(num)
 
 	if len(sorts) > 0 {
-		elasticQuery = elasticQuery.Sort(sorts...)
+		var sss []types.SortCombinationsVariant = []types.SortCombinationsVariant{}
+		for _, sort := range sorts {
+			sss = append(sss, &_sortField{a: *sort})
+		}
+		elasticQuery = elasticQuery.Sort(sss...)
 	}
 	resp, err := elasticQuery.Do(ctx)
 	if err != nil {
