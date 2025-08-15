@@ -2,8 +2,13 @@ package resolver
 
 import (
 	"context"
-	"emperror.dev/errors"
 	"encoding/json"
+	"regexp"
+	"slices"
+	"strings"
+	"time"
+
+	"emperror.dev/errors"
 	"github.com/bluele/gcache"
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
@@ -13,10 +18,6 @@ import (
 	"github.com/je4/revcat/v2/pkg/sourcetype"
 	"github.com/je4/revcat/v2/tools/graph/model"
 	"github.com/je4/utils/v2/pkg/zLogger"
-	"regexp"
-	"slices"
-	"strings"
-	"time"
 )
 
 func NewElasticResolver(elastic *elasticsearch.TypedClient, index string, clients []*config.Client, logger zLogger.ZLogger) *ElasticResolver {
@@ -163,7 +164,7 @@ func (s *_sortField) SortCombinationsCaster() *types.SortCombinations {
 	return &sortCombinations
 }
 
-var _ types.SortCombinationsVariant = (*_sortField)(nil)
+var _ types.SortCombinations = (*_sortField)(nil)
 
 // Search is the resolver for the search field.
 func (r *ElasticResolver) Search(
@@ -420,7 +421,7 @@ func (r *ElasticResolver) Search(
 		Size(num)
 
 	if len(sorts) > 0 {
-		var sss []types.SortCombinationsVariant = []types.SortCombinationsVariant{}
+		var sss []types.SortCombinations = []types.SortCombinations{}
 		for _, sort := range sorts {
 			sss = append(sss, &_sortField{a: *sort})
 		}
