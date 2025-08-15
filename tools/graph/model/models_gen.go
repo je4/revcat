@@ -147,13 +147,15 @@ type Person struct {
 	Name             string              `json:"name"`
 	Role             *string             `json:"role,omitempty"`
 	AlternativeNames []string            `json:"alternativeNames,omitempty"`
+	Year             *int                `json:"year,omitempty"`
 	Identifier       []*PersonIdentifier `json:"identifier"`
 }
 
 type PersonIdentifier struct {
-	Name string  `json:"name"`
-	ID   string  `json:"id"`
-	URL  *string `json:"url,omitempty"`
+	Name       string  `json:"name"`
+	ID         string  `json:"id"`
+	URL        *string `json:"url,omitempty"`
+	Additional *string `json:"additional,omitempty"`
 }
 
 type Query struct {

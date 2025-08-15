@@ -156,12 +156,14 @@ type ComplexityRoot struct {
 		Identifier       func(childComplexity int) int
 		Name             func(childComplexity int) int
 		Role             func(childComplexity int) int
+		Year             func(childComplexity int) int
 	}
 
 	PersonIdentifier struct {
-		ID   func(childComplexity int) int
-		Name func(childComplexity int) int
-		URL  func(childComplexity int) int
+		Additional func(childComplexity int) int
+		ID         func(childComplexity int) int
+		Name       func(childComplexity int) int
+		URL        func(childComplexity int) int
 	}
 
 	Query struct {
@@ -692,6 +694,20 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Person.Role(childComplexity), true
+
+	case "Person.year":
+		if e.complexity.Person.Year == nil {
+			break
+		}
+
+		return e.complexity.Person.Year(childComplexity), true
+
+	case "PersonIdentifier.additional":
+		if e.complexity.PersonIdentifier.Additional == nil {
+			break
+		}
+
+		return e.complexity.PersonIdentifier.Additional(childComplexity), true
 
 	case "PersonIdentifier.id":
 		if e.complexity.PersonIdentifier.ID == nil {
@@ -2525,6 +2541,8 @@ func (ec *executionContext) fieldContext_MediathekBaseEntry_person(_ context.Con
 				return ec.fieldContext_Person_role(ctx, field)
 			case "alternativeNames":
 				return ec.fieldContext_Person_alternativeNames(ctx, field)
+			case "year":
+				return ec.fieldContext_Person_year(ctx, field)
 			case "identifier":
 				return ec.fieldContext_Person_identifier(ctx, field)
 			}
@@ -4138,6 +4156,47 @@ func (ec *executionContext) fieldContext_Person_alternativeNames(_ context.Conte
 	return fc, nil
 }
 
+func (ec *executionContext) _Person_year(ctx context.Context, field graphql.CollectedField, obj *model.Person) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Person_year(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Year, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*int)
+	fc.Result = res
+	return ec.marshalOInt2ᚖint(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Person_year(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Person",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Person_identifier(ctx context.Context, field graphql.CollectedField, obj *model.Person) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Person_identifier(ctx, field)
 	if err != nil {
@@ -4183,6 +4242,8 @@ func (ec *executionContext) fieldContext_Person_identifier(_ context.Context, fi
 				return ec.fieldContext_PersonIdentifier_id(ctx, field)
 			case "url":
 				return ec.fieldContext_PersonIdentifier_url(ctx, field)
+			case "additional":
+				return ec.fieldContext_PersonIdentifier_additional(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type PersonIdentifier", field.Name)
 		},
@@ -4307,6 +4368,47 @@ func (ec *executionContext) _PersonIdentifier_url(ctx context.Context, field gra
 }
 
 func (ec *executionContext) fieldContext_PersonIdentifier_url(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "PersonIdentifier",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _PersonIdentifier_additional(ctx context.Context, field graphql.CollectedField, obj *model.PersonIdentifier) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_PersonIdentifier_additional(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Additional, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalOString2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_PersonIdentifier_additional(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "PersonIdentifier",
 		Field:      field,
@@ -7888,6 +7990,8 @@ func (ec *executionContext) _Person(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec._Person_role(ctx, field, obj)
 		case "alternativeNames":
 			out.Values[i] = ec._Person_alternativeNames(ctx, field, obj)
+		case "year":
+			out.Values[i] = ec._Person_year(ctx, field, obj)
 		case "identifier":
 			out.Values[i] = ec._Person_identifier(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
@@ -7939,6 +8043,8 @@ func (ec *executionContext) _PersonIdentifier(ctx context.Context, sel ast.Selec
 			}
 		case "url":
 			out.Values[i] = ec._PersonIdentifier_url(ctx, field, obj)
+		case "additional":
+			out.Values[i] = ec._PersonIdentifier_additional(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}

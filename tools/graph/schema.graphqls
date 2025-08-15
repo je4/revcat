@@ -29,12 +29,14 @@ type PersonIdentifier {
     name: String!
     id: String!
     url: String
+    additional: String
 }
 
 type Person {
   name: String!
   role: String
   alternativeNames: [String!]
+  year: Int
   identifier: [PersonIdentifier!]!
 }
 

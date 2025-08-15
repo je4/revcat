@@ -118,12 +118,14 @@ fragment PersonIdentifierFragment on PersonIdentifier {
     name
     id
     url
+    additional
 }
 
 fragment PersonFragment on Person {
     name
     role
     alternativeNames
+    year
     identifier {
         ...PersonIdentifierFragment
     }
