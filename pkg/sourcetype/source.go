@@ -70,14 +70,16 @@ func GUnzip(data string) (string, error) {
 }
 
 type Identifier struct {
-	ID  string `json:"id"`
-	URL string `json:"urn,omitempty"`
+	ID         string `json:"id"`
+	URL        string `json:"urn,omitempty"`
+	Additional string `json:"additional,omitempty"`
 }
 
 type Person struct {
 	Name             string                `json:"name"`
 	Role             string                `json:"role"`
 	AlternativeNames []string              `json:"alternative_names,omitempty"`
+	Year             int                   `json:"year,omitempty"`
 	Identifier       map[string]Identifier `json:"identifier"`
 }
 

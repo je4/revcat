@@ -466,9 +466,10 @@ func (t *FacetFragment) GetValues() []*FacetValueFragment {
 }
 
 type PersonIdentifierFragment struct {
-	Name string  "json:\"name\" graphql:\"name\""
-	ID   string  "json:\"id\" graphql:\"id\""
-	URL  *string "json:\"url,omitempty\" graphql:\"url\""
+	Name       string  "json:\"name\" graphql:\"name\""
+	ID         string  "json:\"id\" graphql:\"id\""
+	URL        *string "json:\"url,omitempty\" graphql:\"url\""
+	Additional *string "json:\"additional,omitempty\" graphql:\"additional\""
 }
 
 func (t *PersonIdentifierFragment) GetName() string {
@@ -489,11 +490,18 @@ func (t *PersonIdentifierFragment) GetURL() *string {
 	}
 	return t.URL
 }
+func (t *PersonIdentifierFragment) GetAdditional() *string {
+	if t == nil {
+		t = &PersonIdentifierFragment{}
+	}
+	return t.Additional
+}
 
 type PersonFragment struct {
 	Name             string                      "json:\"name\" graphql:\"name\""
 	Role             *string                     "json:\"role,omitempty\" graphql:\"role\""
 	AlternativeNames []string                    "json:\"alternativeNames,omitempty\" graphql:\"alternativeNames\""
+	Year             *int64                      "json:\"year,omitempty\" graphql:\"year\""
 	Identifier       []*PersonIdentifierFragment "json:\"identifier\" graphql:\"identifier\""
 }
 
@@ -514,6 +522,12 @@ func (t *PersonFragment) GetAlternativeNames() []string {
 		t = &PersonFragment{}
 	}
 	return t.AlternativeNames
+}
+func (t *PersonFragment) GetYear() *int64 {
+	if t == nil {
+		t = &PersonFragment{}
+	}
+	return t.Year
 }
 func (t *PersonFragment) GetIdentifier() []*PersonIdentifierFragment {
 	if t == nil {
@@ -862,6 +876,7 @@ fragment PersonFragment on Person {
 	name
 	role
 	alternativeNames
+	year
 	identifier {
 		... PersonIdentifierFragment
 	}
@@ -870,6 +885,7 @@ fragment PersonIdentifierFragment on PersonIdentifier {
 	name
 	id
 	url
+	additional
 }
 fragment MediaCountFragment on MediaCount {
 	type
@@ -1009,6 +1025,7 @@ fragment PersonFragment on Person {
 	name
 	role
 	alternativeNames
+	year
 	identifier {
 		... PersonIdentifierFragment
 	}
@@ -1017,6 +1034,7 @@ fragment PersonIdentifierFragment on PersonIdentifier {
 	name
 	id
 	url
+	additional
 }
 fragment MediaCountFragment on MediaCount {
 	type

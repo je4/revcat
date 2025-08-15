@@ -201,6 +201,9 @@ func sourceToMediathekBaseEntry(src *sourcetype.SourceData) *model.MediathekBase
 		}
 		p.AlternativeNames = person.AlternativeNames
 		p.Identifier = []*model.PersonIdentifier{}
+		if person.Year != 0 {
+			p.Year = &person.Year
+		}
 		for name, ident := range person.Identifier {
 			pi := &model.PersonIdentifier{
 				Name: name,
@@ -208,6 +211,9 @@ func sourceToMediathekBaseEntry(src *sourcetype.SourceData) *model.MediathekBase
 			}
 			if ident.URL != "" {
 				pi.URL = &ident.URL
+			}
+			if ident.Additional != "" {
+				pi.Additional = &ident.Additional
 			}
 			p.Identifier = append(p.Identifier, pi)
 		}
