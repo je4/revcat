@@ -2,15 +2,16 @@ package resolver
 
 import (
 	"context"
-	"emperror.dev/errors"
 	"fmt"
+	"regexp"
+	"time"
+
+	"emperror.dev/errors"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/je4/revcat/v2/pkg/sourcetype"
 	"github.com/je4/revcat/v2/tools/graph/model"
-	"regexp"
-	"time"
 )
 
 func CheckJWTValid(tokenstring string, secret string, alg []string, maxAge time.Duration) (map[string]interface{}, error) {
@@ -197,6 +198,18 @@ func sourceToMediathekBaseEntry(src *sourcetype.SourceData) *model.MediathekBase
 		}
 		if person.Role != "" {
 			p.Role = &person.Role
+		}
+		p.AlternativeNames = person.AlternativeNames
+		p.Identifier = []*model.PersonIdentifier{}
+		for name, ident := range person.Identifier {
+			pi := &model.PersonIdentifier{
+				Name: name,
+				ID:   ident.ID,
+			}
+			if ident.URL != "" {
+				pi.URL = &ident.URL
+			}
+			p.Identifier = append(p.Identifier, pi)
 		}
 		entry.Person = append(entry.Person, p)
 	}

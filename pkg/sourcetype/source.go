@@ -3,14 +3,16 @@ package sourcetype
 import (
 	"bytes"
 	"compress/gzip"
+
 	"github.com/je4/zsearch/v2/pkg/translate"
 
 	"encoding/base64"
 	"encoding/json"
-	"github.com/pkg/errors"
 	"html/template"
 	"io"
 	"time"
+
+	"github.com/pkg/errors"
 )
 
 type SourceData struct {
@@ -67,9 +69,16 @@ func GUnzip(data string) (string, error) {
 	return dest.String(), nil
 }
 
+type Identifier struct {
+	ID  string `json:"id"`
+	URL string `json:"urn,omitempty"`
+}
+
 type Person struct {
-	Name string `json:"name"`
-	Role string `json:"role"`
+	Name             string                `json:"name"`
+	Role             string                `json:"role"`
+	AlternativeNames []string              `json:"alternative_names,omitempty"`
+	Identifier       map[string]Identifier `json:"identifier"`
 }
 
 type Media struct {
