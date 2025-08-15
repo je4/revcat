@@ -1,8 +1,8 @@
 logfile = ""
 loglevel = "DEBUG"
 
-localaddr = "localhost:8443"
-externaladdr = "https://localhost:8443/graphql"
+localaddr = "localhost:8441"
+externaladdr = "https://localhost:8441/graphql"
 badger = "c:/temp/performance/badger"
 zoomimageheight = 150
 aspectratio = 1.77777778
