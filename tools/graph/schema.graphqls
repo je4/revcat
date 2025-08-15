@@ -25,9 +25,17 @@ type MediaList {
   items: [Media!]!
 }
 
+type PersonIdentifier {
+    name: String!
+    id: String!
+    url: String
+}
+
 type Person {
   name: String!
   role: String
+  alternativeNames: [String!]
+  identifier: [PersonIdentifier!]!
 }
 
 type Note {

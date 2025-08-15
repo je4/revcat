@@ -114,7 +114,17 @@ fragment FacetFragment on Facet {
     }
 }
 
+fragment PersonIdentifierFragment on PersonIdentifier {
+    name
+    id
+    url
+}
+
 fragment PersonFragment on Person {
     name
     role
+    alternativeNames
+    identifier {
+        ...PersonIdentifierFragment
+    }
 }
