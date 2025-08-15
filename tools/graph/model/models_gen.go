@@ -144,8 +144,16 @@ type PageInfo struct {
 }
 
 type Person struct {
+	Name             string              `json:"name"`
+	Role             *string             `json:"role,omitempty"`
+	AlternativeNames []string            `json:"alternativeNames,omitempty"`
+	Identifier       []*PersonIdentifier `json:"identifier"`
+}
+
+type PersonIdentifier struct {
 	Name string  `json:"name"`
-	Role *string `json:"role,omitempty"`
+	ID   string  `json:"id"`
+	URL  *string `json:"url,omitempty"`
 }
 
 type Query struct {
