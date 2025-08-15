@@ -465,9 +465,36 @@ func (t *FacetFragment) GetValues() []*FacetValueFragment {
 	return t.Values
 }
 
-type PersonFragment struct {
+type PersonIdentifierFragment struct {
 	Name string  "json:\"name\" graphql:\"name\""
-	Role *string "json:\"role,omitempty\" graphql:\"role\""
+	ID   string  "json:\"id\" graphql:\"id\""
+	URL  *string "json:\"url,omitempty\" graphql:\"url\""
+}
+
+func (t *PersonIdentifierFragment) GetName() string {
+	if t == nil {
+		t = &PersonIdentifierFragment{}
+	}
+	return t.Name
+}
+func (t *PersonIdentifierFragment) GetID() string {
+	if t == nil {
+		t = &PersonIdentifierFragment{}
+	}
+	return t.ID
+}
+func (t *PersonIdentifierFragment) GetURL() *string {
+	if t == nil {
+		t = &PersonIdentifierFragment{}
+	}
+	return t.URL
+}
+
+type PersonFragment struct {
+	Name             string                      "json:\"name\" graphql:\"name\""
+	Role             *string                     "json:\"role,omitempty\" graphql:\"role\""
+	AlternativeNames []string                    "json:\"alternativeNames,omitempty\" graphql:\"alternativeNames\""
+	Identifier       []*PersonIdentifierFragment "json:\"identifier\" graphql:\"identifier\""
 }
 
 func (t *PersonFragment) GetName() string {
@@ -481,6 +508,18 @@ func (t *PersonFragment) GetRole() *string {
 		t = &PersonFragment{}
 	}
 	return t.Role
+}
+func (t *PersonFragment) GetAlternativeNames() []string {
+	if t == nil {
+		t = &PersonFragment{}
+	}
+	return t.AlternativeNames
+}
+func (t *PersonFragment) GetIdentifier() []*PersonIdentifierFragment {
+	if t == nil {
+		t = &PersonFragment{}
+	}
+	return t.Identifier
 }
 
 type MediathekBaseFragment_ACL struct {
@@ -822,6 +861,15 @@ fragment MultiLangFragment on MultiLangString {
 fragment PersonFragment on Person {
 	name
 	role
+	alternativeNames
+	identifier {
+		... PersonIdentifierFragment
+	}
+}
+fragment PersonIdentifierFragment on PersonIdentifier {
+	name
+	id
+	url
 }
 fragment MediaCountFragment on MediaCount {
 	type
@@ -960,6 +1008,15 @@ fragment MultiLangFragment on MultiLangString {
 fragment PersonFragment on Person {
 	name
 	role
+	alternativeNames
+	identifier {
+		... PersonIdentifierFragment
+	}
+}
+fragment PersonIdentifierFragment on PersonIdentifier {
+	name
+	id
+	url
 }
 fragment MediaCountFragment on MediaCount {
 	type
