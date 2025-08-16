@@ -71,7 +71,7 @@ func GUnzip(data string) (string, error) {
 
 type Identifier struct {
 	ID         string `json:"id"`
-	URL        string `json:"urn,omitempty"`
+	URL        string `json:"url,omitempty"`
 	Additional string `json:"additional,omitempty"`
 }
 
