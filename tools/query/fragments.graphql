@@ -126,6 +126,7 @@ fragment PersonFragment on Person {
     role
     alternativeNames
     year
+    web
     identifier {
         ...PersonIdentifierFragment
     }

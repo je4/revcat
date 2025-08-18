@@ -37,6 +37,7 @@ type Person {
   role: String
   alternativeNames: [String!]
   year: Int
+  web: [String!]
   identifier: [PersonIdentifier!]!
 }
 

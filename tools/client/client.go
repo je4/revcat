@@ -502,6 +502,7 @@ type PersonFragment struct {
 	Role             *string                     "json:\"role,omitempty\" graphql:\"role\""
 	AlternativeNames []string                    "json:\"alternativeNames,omitempty\" graphql:\"alternativeNames\""
 	Year             *int64                      "json:\"year,omitempty\" graphql:\"year\""
+	Web              []string                    "json:\"web,omitempty\" graphql:\"web\""
 	Identifier       []*PersonIdentifierFragment "json:\"identifier\" graphql:\"identifier\""
 }
 
@@ -528,6 +529,12 @@ func (t *PersonFragment) GetYear() *int64 {
 		t = &PersonFragment{}
 	}
 	return t.Year
+}
+func (t *PersonFragment) GetWeb() []string {
+	if t == nil {
+		t = &PersonFragment{}
+	}
+	return t.Web
 }
 func (t *PersonFragment) GetIdentifier() []*PersonIdentifierFragment {
 	if t == nil {
@@ -877,6 +884,7 @@ fragment PersonFragment on Person {
 	role
 	alternativeNames
 	year
+	web
 	identifier {
 		... PersonIdentifierFragment
 	}
@@ -1026,6 +1034,7 @@ fragment PersonFragment on Person {
 	role
 	alternativeNames
 	year
+	web
 	identifier {
 		... PersonIdentifierFragment
 	}

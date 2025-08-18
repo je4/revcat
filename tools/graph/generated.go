@@ -156,6 +156,7 @@ type ComplexityRoot struct {
 		Identifier       func(childComplexity int) int
 		Name             func(childComplexity int) int
 		Role             func(childComplexity int) int
+		Web              func(childComplexity int) int
 		Year             func(childComplexity int) int
 	}
 
@@ -694,6 +695,13 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.complexity.Person.Role(childComplexity), true
+
+	case "Person.web":
+		if e.complexity.Person.Web == nil {
+			break
+		}
+
+		return e.complexity.Person.Web(childComplexity), true
 
 	case "Person.year":
 		if e.complexity.Person.Year == nil {
@@ -2543,6 +2551,8 @@ func (ec *executionContext) fieldContext_MediathekBaseEntry_person(_ context.Con
 				return ec.fieldContext_Person_alternativeNames(ctx, field)
 			case "year":
 				return ec.fieldContext_Person_year(ctx, field)
+			case "web":
+				return ec.fieldContext_Person_web(ctx, field)
 			case "identifier":
 				return ec.fieldContext_Person_identifier(ctx, field)
 			}
@@ -4192,6 +4202,47 @@ func (ec *executionContext) fieldContext_Person_year(_ context.Context, field gr
 		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Int does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Person_web(ctx context.Context, field graphql.CollectedField, obj *model.Person) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Person_web(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (any, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Web, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	fc.Result = res
+	return ec.marshalOString2ᚕstringᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Person_web(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Person",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
 		},
 	}
 	return fc, nil
@@ -7992,6 +8043,8 @@ func (ec *executionContext) _Person(ctx context.Context, sel ast.SelectionSet, o
 			out.Values[i] = ec._Person_alternativeNames(ctx, field, obj)
 		case "year":
 			out.Values[i] = ec._Person_year(ctx, field, obj)
+		case "web":
+			out.Values[i] = ec._Person_web(ctx, field, obj)
 		case "identifier":
 			out.Values[i] = ec._Person_identifier(ctx, field, obj)
 			if out.Values[i] == graphql.Null {
