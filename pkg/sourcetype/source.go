@@ -3,15 +3,13 @@ package sourcetype
 import (
 	"bytes"
 	"compress/gzip"
-
-	"github.com/je4/zsearch/v2/pkg/translate"
-
 	"encoding/base64"
 	"encoding/json"
 	"html/template"
 	"io"
 	"time"
 
+	"github.com/je4/zsearch/v2/pkg/translate"
 	"github.com/pkg/errors"
 )
 
