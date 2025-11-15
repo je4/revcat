@@ -29,16 +29,19 @@ field = "category.keyword"
 values = [
     "zotero2!!PCB_Basel",
     "zotero2!!ACT Performance Festival",
-    "zotero2!!Performance Art!!6x2 Performance-Duos",
+    "zotero2!!Konvolute",
+    "zotero2!!Performance Art",
+    "zotero2!!Kaskadenkondensator Basel",
     "zotero2!!Archive des Ephemeren",
-    "bangbang",
-    "zotero2!!Kaskadenkondensator Basel!!Kasko-Videodokumentationen",
-    "zotero2!!Performance Art!!Doce en Diciembre",
-    "zotero2!!Performance Art!!Together Elsewhere",
-    "zotero2!!Interviews Archiv Performativ",
     "zotero2!!Perf en Bref",
-    "zotero2!!Performance Art!!Must or Not",
-    "zotero2!!Performance Art!!Partout"
+    "bangbang",
+    "zotero2!!Digitale See",
+    "zotero2!!Albena Mihaylova",
+    "zotero2!!Doce en Diciembre!!Oceanic Issues - Mensajes Oceánicos",
+    "zotero2!!Interviews Archiv Performativ",
+    "zotero2!!Performance Art",
+    "zotero2!!Perf en Bref",
+    "zotero2!!Werke!!Hochschule für Musik!!Motet Cycles"
 ]
 
 [[client]]
