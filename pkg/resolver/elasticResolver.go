@@ -312,10 +312,38 @@ func (r *ElasticResolver) Search(
 	}
 
 	esMust := []types.Query{}
+	esShould := []types.Query{}
+	var artistBoost float32 = 1.5
 	if query != "" {
 		esMust = append(esMust, types.Query{
 			SimpleQueryString: &types.SimpleQueryStringQuery{
 				Query: query,
+			},
+		})
+		esShould = append(esShould, types.Query{
+			Nested: &types.NestedQuery{
+				Path: "persons",
+				Query: types.Query{
+					Bool: &types.BoolQuery{
+						Must: []types.Query{
+							types.Query{
+								Terms: &types.TermsQuery{
+									TermsQuery: map[string]types.TermsQueryField{
+										"role": []string{"artist"},
+									},
+								},
+							},
+							types.Query{
+								Match: map[string]types.MatchQuery{
+									"name": types.MatchQuery{
+										Query: query,
+									},
+								},
+							},
+						},
+					},
+				},
+				Boost: &artistBoost,
 			},
 		})
 	}
@@ -367,6 +395,7 @@ func (r *ElasticResolver) Search(
 			Bool: &types.BoolQuery{
 				Filter: esFilter, // []types.Query{},
 				Must:   esMust,
+				Should: esShould,
 			},
 		}
 	}
