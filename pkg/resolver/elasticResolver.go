@@ -277,10 +277,8 @@ func (r *ElasticResolver) Search(
 			} else {
 				if len(f.Term.Include) > 1 {
 					termAgg.Include = f.Term.Include
-					s := len(f.Term.Include)
-					termAgg.Size = &s
-					zero := 0
-					termAgg.MinDocCount = &zero
+					termAgg.Size = new(len(f.Term.Include))
+					termAgg.MinDocCount = new(0)
 				}
 			}
 
@@ -352,7 +350,6 @@ func (r *ElasticResolver) Search(
 		if err != nil {
 			return nil, errors.Wrap(err, "cannot marshal params")
 		}
-		scriptSource := "cosineSimilarity(params.queryVector, 'content_vector')"
 		esMust = append(esMust, types.Query{
 			ScriptScore: &types.ScriptScoreQuery{
 				Query: types.Query{
@@ -361,7 +358,7 @@ func (r *ElasticResolver) Search(
 					},
 				},
 				Script: types.Script{
-					Source: &scriptSource,
+					Source: new("cosineSimilarity(params.queryVector, 'content_vector')"),
 					Params: map[string]json.RawMessage{
 						"queryVector": vectorBytes,
 					},

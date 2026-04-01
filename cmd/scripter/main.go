@@ -120,7 +120,6 @@ func main() {
 		logger.Fatal().Err(err)
 	}
 
-	signature := "zotero2-2486551*"
 	searchRequest := &search.Request{
 		Query: &types.Query{
 			Bool: &types.BoolQuery{
@@ -135,7 +134,7 @@ func main() {
 					types.Query{
 						Wildcard: map[string]types.WildcardQuery{
 							"signature.keyword": types.WildcardQuery{
-								Value: &signature,
+								Value: new("zotero2-2486551*"),
 							},
 						},
 					},
