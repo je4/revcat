@@ -16,10 +16,10 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.3.1
 	github.com/gqlgo/gqlgenc v0.33.1
 	github.com/je4/utils/v2 v2.0.64
-	github.com/je4/zsearch/v2 v2.0.11
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.35.0
 	github.com/vektah/gqlparser/v2 v2.5.32
+	go.ub.unibas.ch/metastring v0.0.0-20260401155127-108b29f652e8
 	golang.org/x/image v0.38.0
 )
 
@@ -57,9 +57,11 @@ require (
 	github.com/pelletier/go-toml/v2 v2.3.0 // indirect
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.59.0 // indirect
+	github.com/sergi/go-diff v1.4.0 // indirect
 	github.com/sosodev/duration v1.4.0 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.1 // indirect
+	github.com/yuin/goldmark v1.8.2 // indirect
 	go.mongodb.org/mongo-driver/v2 v2.5.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/otel v1.42.0 // indirect

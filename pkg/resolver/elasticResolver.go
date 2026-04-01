@@ -601,14 +601,14 @@ func (r *ElasticResolver) sourceToMediathekFullEntry(ctx context.Context, src *s
 	for _, lang := range src.Abstract.GetNativeLanguages() {
 		entry.Abstract = append(entry.Abstract, &model.MultiLangString{
 			Lang:       lang.String(),
-			Value:      src.Abstract.Get(lang),
+			Value:      src.Abstract.Get(lang).ContentString(),
 			Translated: false,
 		})
 	}
 	for _, lang := range src.Abstract.GetTranslatedLanguages() {
 		entry.Abstract = append(entry.Abstract, &model.MultiLangString{
 			Lang:       lang.String(),
-			Value:      src.Abstract.Get(lang),
+			Value:      src.Abstract.Get(lang).ContentString(),
 			Translated: true,
 		})
 	}

@@ -3,14 +3,15 @@ package resolver
 import (
 	"bytes"
 	"context"
-	"emperror.dev/errors"
 	"encoding/json"
+	"io"
+
+	"emperror.dev/errors"
 	"github.com/andybalholm/brotli"
 	"github.com/dgraph-io/badger/v4"
 	"github.com/je4/revcat/v2/pkg/sourcetype"
 	"github.com/je4/revcat/v2/tools/graph/model"
 	"github.com/je4/utils/v2/pkg/zLogger"
-	"io"
 )
 
 func NewBadgerResolver(logger zLogger.ZLogger, db *badger.DB) Resolver {
@@ -94,14 +95,14 @@ func (b *badgerResolver) sourceToMediathekFullEntry(src *sourcetype.SourceData) 
 	for _, lang := range src.Abstract.GetNativeLanguages() {
 		entry.Abstract = append(entry.Abstract, &model.MultiLangString{
 			Lang:       lang.String(),
-			Value:      src.Abstract.Get(lang),
+			Value:      src.Abstract.Get(lang).ContentString(),
 			Translated: false,
 		})
 	}
 	for _, lang := range src.Abstract.GetTranslatedLanguages() {
 		entry.Abstract = append(entry.Abstract, &model.MultiLangString{
 			Lang:       lang.String(),
-			Value:      src.Abstract.Get(lang),
+			Value:      src.Abstract.Get(lang).ContentString(),
 			Translated: true,
 		})
 	}

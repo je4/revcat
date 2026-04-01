@@ -2,6 +2,7 @@ package graph
 
 import (
 	"context"
+
 	"emperror.dev/errors"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"github.com/gin-gonic/gin"
@@ -125,14 +126,14 @@ func sourceToMediathekBaseEntry(src *sourcetype.SourceData) *model.MediathekBase
 	for _, lang := range src.Title.GetNativeLanguages() {
 		entry.Title = append(entry.Title, &model.MultiLangString{
 			Lang:       lang.String(),
-			Value:      src.Title.Get(lang),
+			Value:      src.Title.Get(lang).ContentString(),
 			Translated: false,
 		})
 	}
 	for _, lang := range src.Title.GetTranslatedLanguages() {
 		entry.Title = append(entry.Title, &model.MultiLangString{
 			Lang:       lang.String(),
-			Value:      src.Title.Get(lang),
+			Value:      src.Title.Get(lang).ContentString(),
 			Translated: true,
 		})
 	}
@@ -152,14 +153,14 @@ func sourceToMediathekFullEntry(src *sourcetype.SourceData) *model.MediathekFull
 	for _, lang := range src.Abstract.GetNativeLanguages() {
 		entry.Abstract = append(entry.Abstract, &model.MultiLangString{
 			Lang:       lang.String(),
-			Value:      src.Abstract.Get(lang),
+			Value:      src.Abstract.Get(lang).ContentString(),
 			Translated: false,
 		})
 	}
 	for _, lang := range src.Abstract.GetTranslatedLanguages() {
 		entry.Abstract = append(entry.Abstract, &model.MultiLangString{
 			Lang:       lang.String(),
-			Value:      src.Abstract.Get(lang),
+			Value:      src.Abstract.Get(lang).ContentString(),
 			Translated: true,
 		})
 	}

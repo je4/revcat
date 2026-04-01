@@ -222,14 +222,14 @@ func sourceToMediathekBaseEntry(src *sourcetype.SourceData) *model.MediathekBase
 	for _, lang := range src.Title.GetNativeLanguages() {
 		entry.Title = append(entry.Title, &model.MultiLangString{
 			Lang:       lang.String(),
-			Value:      src.Title.Get(lang),
+			Value:      src.Title.Get(lang).ContentString(),
 			Translated: false,
 		})
 	}
 	for _, lang := range src.Title.GetTranslatedLanguages() {
 		entry.Title = append(entry.Title, &model.MultiLangString{
 			Lang:       lang.String(),
-			Value:      src.Title.Get(lang),
+			Value:      src.Title.Get(lang).ContentString(),
 			Translated: true,
 		})
 	}
