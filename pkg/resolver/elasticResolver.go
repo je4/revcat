@@ -13,6 +13,7 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/operator"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/sortorder"
 	"github.com/je4/revcat/v2/config"
 	"github.com/je4/revcat/v2/pkg/sourcetype"
@@ -311,39 +312,51 @@ func (r *ElasticResolver) Search(
 
 	esMust := []types.Query{}
 	esShould := []types.Query{}
-	var artistBoost float32 = 1.5
+	//var artistBoost float32 = 1.5
 	if query != "" {
 		esMust = append(esMust, types.Query{
 			SimpleQueryString: &types.SimpleQueryStringQuery{
 				Query: query,
+				Fields: []string{
+					"title^4",
+					"persons.name^4",
+					"series^2",
+					"tags^2",
+					"category^1.5",
+					"abstract^1.1",
+					"notes.title^1.2",
+					"notes.note^1.0",
+					"media.*.fulltext^1.0",
+				},
+				DefaultOperator: &operator.Or,
 			},
 		})
 		esShould = append(esShould, types.Query{
-			Nested: &types.NestedQuery{
-				Path: "persons",
-				Query: types.Query{
-					Bool: &types.BoolQuery{
-						Must: []types.Query{
-							types.Query{
-								Terms: &types.TermsQuery{
-									TermsQuery: map[string]types.TermsQueryField{
-										"role": []string{"artist"},
-									},
-								},
-							},
-							types.Query{
-								Match: map[string]types.MatchQuery{
-									"name": types.MatchQuery{
-										Query: query,
-									},
-								},
+			SimpleQueryString: &types.SimpleQueryStringQuery{
+				Query: query,
+				Fields: []string{
+					"title^10",
+					"persons.name^5",
+				},
+				AnalyzeWildcard: new(true),
+			},
+		})
+		/*
+			esShould = append(esShould, types.Query{
+				Nested: &types.NestedQuery{
+					Path: "persons",
+					Query: types.Query{
+						Match: map[string]types.MatchQuery{
+							"persons.name": types.MatchQuery{
+								Query:     query,
+								Fuzziness: "AUTO",
 							},
 						},
 					},
+					Boost: &artistBoost,
 				},
-				Boost: &artistBoost,
-			},
-		})
+			})
+		*/
 	}
 	if len(vector) > 0 {
 		vectorBytes, err := json.Marshal(vector)
