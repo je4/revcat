@@ -164,35 +164,45 @@ func sourceMediaToMedia(m *sourcetype.Media) *model.Media {
 }
 
 func sourceToMediathekBaseEntry(src *sourcetype.SourceData) *model.MediathekBaseEntry {
+	collectionTitle := src.GetCollectionTitle()
+	series := src.GetSeries()
+	place := src.GetPlace()
+	date := src.GetDate()
+	url := src.GetUrl()
+	publisher := src.GetPublisher()
+	rights := src.GetRights()
+	license := src.GetLicense()
+	srcType := src.GetType()
+
 	entry := &model.MediathekBaseEntry{
-		ID:                src.ID,
-		Signature:         src.Signature,
-		SignatureOriginal: src.SignatureOriginal,
-		CollectionTitle:   &src.CollectionTitle,
-		Source:            src.Source,
+		ID:                src.GetID(),
+		Signature:         src.GetSignature(),
+		SignatureOriginal: src.GetSignatureOriginal(),
+		CollectionTitle:   &collectionTitle,
+		Source:            src.GetSource(),
 		Title:             []*model.MultiLangString{}, //src.Title,
-		Series:            &src.Series,
-		Place:             &src.Place,
-		Date:              &src.Date,
+		Series:            &series,
+		Place:             &place,
+		Date:              &date,
 		Person:            []*model.Person{},
-		Category:          src.Category,
-		Tags:              src.Tags,
-		URL:               &src.Url,
-		Publisher:         &src.Publisher,
-		Rights:            &src.Rights,
-		License:           &src.License,
-		Type:              &src.Type,
+		Category:          src.GetCategory(),
+		Tags:              src.GetTags(),
+		URL:               &url,
+		Publisher:         &publisher,
+		Rights:            &rights,
+		License:           &license,
+		Type:              &srcType,
 		References:        make([]*model.Reference, 0),
-		Poster:            sourceMediaToMedia(src.Poster),
+		Poster:            sourceMediaToMedia(src.GetPoster()),
 		ACL:               make([]*model.ACL, 0),
 	}
-	for name, acls := range src.ACL {
+	for name, acls := range src.GetACL() {
 		entry.ACL = append(entry.ACL, &model.ACL{
 			Name:   name,
 			Groups: acls,
 		})
 	}
-	for _, person := range src.Persons {
+	for _, person := range src.GetPersons() {
 		p := &model.Person{
 			Name: person.Name,
 		}
@@ -219,17 +229,18 @@ func sourceToMediathekBaseEntry(src *sourcetype.SourceData) *model.MediathekBase
 		}
 		entry.Person = append(entry.Person, p)
 	}
-	for _, lang := range src.Title.GetNativeLanguages() {
+	title := src.GetTitle()
+	for _, lang := range title.GetNativeLanguages() {
 		entry.Title = append(entry.Title, &model.MultiLangString{
 			Lang:       lang.String(),
-			Value:      src.Title.Get(lang).ContentString(),
+			Value:      title.Get(lang).ContentString(),
 			Translated: false,
 		})
 	}
-	for _, lang := range src.Title.GetTranslatedLanguages() {
+	for _, lang := range title.GetTranslatedLanguages() {
 		entry.Title = append(entry.Title, &model.MultiLangString{
 			Lang:       lang.String(),
-			Value:      src.Title.Get(lang).ContentString(),
+			Value:      title.Get(lang).ContentString(),
 			Translated: true,
 		})
 	}

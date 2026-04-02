@@ -23,6 +23,9 @@ func (s *SourceData) GetSource() string {
 }
 
 func (s *SourceData) GetTitle() *multilangString.MultiLangString {
+	if s.Title == nil {
+		return &multilangString.MultiLangString{}
+	}
 	return s.Title
 }
 
@@ -67,6 +70,9 @@ func (s *SourceData) GetMedia() map[string]MediaList {
 }
 
 func (s *SourceData) GetPoster() *Media {
+	if s.Poster == nil {
+		return &Media{}
+	}
 	return s.Poster
 }
 
@@ -79,6 +85,9 @@ func (s *SourceData) GetUrl() string {
 }
 
 func (s *SourceData) GetAbstract() *multilangString.MultiLangString {
+	if s.Abstract == nil {
+		return &multilangString.MultiLangString{}
+	}
 	return s.Abstract
 }
 
@@ -87,14 +96,23 @@ func (s *SourceData) GetReferences() []Reference {
 }
 
 func (s *SourceData) GetMeta() *Metalist {
+	if s.Meta == nil {
+		return &Metalist{}
+	}
 	return s.Meta
 }
 
 func (s *SourceData) GetExtra() *Metalist {
+	if s.Extra == nil {
+		return &Metalist{}
+	}
 	return s.Extra
 }
 
 func (s *SourceData) GetVars() *Varlist {
+	if s.Vars == nil {
+		return &Varlist{}
+	}
 	return s.Vars
 }
 

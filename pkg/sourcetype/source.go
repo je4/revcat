@@ -114,3 +114,5 @@ type Reference struct {
 	Title     string `json:"title"`
 	Signature string `json:"signature"`
 }
+
+var _ Source = (*SourceData)(nil)
