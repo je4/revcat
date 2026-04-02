@@ -27,7 +27,7 @@ type Source interface {
 	SetCollectionTitle(collectionTitle string) error
 	GetPersons() []Person
 	SetPersons(persons []Person) error
-	AddPerson(p Person)
+	AddPerson(p Person) error
 	GetACL() map[string][]string
 	SetACL(acl map[string][]string) error
 	GetCatalog() []string
@@ -38,7 +38,7 @@ type Source interface {
 	SetTags(tags []string) error
 	GetMedia() map[string]MediaList
 	SetMedia(media map[string]MediaList) error
-	AddMedia(kind string, m Media)
+	AddMedia(kind string, m Media) error
 	GetPoster() *Media
 	SetPoster(poster *Media) error
 	GetNotes() []Note
@@ -51,13 +51,13 @@ type Source interface {
 	SetReferences(references []Reference) error
 	GetMeta() *Metalist
 	SetMeta(meta *Metalist) error
-	AddMeta(key, value string)
+	AddMeta(key, value string) error
 	GetExtra() *Metalist
 	SetExtra(extra *Metalist) error
-	AddExtra(key, value string)
+	AddExtra(key, value string) error
 	GetVars() *Varlist
 	SetVars(vars *Varlist) error
-	AddVar(key string, value []string)
+	AddVar(key string, value []string) error
 	GetType() string
 	SetType(t string) error
 	GetQueries() []Query

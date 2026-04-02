@@ -244,28 +244,38 @@ func TestSourceData_Adders(t *testing.T) {
 	s := &SourceData{}
 
 	p := Person{Name: "Alice"}
-	s.AddPerson(p)
+	if err := s.AddPerson(p); err != nil {
+		t.Errorf("AddPerson() error = %v", err)
+	}
 	if len(s.Persons) != 1 || s.Persons[0].Name != "Alice" {
 		t.Errorf("AddPerson failed, got %v", s.Persons)
 	}
 
 	m := Media{Name: "video.mp4"}
-	s.AddMedia("video", m)
+	if err := s.AddMedia("video", m); err != nil {
+		t.Errorf("AddMedia() error = %v", err)
+	}
 	if len(s.Media) != 1 || len(s.Media["video"]) != 1 || s.Media["video"][0].Name != "video.mp4" {
 		t.Errorf("AddMedia failed, got %v", s.Media)
 	}
 
-	s.AddMeta("author", "John")
+	if err := s.AddMeta("author", "John"); err != nil {
+		t.Errorf("AddMeta() error = %v", err)
+	}
 	if (*s.Meta)["author"] != "John" {
 		t.Errorf("AddMeta failed, got %v", s.Meta)
 	}
 
-	s.AddExtra("quality", "high")
+	if err := s.AddExtra("quality", "high"); err != nil {
+		t.Errorf("AddExtra() error = %v", err)
+	}
 	if (*s.Extra)["quality"] != "high" {
 		t.Errorf("AddExtra failed, got %v", s.Extra)
 	}
 
-	s.AddVar("keywords", []string{"go", "lang"})
+	if err := s.AddVar("keywords", []string{"go", "lang"}); err != nil {
+		t.Errorf("AddVar() error = %v", err)
+	}
 	if !reflect.DeepEqual((*s.Vars)["keywords"], []string{"go", "lang"}) {
 		t.Errorf("AddVar failed, got %v", s.Vars)
 	}

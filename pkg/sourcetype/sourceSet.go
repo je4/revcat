@@ -176,11 +176,12 @@ func (s *SourceData) SetLicense(license string) error {
 	return nil
 }
 
-func (s *SourceData) AddPerson(p Person) {
+func (s *SourceData) AddPerson(p Person) error {
 	s.Persons = append(s.Persons, p)
+	return nil
 }
 
-func (s *SourceData) AddMedia(kind string, m Media) {
+func (s *SourceData) AddMedia(kind string, m Media) error {
 	if s.Media == nil {
 		s.Media = make(map[string]MediaList)
 	}
@@ -188,25 +189,29 @@ func (s *SourceData) AddMedia(kind string, m Media) {
 		s.Media[kind] = MediaList{}
 	}
 	s.Media[kind] = append(s.Media[kind], m)
+	return nil
 }
 
-func (s *SourceData) AddMeta(key, value string) {
+func (s *SourceData) AddMeta(key, value string) error {
 	if s.Meta == nil {
 		s.Meta = &Metalist{}
 	}
 	(*s.Meta)[key] = value
+	return nil
 }
 
-func (s *SourceData) AddExtra(key, value string) {
+func (s *SourceData) AddExtra(key, value string) error {
 	if s.Extra == nil {
 		s.Extra = &Metalist{}
 	}
 	(*s.Extra)[key] = value
+	return nil
 }
 
-func (s *SourceData) AddVar(key string, value []string) {
+func (s *SourceData) AddVar(key string, value []string) error {
 	if s.Vars == nil {
 		s.Vars = &Varlist{}
 	}
 	s.Vars.Append(key, value)
+	return nil
 }
