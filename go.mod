@@ -19,6 +19,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.35.0
 	github.com/vektah/gqlparser/v2 v2.5.32
+	gitlab.switch.ch/ub-unibas/rdv2/ubcat/v2 v2.0.47
 	go.ub.unibas.ch/metastring v0.0.0-20260401155127-108b29f652e8
 	golang.org/x/image v0.38.0
 )
