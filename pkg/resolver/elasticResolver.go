@@ -569,7 +569,7 @@ func (r *ElasticResolver) Search(
 
 func (r *ElasticResolver) sourceToMediathekFullEntry(ctx context.Context, src *sourcetype.SourceData, mediaVisible, mediaProtected bool) *model.MediathekFullEntry {
 	entry := &model.MediathekFullEntry{
-		ID:             src.ID,
+		ID:             src.GetID(),
 		Base:           sourceToMediathekBaseEntry(src),
 		Notes:          []*model.Note{},
 		Abstract:       []*model.MultiLangString{}, //&src.Abstract,
@@ -579,7 +579,7 @@ func (r *ElasticResolver) sourceToMediathekFullEntry(ctx context.Context, src *s
 	}
 	/*
 		var refSignatures = make([]string, 0)
-		for _, ref := range src.References {
+		for _, ref := range src.GetReferences() {
 			if ref.Type == "signature" {
 				refSignatures = append(refSignatures, ref.Signature)
 			}
@@ -590,7 +590,7 @@ func (r *ElasticResolver) sourceToMediathekFullEntry(ctx context.Context, src *s
 				r.logger.Error().Err(err).Msgf("cannot load references %v", refSignatures)
 			}
 			for _, ref := range refs {
-				if ref.Signature == src.Signature {
+				if ref.Signature == src.GetSignature() {
 					// prevent recursion
 					continue
 				}
@@ -598,39 +598,40 @@ func (r *ElasticResolver) sourceToMediathekFullEntry(ctx context.Context, src *s
 			}
 		}
 	*/
-	for _, lang := range src.Abstract.GetNativeLanguages() {
+	abstract := src.GetAbstract()
+	for _, lang := range abstract.GetNativeLanguages() {
 		entry.Abstract = append(entry.Abstract, &model.MultiLangString{
 			Lang:       lang.String(),
-			Value:      src.Abstract.Get(lang).ContentString(),
+			Value:      abstract.Get(lang).ContentString(),
 			Translated: false,
 		})
 	}
-	for _, lang := range src.Abstract.GetTranslatedLanguages() {
+	for _, lang := range abstract.GetTranslatedLanguages() {
 		entry.Abstract = append(entry.Abstract, &model.MultiLangString{
 			Lang:       lang.String(),
-			Value:      src.Abstract.Get(lang).ContentString(),
+			Value:      abstract.Get(lang).ContentString(),
 			Translated: true,
 		})
 	}
-	for _, note := range src.Notes {
+	for _, note := range src.GetNotes() {
 		entry.Notes = append(entry.Notes, &model.Note{
 			Title: &note.Title,
 			Text:  string(note.Note),
 		})
 	}
-	if src.Extra != nil {
-		for key, val := range *src.Extra {
-			entry.Extra = append(entry.Extra, &model.KeyValue{
-				Key:   key,
-				Value: val,
-			})
-		}
+	extra := src.GetExtra()
+	for key, val := range *extra {
+		entry.Extra = append(entry.Extra, &model.KeyValue{
+			Key:   key,
+			Value: val,
+		})
 	}
 	entry.Base.MediaVisible = mediaVisible
 	entry.Base.MediaProtected = mediaProtected
 	entry.Base.MediaCount = []*model.MediaCount{}
-	if src.Media != nil {
-		for key, ml := range src.Media {
+	media := src.GetMedia()
+	if media != nil {
+		for key, ml := range media {
 			entry.Base.MediaCount = append(entry.Base.MediaCount, &model.MediaCount{
 				Type:  key,
 				Count: len(ml),
@@ -639,8 +640,8 @@ func (r *ElasticResolver) sourceToMediathekFullEntry(ctx context.Context, src *s
 				Type:  key,
 				Items: make([]*model.Media, 0),
 			}
-			for _, media := range ml {
-				mediaList.Items = append(mediaList.Items, sourceMediaToMedia(&media))
+			for _, mediaItem := range ml {
+				mediaList.Items = append(mediaList.Items, sourceMediaToMedia(&mediaItem))
 			}
 			entry.Media = append(entry.Media, mediaList)
 		}
