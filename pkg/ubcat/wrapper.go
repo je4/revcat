@@ -2,6 +2,7 @@ package ubcat
 
 import (
 	"html/template"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -28,38 +29,32 @@ func (m *medUBCat) SetID(id string) error {
 }
 
 func (m *medUBCat) GetSignature() string {
-	if m.Mapping == nil || len(m.Mapping.RecordIdentifier) == 0 {
-		return ""
+	recordIdentifiers := m.cast().GetRecordIdentifier()
+	for _, recordIdentifier := range recordIdentifiers {
+		if strings.HasPrefix(recordIdentifier, "original:") {
+			continue
+		}
+		return recordIdentifier
 	}
-	return m.Mapping.RecordIdentifier[0]
+	return ""
 }
 
 func (m *medUBCat) SetSignature(signature string) error {
-	if m.Mapping == nil {
-		m.Mapping = &ubschema.Mapping001{}
-	}
-	m.Mapping.RecordIdentifier = []string{signature}
-	return nil
+	return errors.WithStack(m.cast().SetRecordIdentifier(append([]string{signature}, m.cast().GetRecordIdentifier()...)))
 }
 
 func (m *medUBCat) GetSignatureOriginal() string {
-	if m.Mapping == nil || len(m.Mapping.RecordIdentifier) < 2 {
-		return ""
+	recordIdentifiers := m.cast().GetRecordIdentifier()
+	for _, recordIdentifier := range recordIdentifiers {
+		if strings.HasPrefix(recordIdentifier, "original:") {
+			return recordIdentifier[len("original:"):]
+		}
 	}
-	return m.Mapping.RecordIdentifier[1]
+	return ""
 }
 
 func (m *medUBCat) SetSignatureOriginal(signatureOriginal string) error {
-	if m.Mapping == nil {
-		m.Mapping = &ubschema.Mapping001{}
-	}
-	if len(m.Mapping.RecordIdentifier) < 2 {
-		for len(m.Mapping.RecordIdentifier) < 2 {
-			m.Mapping.RecordIdentifier = append(m.Mapping.RecordIdentifier, "")
-		}
-	}
-	m.Mapping.RecordIdentifier[1] = signatureOriginal
-	return nil
+	return errors.WithStack(m.cast().SetRecordIdentifier(append([]string{"original:" + signatureOriginal}, m.cast().GetRecordIdentifier()...)))
 }
 
 func (m *medUBCat) GetSource() string {

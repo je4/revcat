@@ -154,10 +154,8 @@ github.com/xyproto/randomstring v1.0.5 h1:YtlWPoRdgMu3NZtP45drfy1GKoojuR7hmRcnhZ
 github.com/xyproto/randomstring v1.0.5/go.mod h1:rgmS5DeNXLivK7YprL0pY+lTuhNQW3iGxZ18UQApw/E=
 github.com/yuin/goldmark v1.8.2 h1:kEGpgqJXdgbkhcOgBxkC0X0PmoPG1ZyoZ117rDVp4zE=
 github.com/yuin/goldmark v1.8.2/go.mod h1:ip/1k0VRfGynBgxOz0yCqHrbZXhcjxyuS66Brc7iBKg=
-gitlab.switch.ch/ub-unibas/rdv2/ubcat/v2 v2.0.46 h1:yY581uUjAzlTCxZZ7j3XQLkchYPPio+mh0gTgT9w6gc=
-gitlab.switch.ch/ub-unibas/rdv2/ubcat/v2 v2.0.46/go.mod h1:D6d46XFDrvhYNg5GoK8sfsIhoaphlbB/ysOkrI4eaKg=
-gitlab.switch.ch/ub-unibas/rdv2/ubcat/v2 v2.0.47 h1:dHcmAKvex4fe/njWMhPxpQRXbac/AAHbwfbPqmRGQqk=
-gitlab.switch.ch/ub-unibas/rdv2/ubcat/v2 v2.0.47/go.mod h1:C6ioIZ9XnGLLLLROLv6jY4bIDovjDVRR3oBLqYClnFo=
+gitlab.switch.ch/ub-unibas/rdv2/ubcat/v2 v2.0.48 h1:I02RYZ8Gsgc458nJrwu0uRc3d4R0gYKNBK4YwJLbMIQ=
+gitlab.switch.ch/ub-unibas/rdv2/ubcat/v2 v2.0.48/go.mod h1:C6ioIZ9XnGLLLLROLv6jY4bIDovjDVRR3oBLqYClnFo=
 go.mongodb.org/mongo-driver/v2 v2.5.0 h1:yXUhImUjjAInNcpTcAlPHiT7bIXhshCTL3jVBkF3xaE=
 go.mongodb.org/mongo-driver/v2 v2.5.0/go.mod h1:yOI9kBsufol30iFsl1slpdq1I0eHPzybRWdyYUs8K/0=
 go.opentelemetry.io/auto/sdk v1.2.1 h1:jXsnJ4Lmnqd11kwkBV2LgLoFMZKizbCi5fNZ/ipaZ64=
