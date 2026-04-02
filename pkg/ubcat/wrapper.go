@@ -9,7 +9,6 @@ import (
 
 	"github.com/je4/revcat/v2/pkg/sourcetype"
 	ubschema "gitlab.switch.ch/ub-unibas/rdv2/ubcat/v2/pkg/schema"
-	"go.ub.unibas.ch/metastring/pkg/metaString"
 	"go.ub.unibas.ch/metastring/pkg/multilangString"
 )
 
@@ -361,16 +360,19 @@ func (m *medUBCat) SetUrl(url string) error {
 }
 
 func (m *medUBCat) GetAbstract() *multilangString.MultiLangString {
+	abs := m.cast().GetAbstracts()
 	mls := &multilangString.MultiLangString{}
-	abs := m.cast().GetAbstract()
-	if abs != nil {
-		mls.Set(abs.String())
+	for _, l := range abs {
+		mls.Set(l.String())
 	}
 	return mls
 }
 
 func (m *medUBCat) SetAbstract(abstract *multilangString.MultiLangString) error {
-	if err := m.cast().SetAbstract(metaString.NewMetaString(abstract.String().String())); err != nil {
+	if abstract == nil {
+		return errors.New("abstract is nil")
+	}
+	if err := m.cast().SetAbstract(*abstract...); err != nil {
 		return errors.WithStack(err)
 	}
 	return nil
