@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/je4/revcat/v2/pkg/sourcetype"
+	"go.ub.unibas.ch/metastring/pkg/metaString"
 	"go.ub.unibas.ch/metastring/pkg/multilangString"
 )
 
@@ -22,8 +23,8 @@ func fillSource(s sourcetype.Source) error {
 	}
 
 	title := &multilangString.MultiLangString{}
-	title.Set("Main Title")
-	if err := s.SetTitle(title); err != nil {
+	title.Set(metaString.NewMetaString("Main Title"))
+	if err := s.SetTitle(title.String()); err != nil {
 		return err
 	}
 
@@ -103,8 +104,7 @@ func fillSource(s sourcetype.Source) error {
 		return err
 	}
 
-	abstract := &multilangString.MultiLangString{}
-	abstract.Set("This is an abstract")
+	abstract := multilangString.NewMultiLangString(metaString.NewMetaString("This is an abstract"))
 	if err := s.SetAbstract(abstract); err != nil {
 		return err
 	}
@@ -265,7 +265,7 @@ func compareSources(t *testing.T, s1, s2 sourcetype.Source) {
 		t.Errorf("SignatureOriginal mismatch: %v != %v", s1.GetSignatureOriginal(), s2.GetSignatureOriginal())
 	}
 
-	if s1.GetTitle().String().String() != s2.GetTitle().String().String() {
+	if s1.GetTitle().String() != s2.GetTitle().String() {
 		t.Errorf("Title mismatch: %v != %v", s1.GetTitle(), s2.GetTitle())
 	}
 	if s1.GetSeries() != s2.GetSeries() {

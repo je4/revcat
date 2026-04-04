@@ -6,6 +6,7 @@ import (
 
 	"github.com/je4/revcat/v2/pkg/sourcetype"
 	ubschema "gitlab.switch.ch/ub-unibas/rdv2/ubcat/v2/pkg/schema"
+	"go.ub.unibas.ch/metastring/pkg/metaString"
 	"go.ub.unibas.ch/metastring/pkg/multilangString"
 )
 
@@ -250,8 +251,7 @@ func TestMedUBCat_Vars(t *testing.T) {
 func TestMedUBCat_Abstract(t *testing.T) {
 	m := &medUBCat{}
 	abstractStr := "Dies ist ein Abstract"
-	abstract := &multilangString.MultiLangString{}
-	abstract.Set(abstractStr)
+	abstract := multilangString.NewMultiLangString(metaString.NewMetaString(abstractStr))
 
 	if err := m.SetAbstract(abstract); err != nil {
 		t.Fatalf("SetAbstract() error = %v", err)
@@ -278,8 +278,7 @@ func TestSourceDataAndUBSchema001(t *testing.T) {
 	titleStr := "Test Titel"
 	date := "2024"
 	abstractStr := "Dies ist ein Abstract"
-	abstract := &multilangString.MultiLangString{}
-	abstract.Set(abstractStr)
+	abstract := multilangString.NewMultiLangString(metaString.NewMetaString(abstractStr))
 
 	persons := []sourcetype.Person{
 		{
@@ -296,9 +295,8 @@ func TestSourceDataAndUBSchema001(t *testing.T) {
 		t.Fatalf("SetSignature() error = %v", err)
 	}
 
-	title := &multilangString.MultiLangString{}
-	title.Set(titleStr)
-	if err := m.SetTitle(title); err != nil {
+	title := multilangString.NewMultiLangString(metaString.NewMetaString(titleStr))
+	if err := m.SetTitle(title.String()); err != nil {
 		t.Fatalf("SetTitle() error = %v", err)
 	}
 
@@ -321,8 +319,8 @@ func TestSourceDataAndUBSchema001(t *testing.T) {
 	if m.GetSignature() != signature {
 		t.Errorf("GetSignature() = %v, want %v", m.GetSignature(), signature)
 	}
-	if m.GetTitle().String().String() != titleStr {
-		t.Errorf("GetTitle() = %v, want %v", m.GetTitle().String().String(), titleStr)
+	if m.GetTitle().String() != titleStr {
+		t.Errorf("GetTitle() = %v, want %v", m.GetTitle().String(), titleStr)
 	}
 	if m.GetDate() != date {
 		t.Errorf("GetDate() = %v, want %v", m.GetDate(), date)
@@ -338,7 +336,7 @@ func TestSourceDataAndUBSchema001(t *testing.T) {
 	sd := &sourcetype.SourceData{}
 	sd.SetID(id)
 	sd.SetSignature(signature)
-	sd.SetTitle(title)
+	sd.SetTitle(title.String())
 	sd.SetDate(date)
 	sd.SetAbstract(abstract)
 	sd.SetPersons(persons)
@@ -353,7 +351,7 @@ func TestSourceDataAndUBSchema001(t *testing.T) {
 	if s1.GetSignature() != s2.GetSignature() {
 		t.Errorf("m.GetSignature() [%v] != sd.GetSignature() [%v]", s1.GetSignature(), s2.GetSignature())
 	}
-	if s1.GetTitle().String().String() != s2.GetTitle().String().String() {
+	if s1.GetTitle().String() != s2.GetTitle().String() {
 		t.Errorf("m.GetTitle() [%v] != sd.GetTitle() [%v]", s1.GetTitle(), s2.GetTitle())
 	}
 	if s1.GetDate() != s2.GetDate() {

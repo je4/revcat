@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"go.ub.unibas.ch/metastring/pkg/metaString"
 
 	"github.com/je4/revcat/v2/pkg/sourcetype"
 	ubschema "gitlab.switch.ch/ub-unibas/rdv2/ubcat/v2/pkg/schema"
@@ -64,14 +65,12 @@ func (m *medUBCat) SetSource(source string) error {
 	return nil
 }
 
-func (m *medUBCat) GetTitle() *multilangString.MultiLangString {
-	mls := &multilangString.MultiLangString{}
-	mls.Set(m.cast().GetMainTitle())
-	return mls
+func (m *medUBCat) GetTitle() *metaString.MetaString {
+	return metaString.NewMetaString(m.cast().GetMainTitle())
 }
 
-func (m *medUBCat) SetTitle(title *multilangString.MultiLangString) error {
-	if err := m.cast().SetMainTitle(title.String().String()); err != nil {
+func (m *medUBCat) SetTitle(title *metaString.MetaString) error {
+	if err := m.cast().SetMainTitle(title.String()); err != nil {
 		return errors.WithStack(err)
 	}
 	return nil
@@ -360,19 +359,14 @@ func (m *medUBCat) SetUrl(url string) error {
 }
 
 func (m *medUBCat) GetAbstract() *multilangString.MultiLangString {
-	abs := m.cast().GetAbstracts()
-	mls := &multilangString.MultiLangString{}
-	for _, l := range abs {
-		mls.Set(l.String())
-	}
-	return mls
+	return m.cast().GetAbstract()
 }
 
 func (m *medUBCat) SetAbstract(abstract *multilangString.MultiLangString) error {
 	if abstract == nil {
 		return errors.New("abstract is nil")
 	}
-	if err := m.cast().SetAbstract(*abstract...); err != nil {
+	if err := m.cast().SetAbstract(abstract); err != nil {
 		return errors.WithStack(err)
 	}
 	return nil

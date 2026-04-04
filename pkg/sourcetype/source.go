@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"go.ub.unibas.ch/metastring/pkg/metaString"
 	"go.ub.unibas.ch/metastring/pkg/multilangString"
 )
 
@@ -17,7 +18,7 @@ type SourceData struct {
 	Signature         string                           `json:"signature"`
 	SignatureOriginal string                           `json:"signatureoriginal"`
 	Source            string                           `json:"source"`
-	Title             *multilangString.MultiLangString `json:"title"`
+	Title             *metaString.MetaString           `json:"title"`
 	Series            string                           `json:"series"`
 	Place             string                           `json:"place"`
 	Date              string                           `json:"date"`

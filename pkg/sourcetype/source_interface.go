@@ -3,6 +3,7 @@ package sourcetype
 import (
 	"time"
 
+	"go.ub.unibas.ch/metastring/pkg/metaString"
 	"go.ub.unibas.ch/metastring/pkg/multilangString"
 )
 
@@ -15,8 +16,8 @@ type Source interface {
 	SetSignatureOriginal(signatureOriginal string) error
 	GetSource() string
 	SetSource(source string) error
-	GetTitle() *multilangString.MultiLangString
-	SetTitle(title *multilangString.MultiLangString) error
+	GetTitle() *metaString.MetaString
+	SetTitle(title *metaString.MetaString) error
 	GetSeries() string
 	SetSeries(series string) error
 	GetPlace() string

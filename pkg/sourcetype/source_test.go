@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"go.ub.unibas.ch/metastring/pkg/metaString"
 	"go.ub.unibas.ch/metastring/pkg/multilangString"
 )
 
@@ -16,8 +17,8 @@ func TestSourceData_GettersSetters(t *testing.T) {
 	s := &SourceData{}
 
 	now := time.Now()
-	title := &multilangString.MultiLangString{}
-	abstract := &multilangString.MultiLangString{}
+	title := metaString.NewMetaString("")
+	abstract := multilangString.NewMultiLangString()
 	persons := []Person{{Name: "John Doe"}}
 	acl := map[string][]string{"read": {"user1"}}
 	catalog := []string{"cat1"}
@@ -148,7 +149,7 @@ func TestSourceData_GettersSetters(t *testing.T) {
 	if s.GetSource() != "src" {
 		t.Errorf("GetSource() = %v, want %v", s.GetSource(), "src")
 	}
-	if s.GetTitle() != title {
+	if s.GetTitle().String() != title.String() {
 		t.Errorf("GetTitle() = %v, want %v", s.GetTitle(), title)
 	}
 	if s.GetSeries() != "series" {

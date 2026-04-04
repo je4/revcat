@@ -19,8 +19,8 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.35.0
 	github.com/vektah/gqlparser/v2 v2.5.32
-	gitlab.switch.ch/ub-unibas/rdv2/ubcat/v2 v2.0.48
-	go.ub.unibas.ch/metastring v0.0.0-20260401155127-108b29f652e8
+	gitlab.switch.ch/ub-unibas/rdv2/ubcat/v2 v2.0.51
+	go.ub.unibas.ch/metastring v0.0.0-20260404150311-8c0b893fedac
 	golang.org/x/image v0.38.0
 )
 
@@ -65,9 +65,9 @@ require (
 	github.com/yuin/goldmark v1.8.2 // indirect
 	go.mongodb.org/mongo-driver/v2 v2.5.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/otel v1.42.0 // indirect
-	go.opentelemetry.io/otel/metric v1.42.0 // indirect
-	go.opentelemetry.io/otel/trace v1.42.0 // indirect
+	go.opentelemetry.io/otel v1.43.0 // indirect
+	go.opentelemetry.io/otel/metric v1.43.0 // indirect
+	go.opentelemetry.io/otel/trace v1.43.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.25.0 // indirect
 	golang.org/x/crypto v0.49.0 // indirect

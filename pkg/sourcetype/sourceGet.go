@@ -3,6 +3,7 @@ package sourcetype
 import (
 	"time"
 
+	"go.ub.unibas.ch/metastring/pkg/metaString"
 	"go.ub.unibas.ch/metastring/pkg/multilangString"
 )
 
@@ -22,9 +23,9 @@ func (s *SourceData) GetSource() string {
 	return s.Source
 }
 
-func (s *SourceData) GetTitle() *multilangString.MultiLangString {
+func (s *SourceData) GetTitle() *metaString.MetaString {
 	if s.Title == nil {
-		return &multilangString.MultiLangString{}
+		return metaString.NewMetaString("")
 	}
 	return s.Title
 }
@@ -86,7 +87,7 @@ func (s *SourceData) GetUrl() string {
 
 func (s *SourceData) GetAbstract() *multilangString.MultiLangString {
 	if s.Abstract == nil {
-		return &multilangString.MultiLangString{}
+		return multilangString.NewMultiLangString()
 	}
 	return s.Abstract
 }
