@@ -27,7 +27,7 @@ func (s *SourceData) GetTitle() *metaString.MetaString {
 	if s.Title == nil {
 		return metaString.NewMetaString("")
 	}
-	return s.Title
+	return s.Title.String()
 }
 
 func (s *SourceData) GetSeries() string {

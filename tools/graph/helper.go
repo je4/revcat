@@ -123,20 +123,27 @@ func sourceToMediathekBaseEntry(src *sourcetype.SourceData) *model.MediathekBase
 		}
 		entry.Person = append(entry.Person, p)
 	}
-	for _, lang := range src.Title.GetNativeLanguages() {
-		entry.Title = append(entry.Title, &model.MultiLangString{
-			Lang:       lang.String(),
-			Value:      src.Title.Get(lang).ContentString(),
-			Translated: false,
-		})
-	}
-	for _, lang := range src.Title.GetTranslatedLanguages() {
-		entry.Title = append(entry.Title, &model.MultiLangString{
-			Lang:       lang.String(),
-			Value:      src.Title.Get(lang).ContentString(),
-			Translated: true,
-		})
-	}
+	entry.Title = append(entry.Title, &model.MultiLangString{
+		Lang:       src.Title.String().Lang().String(),
+		Value:      src.Title.String().ContentString(),
+		Translated: false,
+	})
+	/*
+		for _, lang := range src.Title.GetNativeLanguages() {
+			entry.Title = append(entry.Title, &model.MultiLangString{
+				Lang:       lang.String(),
+				Value:      src.Title.Get(lang).ContentString(),
+				Translated: false,
+			})
+		}
+		for _, lang := range src.Title.GetTranslatedLanguages() {
+			entry.Title = append(entry.Title, &model.MultiLangString{
+				Lang:       lang.String(),
+				Value:      src.Title.Get(lang).ContentString(),
+				Translated: true,
+			})
+		}
+	*/
 	return entry
 }
 

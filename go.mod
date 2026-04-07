@@ -14,13 +14,13 @@ require (
 	github.com/gin-contrib/cors v1.7.7
 	github.com/gin-gonic/gin v1.12.0
 	github.com/golang-jwt/jwt/v5 v5.3.1
-	github.com/gqlgo/gqlgenc v0.33.1
+	github.com/gqlgo/gqlgenc v0.35.1
 	github.com/je4/utils/v2 v2.0.64
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.35.0
 	github.com/vektah/gqlparser/v2 v2.5.32
 	gitlab.switch.ch/ub-unibas/rdv2/ubcat/v2 v2.0.51
-	go.ub.unibas.ch/metastring v0.0.0-20260404150311-8c0b893fedac
+	go.ub.unibas.ch/metastring v0.0.0-20260407102649-4bd209fde8c0
 	golang.org/x/image v0.38.0
 )
 

@@ -28,7 +28,7 @@ func (s *SourceData) SetSource(source string) error {
 }
 
 func (s *SourceData) SetTitle(title *metaString.MetaString) error {
-	s.Title = title
+	s.Title = multilangString.NewMultiLangString(title)
 	return nil
 }
 
