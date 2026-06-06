@@ -1,0 +1,444 @@
+[
+  {
+    "id": "01-00",
+    "label_de": "Architektur / Raumgestaltung",
+    "label_en": "Architecture / Interior design",
+    "subthema": [
+      {
+        "id": "01-01",
+        "label_de": "Monografien (Architektur)",
+        "label_en": "Monographs (Architecture)"
+      },
+      {
+        "id": "01-02",
+        "label_de": "Architektur / Architekturtheorie und -geschichte",
+        "label_en": "Architecture / Theory and History of Architecture"
+      },
+      {
+        "id": "01-03",
+        "label_de": "Stadtentwicklung / Urban Design / Verkehrswesen",
+        "label_en": "Urban Development / Urban Design / Transportation"
+      },
+      {
+        "id": "01-04",
+        "label_de": "Landschaftsarchitektur",
+        "label_en": "Landscape / Environmental Architecture"
+      },
+      {
+        "id": "01-05",
+        "label_de": "Baukonstruktion / Tragwerke",
+        "label_en": "Building Construction / Structures"
+      },
+      {
+        "id": "01-06",
+        "label_de": "Innenarchitektur / Raumgestaltung",
+        "label_en": "Interior Architecture / Interior Design"
+      },
+      {
+        "id": "01-07",
+        "label_de": "Szenografie / Bühnengestaltung",
+        "label_en": "Scenography / Stage Design"
+      },
+      {
+        "id": "01-09",
+        "label_de": "Weitere räumliche Gestaltungsformen",
+        "label_en": "Other spatial design forms"
+      }
+    ]
+  },
+  {
+    "id": "02-00",
+    "label_de": "Bildende Künste",
+    "label_en": "Fine arts",
+    "subthema": [
+      {
+        "id": "02-01",
+        "label_de": "Monografien (Kunst)",
+        "label_en": "Monographs (Art)"
+      },
+      {
+        "id": "02-02",
+        "label_de": "Bildhauerei / Objektkunst",
+        "label_en": "Sculpture / Object Art"
+      },
+      {
+        "id": "02-03",
+        "label_de": "Body Art / Performance",
+        "label_en": "Body Art / Performance"
+      },
+      {
+        "id": "02-04",
+        "label_de": "Installation",
+        "label_en": "Installation"
+      },
+      {
+        "id": "02-05",
+        "label_de": "Konzeptkunst",
+        "label_en": "Conceptual art"
+      },
+      {
+        "id": "02-06",
+        "label_de": "Kunst im öffentlichen Raum",
+        "label_en": "Art in public space"
+      },
+      {
+        "id": "02-07",
+        "label_de": "Malerei",
+        "label_en": "Painting"
+      },
+      {
+        "id": "02-08",
+        "label_de": "Mediale Künste",
+        "label_en": "Media arts"
+      },
+      {
+        "id": "02-09",
+        "label_de": "Weitere künstlerische Praktiken",
+        "label_en": "Other artistic practices"
+      }
+    ]
+  },
+  {
+    "id": "03-00",
+    "label_de": "Design / Gestaltung ",
+    "label_en": "Design / Creation ",
+    "subthema": [
+      {
+        "id": "03-01",
+        "label_de": "Grafikdesign / Visuelle Kommunikation",
+        "label_en": "Graphic Design / Visual Communication"
+      },
+      {
+        "id": "03-02",
+        "label_de": "Produktgestaltung / Industriedesign",
+        "label_en": "Product Design / Industrial Design"
+      },
+      {
+        "id": "03-03",
+        "label_de": "Modedesign / Fashion",
+        "label_en": "Fashion / Fashion Design"
+      },
+      {
+        "id": "03-04",
+        "label_de": "Food Design / Kochen",
+        "label_en": "Food Design / Cooking"
+      },
+      {
+        "id": "03-05",
+        "label_de": "Prozessgestaltung / Postindustrial \u0026 Transversal Design",
+        "label_en": "Process Design / Postindustrial \u0026 Transversal Design"
+      },
+      {
+        "id": "03-06",
+        "label_de": "Inlusives Design / Barrierefreiheit",
+        "label_en": "Inlusive Design / Barrier-free Accessibility"
+      },
+      {
+        "id": "03-07",
+        "label_de": "Nachhaltige Gestaltung / Sustainable Design",
+        "label_en": "Sustainable Design"
+      },
+      {
+        "id": "03-09",
+        "label_de": "Weitere Gestaltungsformen",
+        "label_en": "Other design practices"
+      }
+    ]
+  },
+  {
+    "id": "04-00",
+    "label_de": "Fotografie / Film / Musik",
+    "label_en": "Photography / Film / Music",
+    "subthema": [
+      {
+        "id": "04-01",
+        "label_de": "Fotografie",
+        "label_en": "Photography"
+      },
+      {
+        "id": "04-02",
+        "label_de": "Film",
+        "label_en": "Film"
+      },
+      {
+        "id": "04-03",
+        "label_de": "Musik",
+        "label_en": "Music"
+      }
+    ]
+  },
+  {
+    "id": "05-00",
+    "label_de": "Literatur / Theater / Tanz",
+    "label_en": "Literature / Theater / Dance",
+    "subthema": [
+      {
+        "id": "05-01",
+        "label_de": "Literatur allgemein",
+        "label_en": "Literature in general"
+      },
+      {
+        "id": "05-02",
+        "label_de": "Creative Writing / Artists Writing",
+        "label_en": "Creative Writing / Artists Writing"
+      },
+      {
+        "id": "05-03",
+        "label_de": "Theater",
+        "label_en": "Theater"
+      },
+      {
+        "id": "05-04",
+        "label_de": "Tanz",
+        "label_en": "Dance"
+      }
+    ]
+  },
+  {
+    "id": "06-00",
+    "label_de": "Practice-based Research",
+    "label_en": "Practice-based Research",
+    "subthema": [
+      {
+        "id": "06-01",
+        "label_de": "Künstlerisch-gestalterische Methoden allgemein",
+        "label_en": "Artistic Methods"
+      },
+      {
+        "id": "06-02",
+        "label_de": "Artistic Research",
+        "label_en": "Artistic Research"
+      },
+      {
+        "id": "06-03",
+        "label_de": "Design Research",
+        "label_en": "Design Research"
+      },
+      {
+        "id": "06-04",
+        "label_de": "Curatorial Studies / Ausstellungsdesign",
+        "label_en": "Curatorial Studies / Exhibition Design"
+      },
+      {
+        "id": "06-05",
+        "label_de": "Culinary Research",
+        "label_en": "Culinary Research"
+      },
+      {
+        "id": "06-08",
+        "label_de": "Erhaltung / Konservierung ",
+        "label_en": "Conservation / Preservation "
+      },
+      {
+        "id": "06-09",
+        "label_de": "Weitere praxisbasierte Forschungsansätze",
+        "label_en": "Other practice-based research approaches"
+      }
+    ]
+  },
+  {
+    "id": "07-00",
+    "label_de": "Theorie",
+    "label_en": "Theory",
+    "subthema": [
+      {
+        "id": "07-01",
+        "label_de": "Geschichte / Archäologie",
+        "label_en": "History / Archaeology"
+      },
+      {
+        "id": "07-02",
+        "label_de": "Philosophie / Ästhetik",
+        "label_en": "Philosophy / Aesthetics"
+      },
+      {
+        "id": "07-03",
+        "label_de": "Kunstgeschichte / Bildwissenschaften",
+        "label_en": "Art History / Visual Studies"
+      },
+      {
+        "id": "07-04",
+        "label_de": "Designtheorie",
+        "label_en": "Design Theory"
+      },
+      {
+        "id": "07-05",
+        "label_de": "Cultural Theory / Gender Studies / Diversity",
+        "label_en": "Cultural Theory / Gender Studies / Diversity"
+      },
+      {
+        "id": "07-06",
+        "label_de": "Medienwissenschaft / -theorie",
+        "label_en": "Media Science / Theory"
+      },
+      {
+        "id": "07-07",
+        "label_de": "Politik / Sozialwissenschaften /Recht",
+        "label_en": "Politics / Social Sciences / Law"
+      },
+      {
+        "id": "07-08",
+        "label_de": "Religion",
+        "label_en": "Religion"
+      },
+      {
+        "id": "07-09",
+        "label_de": "Weitere Theorien",
+        "label_en": "Other theories"
+      }
+    ]
+  },
+  {
+    "id": "08-00",
+    "label_de": "Vermittlung in Kunst und Design",
+    "label_en": "Art Education / Mediation in art and design",
+    "subthema": [
+      {
+        "id": "08-01",
+        "label_de": "Pädagogik",
+        "label_en": "Pedagogy"
+      },
+      {
+        "id": "08-02",
+        "label_de": "Kunstvermittlung",
+        "label_en": "Art education"
+      },
+      {
+        "id": "08-03",
+        "label_de": "Schule / Unterrichtsmaterial",
+        "label_en": "School / teaching material"
+      },
+      {
+        "id": "08-04",
+        "label_de": "Künstlerische Techniken",
+        "label_en": "Artistic Techniques"
+      },
+      {
+        "id": "08-05",
+        "label_de": "Handwerkliche Techniken",
+        "label_en": "Craft Techniques"
+      }
+    ]
+  },
+  {
+    "id": "09-00",
+    "label_de": "Institutionen / Organisationen",
+    "label_en": "Institutions / Organizations",
+    "subthema": [
+      {
+        "id": "09-01",
+        "label_de": "Wissenschaft / Hochschulen",
+        "label_en": "Science / Universities"
+      },
+      {
+        "id": "09-02",
+        "label_de": "Archive / Bibliotheken",
+        "label_en": "Archives / Libraries"
+      },
+      {
+        "id": "09-03",
+        "label_de": "Museen / Sammlungen ",
+        "label_en": "Museums / Collections "
+      },
+      {
+        "id": "09-04",
+        "label_de": "Ausstellungen / Ausstellungswesen",
+        "label_en": "Exhibitions / Exhibitions"
+      }
+    ]
+  },
+  {
+    "id": "10-00",
+    "label_de": "Material / Naturwissenschaften",
+    "label_en": "Material / Natural Sciences",
+    "subthema": [
+      {
+        "id": "10-01",
+        "label_de": "Materialität (einzelne Materialien / Baustoffe / Farbe etc.)",
+        "label_en": "Materiality (individual materials / building materials / color etc.)"
+      },
+      {
+        "id": "10-02",
+        "label_de": "Informatik / Mathematik ",
+        "label_en": "Informatics / Mathematics "
+      },
+      {
+        "id": "10-03",
+        "label_de": "Physik / Chemie",
+        "label_en": "Physics / Chemistry"
+      },
+      {
+        "id": "10-04",
+        "label_de": "Biologie / Ökologie",
+        "label_en": "Biology / Ecology"
+      },
+      {
+        "id": "10-05",
+        "label_de": "Medizin / Physiologie / Anatomie",
+        "label_en": "Medicine / Physiology / Anatomy"
+      },
+      {
+        "id": "10-06",
+        "label_de": "Psychologie / Wahrnehmungstheorie",
+        "label_en": "Psychology / Theory of Perception"
+      },
+      {
+        "id": "10-07",
+        "label_de": "Technik / Maschinenbau / Elektronik",
+        "label_en": "Technology / Mechanical Engineering / Electronics"
+      },
+      {
+        "id": "10-08",
+        "label_de": "Ökonomie / Wirtschaftswissenschaften",
+        "label_en": "Economy / Economics"
+      },
+      {
+        "id": "10-09",
+        "label_de": "Weitere Wissenschaften",
+        "label_en": "Other Sciences"
+      }
+    ]
+  },
+  {
+    "id": "20-00",
+    "label_de": "Hochschulschriften",
+    "label_en": "Publications of Art and Design Academies",
+    "subthema": [
+      {
+        "id": "20-01",
+        "label_de": "HGK-Publikationen",
+        "label_en": "HGK Publications"
+      },
+      {
+        "id": "20-02",
+        "label_de": "Weitere Hochschulen",
+        "label_en": "Other Universities"
+      }
+    ]
+  },
+  {
+    "id": "21-00",
+    "label_de": "Zeitschriften",
+    "label_en": "Journals"
+  },
+  {
+    "id": "22-00",
+    "label_de": "Nachschlagewerke",
+    "label_en": "Reference works"
+  },
+  {
+    "id": "23-00",
+    "label_de": "Sondersammlungen und Bestände (Schenkungen)",
+    "label_en": "Special collections and holdings (donations)"
+  },
+  {
+    "id": "24-00",
+    "label_de": "Grossformate",
+    "label_en": "Large formats"
+  },
+  {
+    "id": "25-00",
+    "label_de": "Hand- \u0026 Semesterapparate",
+    "label_en": "Hand- \u0026 Semesterapparatus"
+  }
+]
