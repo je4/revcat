@@ -67,27 +67,58 @@ func createFilterQuery(filter *model.InFilter) (*types.Query, error) {
 		qList := []types.Query{}
 		matches := nestedRegexp.FindStringSubmatch(filter.BoolTerm.Field)
 		for _, val := range filter.BoolTerm.Values {
+			var subQuery types.Query
+			fieldName := filter.BoolTerm.Field
+			useMatch := true
+
 			if len(matches) == 3 {
-				qList = append(qList, types.Query{
-					Nested: &types.NestedQuery{
-						Path: matches[1],
-						Query: types.Query{
-							Term: map[string]types.TermQuery{
-								fmt.Sprintf("%s.%s", matches[1], matches[2]): types.TermQuery{
-									Value: val,
-								},
-							},
+				path := matches[1]
+				field := matches[2]
+				fullFieldName := fmt.Sprintf("%s.%s", path, field)
+				if regexp.MustCompile(`\.keyword$`).MatchString(field) {
+					useMatch = false
+				}
+
+				var innerQuery types.Query
+				if useMatch {
+					innerQuery = types.Query{
+						Match: map[string]types.MatchQuery{
+							fullFieldName: {Query: fmt.Sprintf("%v", val)},
 						},
+					}
+				} else {
+					innerQuery = types.Query{
+						Term: map[string]types.TermQuery{
+							fullFieldName: {Value: val},
+						},
+					}
+				}
+
+				subQuery = types.Query{
+					Nested: &types.NestedQuery{
+						Path:  path,
+						Query: innerQuery,
 					},
-				})
+				}
 			} else {
-				qList = append(qList, types.Query{Term: map[string]types.TermQuery{
-					filter.BoolTerm.Field: {
-						Value: val,
-					},
-				},
-				})
+				if regexp.MustCompile(`\.keyword$`).MatchString(fieldName) {
+					useMatch = false
+				}
+				if useMatch {
+					subQuery = types.Query{
+						Match: map[string]types.MatchQuery{
+							fieldName: {Query: fmt.Sprintf("%v", val)},
+						},
+					}
+				} else {
+					subQuery = types.Query{
+						Term: map[string]types.TermQuery{
+							fieldName: {Value: val},
+						},
+					}
+				}
 			}
+			qList = append(qList, subQuery)
 		}
 		if len(qList) > 0 {
 			if filter.BoolTerm.And {
