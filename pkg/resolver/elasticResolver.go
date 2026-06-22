@@ -235,6 +235,9 @@ func (r *ElasticResolver) Search(
 	}
 
 	for _, f := range facets {
+		if f.Query == nil {
+			continue
+		}
 		newFilter, err := createFilterQuery(f.Query)
 		if err != nil {
 			return nil, errors.Wrapf(err, "cannot create facet filter query for %v", f)
@@ -254,6 +257,9 @@ func (r *ElasticResolver) Search(
 		//aggInclude := []string{}
 		for _, f2 := range facets {
 			if f2.Term.Name == f.Term.Name {
+				continue
+			}
+			if f2.Query == nil {
 				continue
 			}
 			newFilter, err := createFilterQuery(f2.Query)
