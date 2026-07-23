@@ -170,6 +170,7 @@ var _ types.SortCombinations = (*_sortField)(nil)
 // Search is the resolver for the search field.
 func (r *ElasticResolver) Search(
 	ctx context.Context,
+	searchType string,
 	query string,
 	facets []*model.InFacet,
 	filter []*model.InFilter,
@@ -320,20 +321,38 @@ func (r *ElasticResolver) Search(
 	esShould := []types.Query{}
 	//var artistBoost float32 = 1.5
 	if query != "" {
+		fields := []string{
+			"title^4",
+			"persons.name^4",
+			"series^2",
+			"tags^2",
+			"category^1.5",
+			"abstract^1.1",
+			"notes.title^1.2",
+			"notes.note^1.0",
+			"media.*.fulltext^1.0",
+		}
+		switch searchType {
+		case "author":
+			fields = []string{"persons.name"}
+		case "title":
+			fields = []string{"title"}
+		case "fulltext":
+			fields = []string{
+				"abstract^1.1",
+				"notes.title^1.2",
+				"notes.note^1.0",
+				"media.*.fulltext^1.0",
+			}
+		case "collection":
+			fields = []string{"collection"}
+		case "signature":
+			fields = []string{"signature"}
+		}
 		esMust = append(esMust, types.Query{
 			SimpleQueryString: &types.SimpleQueryStringQuery{
-				Query: query,
-				Fields: []string{
-					"title^4",
-					"persons.name^4",
-					"series^2",
-					"tags^2",
-					"category^1.5",
-					"abstract^1.1",
-					"notes.title^1.2",
-					"notes.note^1.0",
-					"media.*.fulltext^1.0",
-				},
+				Query:           query,
+				Fields:          fields,
 				DefaultOperator: &operator.Or,
 			},
 		})
@@ -699,7 +718,7 @@ func (r *ElasticResolver) ReferencesFull(ctx context.Context, obj *model.Mediath
 		return nil, errors.Errorf("%s", errValue)
 	}
 	var result = make([]*model.MediathekBaseEntry, 0)
-	sr, err := r.Search(ctx, "", nil, []*model.InFilter{
+	sr, err := r.Search(ctx, "all", "", nil, []*model.InFilter{
 		{
 			BoolTerm: &model.InFilterBoolTerm{
 				Field:  "[references].signature.keyword",
