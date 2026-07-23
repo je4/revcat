@@ -159,7 +159,7 @@ type ComplexityRoot struct {
 
 	Query struct {
 		MediathekEntries func(childComplexity int, signatures []string) int
-		Search           func(childComplexity int, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string, sort []*model.SortField) int
+		Search           func(childComplexity int, searchtype string, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string, sort []*model.SortField) int
 	}
 
 	Reference struct {
@@ -184,7 +184,7 @@ type MediathekFullEntryResolver interface {
 	ReferencesFull(ctx context.Context, obj *model.MediathekFullEntry) ([]*model.MediathekBaseEntry, error)
 }
 type QueryResolver interface {
-	Search(ctx context.Context, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string, sort []*model.SortField) (*model.SearchResult, error)
+	Search(ctx context.Context, searchtype string, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string, sort []*model.SortField) (*model.SearchResult, error)
 	MediathekEntries(ctx context.Context, signatures []string) ([]*model.MediathekFullEntry, error)
 }
 
@@ -692,7 +692,7 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 			return 0, false
 		}
 
-		return e.ComplexityRoot.Query.Search(childComplexity, args["query"].(string), args["facets"].([]*model.InFacet), args["filter"].([]*model.InFilter), args["vector"].([]float64), args["first"].(*int), args["size"].(*int), args["cursor"].(*string), args["sort"].([]*model.SortField)), true
+		return e.ComplexityRoot.Query.Search(childComplexity, args["searchtype"].(string), args["query"].(string), args["facets"].([]*model.InFacet), args["filter"].([]*model.InFilter), args["vector"].([]float64), args["first"].(*int), args["size"].(*int), args["cursor"].(*string), args["sort"].([]*model.SortField)), true
 
 	case "Reference.signature":
 		if e.ComplexityRoot.Reference.Signature == nil {
@@ -1224,70 +1224,78 @@ func (ec *executionContext) field_Query_mediathekEntries_args(ctx context.Contex
 func (ec *executionContext) field_Query_search_args(ctx context.Context, rawArgs map[string]any) (map[string]any, error) {
 	var err error
 	args := map[string]any{}
-	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "query",
+	arg0, err := graphql.ProcessArgField(ctx, rawArgs, "searchtype",
 		func(ctx context.Context, v any) (string, error) {
 			return ec.unmarshalNString2string(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["query"] = arg0
-	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "facets",
+	args["searchtype"] = arg0
+	arg1, err := graphql.ProcessArgField(ctx, rawArgs, "query",
+		func(ctx context.Context, v any) (string, error) {
+			return ec.unmarshalNString2string(ctx, v)
+		})
+	if err != nil {
+		return nil, err
+	}
+	args["query"] = arg1
+	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "facets",
 		func(ctx context.Context, v any) ([]*model.InFacet, error) {
 			return ec.unmarshalOInFacet2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐInFacetᚄ(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["facets"] = arg1
-	arg2, err := graphql.ProcessArgField(ctx, rawArgs, "filter",
+	args["facets"] = arg2
+	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "filter",
 		func(ctx context.Context, v any) ([]*model.InFilter, error) {
 			return ec.unmarshalOInFilter2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐInFilterᚄ(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["filter"] = arg2
-	arg3, err := graphql.ProcessArgField(ctx, rawArgs, "vector",
+	args["filter"] = arg3
+	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "vector",
 		func(ctx context.Context, v any) ([]float64, error) {
 			return ec.unmarshalOFloat2ᚕfloat64ᚄ(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["vector"] = arg3
-	arg4, err := graphql.ProcessArgField(ctx, rawArgs, "first",
+	args["vector"] = arg4
+	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "first",
 		func(ctx context.Context, v any) (*int, error) {
 			return ec.unmarshalOInt2ᚖint(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["first"] = arg4
-	arg5, err := graphql.ProcessArgField(ctx, rawArgs, "size",
+	args["first"] = arg5
+	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "size",
 		func(ctx context.Context, v any) (*int, error) {
 			return ec.unmarshalOInt2ᚖint(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["size"] = arg5
-	arg6, err := graphql.ProcessArgField(ctx, rawArgs, "cursor",
+	args["size"] = arg6
+	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "cursor",
 		func(ctx context.Context, v any) (*string, error) {
 			return ec.unmarshalOString2ᚖstring(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["cursor"] = arg6
-	arg7, err := graphql.ProcessArgField(ctx, rawArgs, "sort",
+	args["cursor"] = arg7
+	arg8, err := graphql.ProcessArgField(ctx, rawArgs, "sort",
 		func(ctx context.Context, v any) ([]*model.SortField, error) {
 			return ec.unmarshalOSortField2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐSortFieldᚄ(ctx, v)
 		})
 	if err != nil {
 		return nil, err
 	}
-	args["sort"] = arg7
+	args["sort"] = arg8
 	return args, nil
 }
 
@@ -3212,7 +3220,7 @@ func (ec *executionContext) _Query_search(ctx context.Context, field graphql.Col
 		},
 		func(ctx context.Context) (any, error) {
 			fc := graphql.GetFieldContext(ctx)
-			return ec.Resolvers.Query().Search(ctx, fc.Args["query"].(string), fc.Args["facets"].([]*model.InFacet), fc.Args["filter"].([]*model.InFilter), fc.Args["vector"].([]float64), fc.Args["first"].(*int), fc.Args["size"].(*int), fc.Args["cursor"].(*string), fc.Args["sort"].([]*model.SortField))
+			return ec.Resolvers.Query().Search(ctx, fc.Args["searchtype"].(string), fc.Args["query"].(string), fc.Args["facets"].([]*model.InFacet), fc.Args["filter"].([]*model.InFilter), fc.Args["vector"].([]float64), fc.Args["first"].(*int), fc.Args["size"].(*int), fc.Args["cursor"].(*string), fc.Args["sort"].([]*model.SortField))
 		},
 		nil,
 		func(ctx context.Context, selections ast.SelectionSet, v *model.SearchResult) graphql.Marshaler {

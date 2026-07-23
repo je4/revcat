@@ -173,6 +173,6 @@ input SortField {
 
 
 type Query {
-  search(query: String!, facets: [InFacet!], filter: [InFilter!], vector: [Float!], first: Int, size: Int, cursor: String, sort: [SortField!]): SearchResult!
+  search(searchtype: String!, query: String!, facets: [InFacet!], filter: [InFilter!], vector: [Float!], first: Int, size: Int, cursor: String, sort: [SortField!]): SearchResult!
   mediathekEntries(signatures: [String!]!): [MediathekFullEntry!]
 }

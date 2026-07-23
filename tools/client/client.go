@@ -10,7 +10,7 @@ import (
 
 type RevCatGraphQLClient interface {
 	MediathekEntries(ctx context.Context, signatures []string, interceptors ...clientv2.RequestInterceptor) (*MediathekEntries, error)
-	Search(ctx context.Context, query string, facets []*InFacet, filter []*InFilter, vector []float64, first *int64, size *int64, cursor *string, sort []*SortField, interceptors ...clientv2.RequestInterceptor) (*Search, error)
+	Search(ctx context.Context, searchtype string, query string, facets []*InFacet, filter []*InFilter, vector []float64, first *int64, size *int64, cursor *string, sort []*SortField, interceptors ...clientv2.RequestInterceptor) (*Search, error)
 }
 
 type Client struct {
@@ -947,8 +947,8 @@ func (c *Client) MediathekEntries(ctx context.Context, signatures []string, inte
 	return &res, nil
 }
 
-const SearchDocument = `query search ($query: String!, $facets: [InFacet!], $filter: [InFilter!], $vector: [Float!], $first: Int, $size: Int, $cursor: String, $sort: [SortField!]) {
-	search(query: $query, facets: $facets, filter: $filter, vector: $vector, first: $first, size: $size, cursor: $cursor, sort: $sort) {
+const SearchDocument = `query search ($searchtype: String!, $query: String!, $facets: [InFacet!], $filter: [InFilter!], $vector: [Float!], $first: Int, $size: Int, $cursor: String, $sort: [SortField!]) {
+	search(searchtype: $searchtype, query: $query, facets: $facets, filter: $filter, vector: $vector, first: $first, size: $size, cursor: $cursor, sort: $sort) {
 		totalCount
 		pageInfo {
 			... PageInfoFragment
@@ -1102,16 +1102,17 @@ fragment FacetValueIntFragment on FacetValueInt {
 }
 `
 
-func (c *Client) Search(ctx context.Context, query string, facets []*InFacet, filter []*InFilter, vector []float64, first *int64, size *int64, cursor *string, sort []*SortField, interceptors ...clientv2.RequestInterceptor) (*Search, error) {
+func (c *Client) Search(ctx context.Context, searchtype string, query string, facets []*InFacet, filter []*InFilter, vector []float64, first *int64, size *int64, cursor *string, sort []*SortField, interceptors ...clientv2.RequestInterceptor) (*Search, error) {
 	vars := map[string]any{
-		"query":  query,
-		"facets": facets,
-		"filter": filter,
-		"vector": vector,
-		"first":  first,
-		"size":   size,
-		"cursor": cursor,
-		"sort":   sort,
+		"searchtype": searchtype,
+		"query":      query,
+		"facets":     facets,
+		"filter":     filter,
+		"vector":     vector,
+		"first":      first,
+		"size":       size,
+		"cursor":     cursor,
+		"sort":       sort,
 	}
 
 	var res Search
