@@ -320,7 +320,24 @@ func (r *ElasticResolver) Search(
 	esMust := []types.Query{}
 	esShould := []types.Query{}
 	//var artistBoost float32 = 1.5
+	nestedPrefixes := []string{
+		"persons.",
+		"notes.",
+		"extra.",
+		"meta.",
+		"queries.",
+		"references.",
+		"media.audio.",
+		"media.default.",
+		"media.gpx.",
+		"media.image.",
+		"media.office.",
+		"media.pdf.",
+		"media.video.",
+		"media.webrecorder.",
+	}
 	if query != "" {
+		// 1. Definition der Felder (wie bisher)
 		fields := []string{
 			"title^4",
 			"persons.name^4",
@@ -332,30 +349,73 @@ func (r *ElasticResolver) Search(
 			"notes.note^1.0",
 			"media.*.fulltext^1.0",
 		}
+
+		// Filterung nach searchType
 		switch searchType {
 		case "author":
 			fields = []string{"persons.name"}
 		case "title":
 			fields = []string{"title"}
 		case "fulltext":
-			fields = []string{
-				"abstract^1.1",
-				"notes.title^1.2",
-				"notes.note^1.0",
-				"media.*.fulltext^1.0",
-			}
+			fields = []string{"abstract^1.1", "notes.title^1.2", "notes.note^1.0", "media.*.fulltext^1.0"}
 		case "collection":
 			fields = []string{"collection"}
 		case "signature":
 			fields = []string{"signature"}
 		}
-		esMust = append(esMust, types.Query{
-			SimpleQueryString: &types.SimpleQueryStringQuery{
-				Query:           query,
-				Fields:          fields,
-				DefaultOperator: &operator.Or,
-			},
-		})
+
+		// 2. Felder nach Nested-Pfad gruppieren
+		// Wir unterscheiden zwischen Root-Feldern und Nested-Feldern (persons, notes)
+		fieldGroups := make(map[string][]string)
+		for _, f := range fields {
+			found := false
+			for _, prefix := range nestedPrefixes {
+				if strings.HasPrefix(f, prefix) {
+					path := strings.TrimSuffix(prefix, ".")
+					fieldGroups[path] = append(fieldGroups[path], f)
+					found = true
+					break
+				}
+			}
+			if !found {
+				// Alles andere (inkl. media.* da media kein nested-Typ im Mapping ist)
+				fieldGroups[""] = append(fieldGroups[""], f)
+			}
+		}
+
+		// 3. Für jede Gruppe eine Query bauen und mit "Should" (ODER) verknüpfen
+		var subQueries []types.Query
+		for path, groupFields := range fieldGroups {
+			sqs := types.Query{
+				SimpleQueryString: &types.SimpleQueryStringQuery{
+					Query:           query,
+					Fields:          groupFields,
+					DefaultOperator: &operator.Or,
+				},
+			}
+
+			if path != "" {
+				// In Nested-Query einpacken
+				subQueries = append(subQueries, types.Query{
+					Nested: &types.NestedQuery{
+						Path:  path,
+						Query: sqs,
+					},
+				})
+			} else {
+				subQueries = append(subQueries, sqs)
+			}
+		}
+
+		// 4. Die Teilabfragen in esMust einfügen (als ODER-Block)
+		if len(subQueries) > 0 {
+			esMust = append(esMust, types.Query{
+				Bool: &types.BoolQuery{
+					Should: subQueries,
+				},
+			})
+		}
+
 		esShould = append(esShould, types.Query{
 			SimpleQueryString: &types.SimpleQueryStringQuery{
 				Query: query,
