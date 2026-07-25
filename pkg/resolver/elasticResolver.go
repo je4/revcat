@@ -181,7 +181,7 @@ func (r *ElasticResolver) Search(
 		return nil, errors.Errorf("%s", errValue)
 	}
 	var from = 0
-	var num = 25
+	var num = 36
 
 	if first != nil {
 		from = *first
