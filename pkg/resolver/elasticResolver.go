@@ -341,6 +341,7 @@ func (r *ElasticResolver) Search(
 		fields := []string{
 			"title^4",
 			"persons.name^4",
+			"collectiontitle^2",
 			"series^2",
 			"tags^2",
 			"category^1.5",
@@ -354,6 +355,8 @@ func (r *ElasticResolver) Search(
 		switch searchType {
 		case "author":
 			fields = []string{"persons.name"}
+		case "estate":
+			fields = []string{"collectiontitle"}
 		case "title":
 			fields = []string{"title"}
 		case "fulltext":
