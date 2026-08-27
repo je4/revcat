@@ -118,7 +118,7 @@ func BuildBaseFilter(client *config.Client, groups ...string) ([]types.Query, er
 	return esFilter, nil
 }
 
-func (r *ElasticResolver) loadEntries(ctx context.Context, signatures []string) ([]sourcetype.SourceData, error) {
+func (r *ElasticResolver) LoadEntries(ctx context.Context, signatures []string) ([]sourcetype.SourceData, error) {
 	var result = make([]sourcetype.SourceData, 0)
 	var newSignatures = make([]string, 0)
 	for _, signature := range signatures {
@@ -744,7 +744,7 @@ func (r *ElasticResolver) MediathekEntries(ctx context.Context, signatures []str
 	if errValue := ctx.Value("error"); errValue != nil {
 		return nil, errors.Errorf("%s", errValue)
 	}
-	docs, err := r.loadEntries(ctx, signatures)
+	docs, err := r.LoadEntries(ctx, signatures)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot load entries %v", signatures)
 	}
@@ -815,7 +815,7 @@ func (r *ElasticResolver) ReferencesFull(ctx context.Context, obj *model.Mediath
 	if len(refSignatures) == 0 {
 		return result, nil
 	}
-	docs, err := r.loadEntries(ctx, refSignatures)
+	docs, err := r.LoadEntries(ctx, refSignatures)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot load entries %v", refSignatures)
 	}

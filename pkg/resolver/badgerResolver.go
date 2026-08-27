@@ -26,7 +26,7 @@ type badgerResolver struct {
 	db     *badger.DB
 }
 
-func (b *badgerResolver) loadEntries(ctx context.Context, signatures []string) ([]sourcetype.SourceData, error) {
+func (b *badgerResolver) LoadEntries(ctx context.Context, signatures []string) ([]sourcetype.SourceData, error) {
 	var result = []sourcetype.SourceData{}
 	if err := b.db.View(func(txn *badger.Txn) error {
 		for _, signature := range signatures {
@@ -80,7 +80,7 @@ func (b *badgerResolver) sourceToMediathekFullEntry(src *sourcetype.SourceData) 
 		}
 	}
 	if len(refSignatures) > 0 {
-		refs, err := b.loadEntries(context.Background(), refSignatures)
+		refs, err := b.LoadEntries(context.Background(), refSignatures)
 		if err != nil {
 			b.logger.Error().Err(err).Msgf("cannot load references %v", refSignatures)
 		}
@@ -137,7 +137,7 @@ func (b *badgerResolver) sourceToMediathekFullEntry(src *sourcetype.SourceData) 
 
 func (b *badgerResolver) MediathekEntries(ctx context.Context, signatures []string) ([]*model.MediathekFullEntry, error) {
 	var result = []*model.MediathekFullEntry{}
-	docs, err := b.loadEntries(ctx, signatures)
+	docs, err := b.LoadEntries(ctx, signatures)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot load entries %v", signatures)
 	}
@@ -157,7 +157,7 @@ func (b *badgerResolver) ReferencesFull(ctx context.Context, obj *model.Mediathe
 	for _, ref := range obj.Base.References {
 		signatures = append(signatures, ref.Signature)
 	}
-	docs, err := b.loadEntries(ctx, signatures)
+	docs, err := b.LoadEntries(ctx, signatures)
 	if err != nil {
 		return nil, errors.Wrapf(err, "cannot load entries %v", signatures)
 	}

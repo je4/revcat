@@ -3,6 +3,7 @@ package resolver
 import (
 	"context"
 
+	"github.com/je4/revcat/v2/pkg/sourcetype"
 	"github.com/je4/revcat/v2/tools/graph/model"
 )
 
@@ -14,4 +15,6 @@ type Resolver interface {
 	MediathekEntries(ctx context.Context, signatures []string) ([]*model.MediathekFullEntry, error)
 
 	ReferencesFull(ctx context.Context, obj *model.MediathekFullEntry) ([]*model.MediathekBaseEntry, error)
+
+	LoadEntries(ctx context.Context, signatures []string) ([]sourcetype.SourceData, error)
 }
