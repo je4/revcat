@@ -1,9 +1,10 @@
 package resolver
 
 import (
-	emperrors "emperror.dev/errors"
 	"encoding/base64"
-	"encoding/json"
+	"encoding/json/v2"
+
+	emperrors "emperror.dev/errors"
 )
 
 func NewCursor(from, size int) *cursor {

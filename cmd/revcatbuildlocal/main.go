@@ -175,7 +175,7 @@ func main() {
 		result, err := elastic.Search().Query(query).Sort(sort).SearchAfter(searchAfter...).Index(conf.ElasticSearch.Index).Do(context.Background())
 
 		if err != nil {
-			logger.Panic().Err(err).Msgf(err.Error())
+			logger.Panic().Err(err).Msg(err.Error())
 		}
 		if len(result.Hits.Hits) == 0 {
 			break
@@ -198,10 +198,14 @@ func main() {
 					logger.Panic().Err(err)
 
 				}
-				if err := txn.Set([]byte(doc.Id_), buf.Bytes()); err != nil {
+				var id string
+				if doc.Id_ != nil {
+					id = *doc.Id_
+				}
+				if err := txn.Set([]byte(id), buf.Bytes()); err != nil {
 					logger.Panic().Err(err)
 				}
-				logger.Info().Msgf("[%05d]: %s", counter+1, doc.Id_)
+				logger.Info().Msgf("[%05d]: %s", counter+1, id)
 				counter++
 				searchAfter = doc.Sort
 			}

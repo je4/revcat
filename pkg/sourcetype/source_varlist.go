@@ -1,6 +1,6 @@
 package sourcetype
 
-import "encoding/json"
+import "encoding/json/v2"
 
 type Varlist map[string][]string
 

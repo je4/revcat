@@ -2,7 +2,8 @@ package resolver
 
 import (
 	"context"
-	"encoding/json"
+	json1 "encoding/json"
+	"encoding/json/v2"
 	"regexp"
 	"slices"
 	"strings"
@@ -460,7 +461,7 @@ func (r *ElasticResolver) Search(
 				},
 				Script: types.Script{
 					Source: new("cosineSimilarity(params.queryVector, 'content_vector')"),
-					Params: map[string]json.RawMessage{
+					Params: map[string]json1.RawMessage{
 						"queryVector": vectorBytes,
 					},
 				},

@@ -2,7 +2,8 @@ package main
 
 import (
 	"encoding/csv"
-	"encoding/json"
+	"encoding/json/jsontext"
+	"encoding/json/v2"
 	"fmt"
 	"io"
 	"os"
@@ -79,7 +80,7 @@ func main() {
 		}
 	}
 
-	output, err := json.MarshalIndent(categories, "", "  ")
+	output, err := json.Marshal(categories, jsontext.WithIndent("  "))
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Fehler beim Erstellen von JSON: %v\n", err)
 		os.Exit(1)

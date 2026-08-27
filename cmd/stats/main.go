@@ -4,7 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"encoding/csv"
-	"encoding/json"
+	"encoding/json/v2"
 	"flag"
 	"fmt"
 	"github.com/elastic/elastic-transport-go/v8/elastictransport"
@@ -188,7 +188,7 @@ func main() {
 		result, err := elastic.Search().Query(query).Sort(sort).SearchAfter(searchAfter...).Index(conf.ElasticSearch.Index).Do(context.Background())
 
 		if err != nil {
-			logger.Panic().Err(err).Msgf(err.Error())
+			logger.Panic().Err(err).Msg(err.Error())
 		}
 		if len(result.Hits.Hits) == 0 {
 			break
@@ -250,7 +250,7 @@ func main() {
 	if *csvFile != "" {
 		csvFP, err := os.Create(*csvFile)
 		if err != nil {
-			logger.Panic().Err(err).Msgf("cannot create csv file %s", *csvFP)
+			logger.Panic().Err(err).Msgf("cannot create csv file %s", *csvFile)
 		}
 		defer csvFP.Close()
 		writer := csv.NewWriter(csvFP)

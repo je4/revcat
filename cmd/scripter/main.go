@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"encoding/json"
+	"encoding/json/v2"
 	"flag"
 	"fmt"
 	"github.com/elastic/elastic-transport-go/v8/elastictransport"

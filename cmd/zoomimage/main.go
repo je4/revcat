@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"crypto/tls"
-	"encoding/json"
+	"encoding/json/v2"
 	"flag"
 	"fmt"
 	"github.com/elastic/elastic-transport-go/v8/elastictransport"
@@ -180,7 +180,7 @@ func main() {
 		result, err := elastic.Search().Query(query).Sort(sort).SearchAfter(searchAfter...).Index(conf.ElasticSearch.Index).Do(context.Background())
 
 		if err != nil {
-			logger.Panic().Err(err).Msgf(err.Error())
+			logger.Panic().Err(err).Msg(err.Error())
 		}
 		if len(result.Hits.Hits) == 0 {
 			break
@@ -315,8 +315,7 @@ func main() {
 	if err != nil {
 		logger.Panic().Err(err).Msg("cannot create collage json file")
 	}
-	jsonW := json.NewEncoder(fp)
-	if err := jsonW.Encode(positions); err != nil {
+	if err := json.MarshalWrite(fp, positions); err != nil {
 		fp.Close()
 		logger.Panic().Err(err).Msg("cannot marshal json")
 	}
