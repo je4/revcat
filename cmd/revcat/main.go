@@ -4,15 +4,6 @@ import (
 	"crypto/tls"
 	"flag"
 	"fmt"
-	"github.com/dgraph-io/badger/v4"
-	"github.com/elastic/elastic-transport-go/v8/elastictransport"
-	elasticsearch "github.com/elastic/go-elasticsearch/v8"
-	"github.com/je4/revcat/v2/config"
-	"github.com/je4/revcat/v2/data/certs"
-	"github.com/je4/revcat/v2/pkg/resolver"
-	"github.com/je4/revcat/v2/pkg/server"
-	"github.com/je4/utils/v2/pkg/zLogger"
-	"github.com/rs/zerolog"
 	"io"
 	"io/fs"
 	"log"
@@ -24,6 +15,16 @@ import (
 	"runtime"
 	"syscall"
 	"time"
+
+	"github.com/dgraph-io/badger/v4"
+	"github.com/elastic/elastic-transport-go/v8/elastictransport"
+	elasticsearch "github.com/elastic/go-elasticsearch/v8"
+	"github.com/je4/revcat/v2/config"
+	"github.com/je4/revcat/v2/data/certs"
+	"github.com/je4/revcat/v2/pkg/resolver"
+	"github.com/je4/revcat/v2/pkg/server"
+	"github.com/je4/utils/v2/pkg/zLogger"
+	"github.com/rs/zerolog"
 )
 
 var configfile = flag.String("config", "", "location of toml configuration file")
@@ -158,7 +159,7 @@ func main() {
 		serverResolver = resolver.NewBadgerResolver(logger, db)
 	}
 
-	ctrl := server.NewController(conf.LocalAddr, conf.ExternalAddr, cert, serverResolver, conf.Client, logger)
+	ctrl := server.NewController(conf.LocalAddr, conf.ExternalAddr, cert, serverResolver, conf.Client, conf.SyncJWTKey.String(), logger)
 	ctrl.Start()
 
 	done := make(chan os.Signal, 1)

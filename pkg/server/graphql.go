@@ -3,8 +3,12 @@ package server
 import (
 	"context"
 	"crypto/tls"
-	"emperror.dev/errors"
 	"fmt"
+	"net/http"
+	"strings"
+	"time"
+
+	"emperror.dev/errors"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/99designs/gqlgen/graphql/playground"
 	"github.com/gin-contrib/cors"
@@ -14,10 +18,126 @@ import (
 	"github.com/je4/revcat/v2/pkg/resolver"
 	"github.com/je4/revcat/v2/tools/graph"
 	"github.com/je4/utils/v2/pkg/zLogger"
-	"net/http"
-	"strings"
-	"time"
 )
+
+type groupClaims struct {
+	Groups string `json:"groups"`
+	jwt.RegisteredClaims
+}
+
+func setContextValue(c *gin.Context, key string, val any) {
+	ctx := context.WithValue(c.Request.Context(), key, val)
+	c.Request = c.Request.WithContext(ctx)
+}
+
+func extractBearerToken(authString string, logger zLogger.ZLogger) (string, error) {
+	if authString == "" {
+		logger.Info().Msg("no authorization header")
+		return "", errors.New("no authorization header")
+	}
+	if !strings.HasPrefix(authString, "Bearer ") {
+		logger.Info().Msgf("authorization '%s' header has wrong type", authString)
+		return "", fmt.Errorf("authorization '%s' header has wrong type", authString)
+	}
+	return authString[7:], nil
+}
+
+func validateJWT[T jwt.Claims](tokenString, key string, claims T, maxAge time.Duration, logger zLogger.ZLogger) (T, error) {
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
+		return []byte(key), nil
+	}, jwt.WithLeeway(5*time.Second), jwt.WithExpirationRequired(), jwt.WithIssuedAt())
+	if err != nil {
+		logger.Info().Err(err).Msgf("cannot parse token '%s'", tokenString)
+		return claims, fmt.Errorf("cannot parse token '%s': %w", tokenString, err)
+	}
+	if !token.Valid {
+		logger.Info().Msgf("invalid token '%s'", tokenString)
+		return claims, fmt.Errorf("invalid token '%s'", tokenString)
+	}
+	c, ok := token.Claims.(T)
+	if !ok {
+		logger.Info().Msgf("invalid claims '%s'", tokenString)
+		return claims, fmt.Errorf("invalid claims '%s'", tokenString)
+	}
+	exp, err := c.GetExpirationTime()
+	if err != nil || exp == nil {
+		logger.Info().Err(err).Msgf("cannot get expiration time '%s'", tokenString)
+		return claims, fmt.Errorf("cannot get expiration time '%s': %v", tokenString, err)
+	}
+	iat, err := c.GetIssuedAt()
+	if err != nil || iat == nil {
+		logger.Info().Err(err).Msgf("cannot get issued at time '%s'", tokenString)
+		return claims, fmt.Errorf("cannot get issued at time '%s': %v", tokenString, err)
+	}
+	if maxAge > 0 && iat.Time.Add(maxAge).Before(exp.Time) {
+		logger.Info().Msgf("token '%s' has more lifetime than allowed (%s)", tokenString, maxAge.String())
+		return claims, fmt.Errorf("token '%s' has more lifetime than allowed (%s)", tokenString, maxAge.String())
+	}
+	return c, nil
+}
+
+func restAuthMiddleware(syncJWTKey string, logger zLogger.ZLogger) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		authString := c.Request.Header.Get("Authorization")
+		tokenString, err := extractBearerToken(authString, logger)
+		if err != nil {
+			setContextValue(c, "error", err.Error())
+			if authString == "" {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, "no authorization header")
+			} else {
+				c.AbortWithStatusJSON(http.StatusUnauthorized, "no bearer token")
+			}
+			return
+		}
+
+		if _, err := validateJWT(tokenString, syncJWTKey, &jwt.RegisteredClaims{}, 4*time.Hour, logger); err != nil {
+			setContextValue(c, "error", err.Error())
+			c.Next()
+			return
+		}
+		c.Next()
+	}
+}
+
+func graphqlAuthMiddleware(clientByApiKey map[string]*config.Client, logger zLogger.ZLogger) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tokenString, err := extractBearerToken(c.Request.Header.Get("Authorization"), logger)
+		if err != nil {
+			setContextValue(c, "error", err.Error())
+			return
+		}
+		parts := strings.SplitN(tokenString, ".", 2)
+
+		client, ok := clientByApiKey[parts[0]]
+		if !ok {
+			logger.Info().Msgf("invalid application key '%s'", parts[0])
+			setContextValue(c, "error", fmt.Sprintf("invalid application key '%s'", parts[0]))
+			return
+		}
+		logger.Debug().Msgf("client: %s", client.Name)
+		if len(parts) != 2 {
+			// we only have an application key
+			setContextValue(c, "groups", client.Groups)
+			setContextValue(c, "client", client.Name)
+			c.Next()
+			return
+		}
+
+		claims, err := validateJWT(parts[1], string(client.JWTKey), &groupClaims{}, time.Duration(client.JWTMaxAge), logger)
+		if err != nil {
+			setContextValue(c, "error", err.Error())
+			c.Next()
+			return
+		}
+		groups := []string{}
+		if strings.TrimSpace(claims.Groups) != "" {
+			groups = strings.Split(claims.Groups, ";")
+		}
+		setContextValue(c, "groups", groups)
+		setContextValue(c, "client", client.Name)
+		c.Next()
+	}
+}
 
 func graphqlHandler(serverResolver resolver.Resolver, logger zLogger.ZLogger) gin.HandlerFunc {
 	h := handler.NewDefaultServer(
@@ -38,7 +158,7 @@ func playgroundHandler() gin.HandlerFunc {
 	}
 }
 
-func NewController(localAddr, externalAddr string, cert *tls.Certificate, serverResolver resolver.Resolver, clients []*config.Client, logger zLogger.ZLogger) *Controller {
+func NewController(localAddr, externalAddr string, cert *tls.Certificate, serverResolver resolver.Resolver, clients []*config.Client, syncJWTKey string, logger zLogger.ZLogger) *Controller {
 	// for faster access
 	clientByApiKey := make(map[string]*config.Client)
 	for _, client := range clients {
@@ -53,123 +173,13 @@ func NewController(localAddr, externalAddr string, cert *tls.Certificate, server
 		logger:       logger,
 	}
 	router := gin.Default()
+	restRouter := router.Group("/rest")
+	restRouter.Use(cors.Default())
+	restRouter.Use(restAuthMiddleware(syncJWTKey, logger))
 
 	subRouter := router.Group("/graphql")
-
-	corsConfig := cors.DefaultConfig()
-	corsConfig.AllowAllOrigins = true
-	subRouter.Use(cors.New(corsConfig))
-
-	checkAuthMiddleware := func() gin.HandlerFunc {
-		type groupClaims struct {
-			Groups string `json:"groups"`
-			jwt.RegisteredClaims
-		}
-		return func(c *gin.Context) {
-			authString := c.Request.Header.Get("Authorization")
-			if authString == "" {
-				logger.Info().Msg("no authorization header")
-				ctx := context.WithValue(c.Request.Context(), "error", "no authorization header")
-				c.Request = c.Request.WithContext(ctx)
-				//c.AbortWithStatusJSON(http.StatusUnauthorized, "no authorization header")
-				return
-			}
-			if !strings.HasPrefix(authString, "Bearer ") {
-				logger.Info().Msgf("authorization '%s' header has wrong type", authString)
-				ctx := context.WithValue(c.Request.Context(), "error", fmt.Sprintf("authorization '%s' header has wrong type", authString))
-				c.Request = c.Request.WithContext(ctx)
-				//c.AbortWithStatusJSON(http.StatusUnauthorized, "no bearer token")
-				return
-			}
-			tokenString := authString[7:]
-			parts := strings.SplitN(tokenString, ".", 2)
-
-			client, ok := clientByApiKey[parts[0]]
-			if !ok {
-				logger.Info().Msgf("invalid application key '%s'", parts[0])
-				ctx := context.WithValue(c.Request.Context(), "error", fmt.Sprintf("invalid application key '%s'", parts[0]))
-				c.Request = c.Request.WithContext(ctx)
-				//c.AbortWithStatusJSON(http.StatusUnauthorized, "invalid application key")
-				return
-
-			}
-			logger.Debug().Msgf("client: %s", client.Name)
-			if len(parts) != 2 {
-				// we only have an application key
-				ctx := context.WithValue(c.Request.Context(), "groups", client.Groups)
-				ctx = context.WithValue(ctx, "client", client.Name)
-				c.Request = c.Request.WithContext(ctx)
-				c.Next()
-				return
-			}
-
-			token, err := jwt.ParseWithClaims(parts[1], &groupClaims{}, func(token *jwt.Token) (interface{}, error) {
-				return []byte(client.JWTKey), nil
-			}, jwt.WithLeeway(5*time.Second), jwt.WithExpirationRequired(), jwt.WithIssuedAt())
-			if err != nil {
-				logger.Info().Err(err).Msgf("cannot parse token '%s'", tokenString)
-				//c.AbortWithStatusJSON(http.StatusUnauthorized, fmt.Sprintf("cannot parse token '%s': %v", tokenString, err))
-				ctx := context.WithValue(c.Request.Context(), "error", fmt.Sprintf("cannot parse token '%s': %v", tokenString, err))
-				c.Request = c.Request.WithContext(ctx)
-				c.Next()
-				return
-			}
-			if !token.Valid {
-				logger.Info().Msgf("invalid token '%s'", tokenString)
-				//c.AbortWithStatusJSON(http.StatusUnauthorized, "invalid token")
-				ctx := context.WithValue(c.Request.Context(), "error", fmt.Sprintf("invalid token '%s'", tokenString))
-				c.Request = c.Request.WithContext(ctx)
-				c.Next()
-				return
-			}
-			claims, ok := token.Claims.(*groupClaims)
-			if !ok {
-				logger.Info().Msgf("invalid claims '%s'", tokenString)
-				//c.AbortWithStatusJSON(http.StatusUnauthorized, "invalid claims")
-				ctx := context.WithValue(c.Request.Context(), "error", fmt.Sprintf("invalid claims '%s'", tokenString))
-				c.Request = c.Request.WithContext(ctx)
-				c.Next()
-				return
-			}
-			exp, err := claims.GetExpirationTime()
-			if err != nil {
-				logger.Info().Err(err).Msgf("cannot get expiration time '%s'", tokenString)
-				//c.AbortWithStatusJSON(http.StatusUnauthorized, fmt.Sprintf("cannot get expiration time '%s': %v", tokenString, err))
-				ctx := context.WithValue(c.Request.Context(), "error", fmt.Sprintf("cannot get expiration time '%s': %v", tokenString, err))
-				c.Request = c.Request.WithContext(ctx)
-				c.Next()
-				return
-			}
-			iat, err := claims.GetIssuedAt()
-			if err != nil {
-				logger.Info().Err(err).Msgf("cannot get issued at time '%s'", tokenString)
-				//c.AbortWithStatusJSON(http.StatusUnauthorized, fmt.Sprintf("cannot get issued at time '%s': %v", tokenString, err))
-				ctx := context.WithValue(c.Request.Context(), "error", fmt.Sprintf("cannot get issued at time '%s': %v", tokenString, err))
-				c.Request = c.Request.WithContext(ctx)
-				c.Next()
-				return
-			}
-			if iat.Time.Add(time.Duration(client.JWTMaxAge)).Before(exp.Time) {
-				logger.Info().Msgf("token '%s' has more lifetime than allowed (%s)", tokenString, client.JWTMaxAge.String())
-				ctx := context.WithValue(c.Request.Context(), "error", fmt.Sprintf("token '%s' has more lifetime than allowed (%s)", tokenString, client.JWTMaxAge.String()))
-				c.Request = c.Request.WithContext(ctx)
-				c.Next()
-				return
-
-			}
-			groups := []string{}
-			if strings.TrimSpace(claims.Groups) != "" {
-				groups = strings.Split(claims.Groups, ";")
-			}
-			ctx := context.WithValue(c.Request.Context(), "groups", groups)
-			ctx = context.WithValue(ctx, "client", client.Name)
-			c.Request = c.Request.WithContext(ctx)
-			c.Next()
-			return
-		}
-	}
-
-	subRouter.Use(checkAuthMiddleware())
+	subRouter.Use(cors.Default())
+	subRouter.Use(graphqlAuthMiddleware(clientByApiKey, logger))
 
 	subRouter.POST("/", graphqlHandler(serverResolver, logger))
 	subRouter.GET("/", playgroundHandler())
