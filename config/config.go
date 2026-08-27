@@ -1,11 +1,12 @@
 package config
 
 import (
+	"io/fs"
+	"os"
+
 	"emperror.dev/errors"
 	"github.com/BurntSushi/toml"
 	"github.com/je4/utils/v2/pkg/config"
-	"io/fs"
-	"os"
 )
 
 type ClientOrQuery struct {
@@ -79,6 +80,8 @@ type RevCatConfig struct {
 	ElasticSearch ElasticSearchConfig `toml:"elasticsearch"`
 
 	Client []*Client `toml:"client"`
+
+	SyncJWTKey config.EnvString `toml:"syncjwtkey"`
 }
 
 func LoadRevCatConfig(fSys fs.FS, fp string, conf *RevCatConfig) error {
