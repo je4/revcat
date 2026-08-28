@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/je4/revcat/v2/pkg/sourcetype"
 	"github.com/je4/utils/v2/pkg/zLogger"
 )
 
@@ -47,4 +48,21 @@ func (ctrl *Controller) getSignature(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, entries[0])
+}
+
+func (ctrl *Controller) updateSignature(c *gin.Context) {
+	signature := c.Param("signature")
+	ctrl.logger.Info().Msgf("updateSignature: signature=%s", signature)
+	data := &sourcetype.SourceData{}
+	if err := c.BindJSON(data); err != nil {
+		ctrl.logger.Error().Err(err).Msgf("updateSignature: signature=%s", signature)
+		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	if err := ctrl.resolver.StoreEntry(context.Background(), signature, data); err != nil {
+		ctrl.logger.Error().Err(err).Msgf("updateSignature: signature=%s", signature)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.String(http.StatusOK, "object %s stored", data.Signature)
 }

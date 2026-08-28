@@ -17,4 +17,5 @@ type Resolver interface {
 	ReferencesFull(ctx context.Context, obj *model.MediathekFullEntry) ([]*model.MediathekBaseEntry, error)
 
 	LoadEntries(ctx context.Context, signatures []string) ([]sourcetype.SourceData, error)
+	StoreEntry(ctx context.Context, signature string, data *sourcetype.SourceData) error
 }

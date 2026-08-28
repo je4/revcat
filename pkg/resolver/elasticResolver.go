@@ -841,4 +841,23 @@ func (r *ElasticResolver) ReferencesFull(ctx context.Context, obj *model.Mediath
 	return result, nil
 }
 
+func (r *ElasticResolver) StoreEntry(ctx context.Context, signature string, data *sourcetype.SourceData) error {
+	if signature == "" && data != nil {
+		signature = data.Signature
+	}
+	if signature == "" {
+		return errors.New("signature is empty")
+	}
+	_, err := r.elastic.Index(r.index).Id(signature).Request(data).Do(ctx)
+	if err != nil {
+		return errors.Wrapf(err, "cannot store '%s' entry in index '%s'", signature, r.index)
+	}
+	if data != nil {
+		sourceCopy := *data
+		sourceCopy.ID = signature
+		r.objectCache.Set(signature, sourceCopy)
+	}
+	return nil
+}
+
 var _ Resolver = (*ElasticResolver)(nil)

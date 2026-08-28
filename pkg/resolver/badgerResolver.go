@@ -167,4 +167,31 @@ func (b *badgerResolver) ReferencesFull(ctx context.Context, obj *model.Mediathe
 	return result, nil
 }
 
+func (b *badgerResolver) StoreEntry(ctx context.Context, signature string, data *sourcetype.SourceData) error {
+	if signature == "" && data != nil {
+		signature = data.Signature
+	}
+	if signature == "" {
+		return errors.New("signature is empty")
+	}
+	rawJSON, err := json.Marshal(data)
+	if err != nil {
+		return errors.Wrapf(err, "cannot marshal source %v", data)
+	}
+	buf := bytes.NewBuffer([]byte{})
+	bw := brotli.NewWriter(buf)
+	if _, err := bw.Write(rawJSON); err != nil {
+		return errors.Wrapf(err, "cannot brotli compress source %v", signature)
+	}
+	if err := bw.Close(); err != nil {
+		return errors.Wrapf(err, "cannot close brotli writer")
+	}
+	if err := b.db.Update(func(txn *badger.Txn) error {
+		return txn.Set([]byte(signature), buf.Bytes())
+	}); err != nil {
+		return errors.Wrapf(err, "cannot store item %v in badger", signature)
+	}
+	return nil
+}
+
 var _ Resolver = (*badgerResolver)(nil)
