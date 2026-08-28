@@ -1,0 +1,420 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "description": "RevCat Catalog and Item Resolver REST API.",
+        "title": "RevCat REST API",
+        "contact": {},
+        "version": "2.0"
+    },
+    "basePath": "/rest",
+    "paths": {
+        "/item/{signature}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Load catalog entry by signature from resolver",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "item"
+                ],
+                "summary": "Get item by signature",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Item Signature",
+                        "name": "signature",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/sourcetype.SourceData"
+                        }
+                    },
+                    "401": {
+                        "description": "no authorization header / no bearer token",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "signature not found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Store catalog entry for signature into resolver",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "item"
+                ],
+                "summary": "Update item by signature",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Item Signature",
+                        "name": "signature",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Item Data",
+                        "name": "data",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/sourcetype.SourceData"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "object stored",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "bad request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "metaString.MetaString": {
+            "type": "object"
+        },
+        "sourcetype.Identifier": {
+            "type": "object",
+            "properties": {
+                "additional": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                }
+            }
+        },
+        "sourcetype.Media": {
+            "type": "object",
+            "properties": {
+                "duration": {
+                    "type": "integer"
+                },
+                "fulltext": {
+                    "type": "string"
+                },
+                "height": {
+                    "type": "integer"
+                },
+                "mimetype": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "orientation": {
+                    "type": "integer"
+                },
+                "type": {
+                    "type": "string"
+                },
+                "uri": {
+                    "type": "string"
+                },
+                "width": {
+                    "type": "integer"
+                }
+            }
+        },
+        "sourcetype.Metalist": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "string"
+            }
+        },
+        "sourcetype.Note": {
+            "type": "object",
+            "properties": {
+                "note": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "sourcetype.Person": {
+            "type": "object",
+            "properties": {
+                "alternative_names": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "identifier": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "$ref": "#/definitions/sourcetype.Identifier"
+                    }
+                },
+                "name": {
+                    "type": "string"
+                },
+                "role": {
+                    "type": "string"
+                },
+                "web": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "year": {
+                    "type": "integer"
+                }
+            }
+        },
+        "sourcetype.Query": {
+            "type": "object",
+            "properties": {
+                "label": {
+                    "type": "string"
+                },
+                "search": {
+                    "type": "string"
+                }
+            }
+        },
+        "sourcetype.Reference": {
+            "type": "object",
+            "properties": {
+                "signature": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "string"
+                },
+                "type": {
+                    "type": "string"
+                }
+            }
+        },
+        "sourcetype.SourceData": {
+            "type": "object",
+            "properties": {
+                "abstract": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/metaString.MetaString"
+                    }
+                },
+                "acl": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        }
+                    }
+                },
+                "catalog": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "category": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "collectiontitle": {
+                    "type": "string"
+                },
+                "date": {
+                    "type": "string"
+                },
+                "dateadded": {
+                    "type": "string"
+                },
+                "extra": {
+                    "$ref": "#/definitions/sourcetype.Metalist"
+                },
+                "hasmedia": {
+                    "type": "boolean"
+                },
+                "license": {
+                    "type": "string"
+                },
+                "media": {
+                    "type": "object",
+                    "additionalProperties": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/definitions/sourcetype.Media"
+                        }
+                    }
+                },
+                "mediatype": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "meta": {
+                    "$ref": "#/definitions/sourcetype.Metalist"
+                },
+                "notes": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sourcetype.Note"
+                    }
+                },
+                "persons": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sourcetype.Person"
+                    }
+                },
+                "place": {
+                    "type": "string"
+                },
+                "poster": {
+                    "$ref": "#/definitions/sourcetype.Media"
+                },
+                "publisher": {
+                    "type": "string"
+                },
+                "queries": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sourcetype.Query"
+                    }
+                },
+                "references": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/sourcetype.Reference"
+                    }
+                },
+                "rights": {
+                    "type": "string"
+                },
+                "series": {
+                    "type": "string"
+                },
+                "signature": {
+                    "type": "string"
+                },
+                "signatureoriginal": {
+                    "type": "string"
+                },
+                "source": {
+                    "type": "string"
+                },
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                },
+                "timestamp": {
+                    "type": "string"
+                },
+                "title": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/metaString.MetaString"
+                    }
+                },
+                "type": {
+                    "type": "string"
+                },
+                "url": {
+                    "type": "string"
+                },
+                "vars": {
+                    "$ref": "#/definitions/sourcetype.Varlist"
+                }
+            }
+        },
+        "sourcetype.Varlist": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                }
+            }
+        }
+    },
+    "securityDefinitions": {
+        "BearerAuth": {
+            "description": "Type \"Bearer\" followed by a space and JWT token.",
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header"
+        }
+    }
+}

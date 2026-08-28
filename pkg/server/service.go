@@ -13,8 +13,11 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/je4/revcat/v2/config"
+	_ "github.com/je4/revcat/v2/docs"
 	"github.com/je4/revcat/v2/pkg/resolver"
 	"github.com/je4/utils/v2/pkg/zLogger"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 )
 
 func setContextValue(c *gin.Context, key string, val any) {
@@ -84,10 +87,13 @@ func NewController(localAddr, externalAddr string, cert *tls.Certificate, server
 		resolver:     serverResolver,
 	}
 	router := gin.Default()
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.InstanceName("revcat")))
+
 	restRouter := router.Group("/rest")
 	restRouter.Use(cors.Default())
 	restRouter.Use(restAuthMiddleware(syncJWTKey, logger))
 	restRouter.GET("/item/:signature", ctrl.getSignature)
+	restRouter.POST("/item/:signature", ctrl.updateSignature)
 
 	subRouter := router.Group("/graphql")
 	subRouter.Use(cors.Default())

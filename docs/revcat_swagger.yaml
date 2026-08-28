@@ -1,0 +1,275 @@
+basePath: /rest
+definitions:
+  metaString.MetaString:
+    type: object
+  sourcetype.Identifier:
+    properties:
+      additional:
+        type: string
+      id:
+        type: string
+      url:
+        type: string
+    type: object
+  sourcetype.Media:
+    properties:
+      duration:
+        type: integer
+      fulltext:
+        type: string
+      height:
+        type: integer
+      mimetype:
+        type: string
+      name:
+        type: string
+      orientation:
+        type: integer
+      type:
+        type: string
+      uri:
+        type: string
+      width:
+        type: integer
+    type: object
+  sourcetype.Metalist:
+    additionalProperties:
+      type: string
+    type: object
+  sourcetype.Note:
+    properties:
+      note:
+        type: string
+      title:
+        type: string
+    type: object
+  sourcetype.Person:
+    properties:
+      alternative_names:
+        items:
+          type: string
+        type: array
+      identifier:
+        additionalProperties:
+          $ref: '#/definitions/sourcetype.Identifier'
+        type: object
+      name:
+        type: string
+      role:
+        type: string
+      web:
+        items:
+          type: string
+        type: array
+      year:
+        type: integer
+    type: object
+  sourcetype.Query:
+    properties:
+      label:
+        type: string
+      search:
+        type: string
+    type: object
+  sourcetype.Reference:
+    properties:
+      signature:
+        type: string
+      title:
+        type: string
+      type:
+        type: string
+    type: object
+  sourcetype.SourceData:
+    properties:
+      abstract:
+        items:
+          $ref: '#/definitions/metaString.MetaString'
+        type: array
+      acl:
+        additionalProperties:
+          items:
+            type: string
+          type: array
+        type: object
+      catalog:
+        items:
+          type: string
+        type: array
+      category:
+        items:
+          type: string
+        type: array
+      collectiontitle:
+        type: string
+      date:
+        type: string
+      dateadded:
+        type: string
+      extra:
+        $ref: '#/definitions/sourcetype.Metalist'
+      hasmedia:
+        type: boolean
+      license:
+        type: string
+      media:
+        additionalProperties:
+          items:
+            $ref: '#/definitions/sourcetype.Media'
+          type: array
+        type: object
+      mediatype:
+        items:
+          type: string
+        type: array
+      meta:
+        $ref: '#/definitions/sourcetype.Metalist'
+      notes:
+        items:
+          $ref: '#/definitions/sourcetype.Note'
+        type: array
+      persons:
+        items:
+          $ref: '#/definitions/sourcetype.Person'
+        type: array
+      place:
+        type: string
+      poster:
+        $ref: '#/definitions/sourcetype.Media'
+      publisher:
+        type: string
+      queries:
+        items:
+          $ref: '#/definitions/sourcetype.Query'
+        type: array
+      references:
+        items:
+          $ref: '#/definitions/sourcetype.Reference'
+        type: array
+      rights:
+        type: string
+      series:
+        type: string
+      signature:
+        type: string
+      signatureoriginal:
+        type: string
+      source:
+        type: string
+      tags:
+        items:
+          type: string
+        type: array
+      timestamp:
+        type: string
+      title:
+        items:
+          $ref: '#/definitions/metaString.MetaString'
+        type: array
+      type:
+        type: string
+      url:
+        type: string
+      vars:
+        $ref: '#/definitions/sourcetype.Varlist'
+    type: object
+  sourcetype.Varlist:
+    additionalProperties:
+      items:
+        type: string
+      type: array
+    type: object
+info:
+  contact: {}
+  description: RevCat Catalog and Item Resolver REST API.
+  title: RevCat REST API
+  version: "2.0"
+paths:
+  /item/{signature}:
+    get:
+      description: Load catalog entry by signature from resolver
+      parameters:
+      - description: Item Signature
+        in: path
+        name: signature
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/sourcetype.SourceData'
+        "401":
+          description: no authorization header / no bearer token
+          schema:
+            type: string
+        "404":
+          description: signature not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: internal error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get item by signature
+      tags:
+      - item
+    post:
+      consumes:
+      - application/json
+      description: Store catalog entry for signature into resolver
+      parameters:
+      - description: Item Signature
+        in: path
+        name: signature
+        required: true
+        type: string
+      - description: Item Data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/sourcetype.SourceData'
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: object stored
+          schema:
+            type: string
+        "400":
+          description: bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "500":
+          description: internal error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update item by signature
+      tags:
+      - item
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

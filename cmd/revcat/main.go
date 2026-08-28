@@ -1,3 +1,11 @@
+// @title          RevCat REST API
+// @version        2.0
+// @description    RevCat Catalog and Item Resolver REST API.
+// @BasePath       /rest
+// @securityDefinitions.apikey BearerAuth
+// @in             header
+// @name           Authorization
+// @description    Type "Bearer" followed by a space and JWT token.
 package main
 
 import (

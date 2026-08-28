@@ -34,6 +34,17 @@ func restAuthMiddleware(syncJWTKey string, logger zLogger.ZLogger) gin.HandlerFu
 	}
 }
 
+// @Summary      Get item by signature
+// @Description  Load catalog entry by signature from resolver
+// @Tags         item
+// @Produce      json
+// @Param        signature path string true "Item Signature"
+// @Security     BearerAuth
+// @Success      200 {object} sourcetype.SourceData
+// @Failure      401 {string} string "no authorization header / no bearer token"
+// @Failure      404 {object} map[string]string "signature not found"
+// @Failure      500 {object} map[string]string "internal error"
+// @Router       /item/{signature} [get]
 func (ctrl *Controller) getSignature(c *gin.Context) {
 	signature := c.Param("signature")
 	ctrl.logger.Info().Msgf("getSignature: signature=%s", signature)
@@ -50,6 +61,19 @@ func (ctrl *Controller) getSignature(c *gin.Context) {
 	c.JSON(http.StatusOK, entries[0])
 }
 
+// @Summary      Update item by signature
+// @Description  Store catalog entry for signature into resolver
+// @Tags         item
+// @Accept       json
+// @Produce      plain
+// @Param        signature path string true "Item Signature"
+// @Param        data body sourcetype.SourceData true "Item Data"
+// @Security     BearerAuth
+// @Success      200 {string} string "object stored"
+// @Failure      400 {object} map[string]string "bad request"
+// @Failure      401 {string} string "unauthorized"
+// @Failure      500 {object} map[string]string "internal error"
+// @Router       /item/{signature} [post]
 func (ctrl *Controller) updateSignature(c *gin.Context) {
 	signature := c.Param("signature")
 	ctrl.logger.Info().Msgf("updateSignature: signature=%s", signature)
