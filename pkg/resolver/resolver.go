@@ -18,4 +18,5 @@ type Resolver interface {
 
 	LoadEntries(ctx context.Context, signatures []string) ([]sourcetype.SourceData, error)
 	StoreEntry(ctx context.Context, signature string, data *sourcetype.SourceData) error
+	DeleteEntry(ctx context.Context, signature string) error
 }

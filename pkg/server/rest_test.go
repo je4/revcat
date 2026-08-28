@@ -58,6 +58,16 @@ func (m *mockResolver) StoreEntry(ctx context.Context, signature string, data *s
 	return nil
 }
 
+func (m *mockResolver) DeleteEntry(ctx context.Context, signature string) error {
+	if m.err != nil {
+		return m.err
+	}
+	if m.entries != nil {
+		delete(m.entries, signature)
+	}
+	return nil
+}
+
 func TestSwaggerEndpoints(t *testing.T) {
 	logger := newTestLogger()
 	ctrl := NewController("localhost:8080", "http://localhost:8080/graphql", nil, &mockResolver{}, nil, "jwt-secret", logger)
@@ -94,6 +104,15 @@ func TestSwaggerEndpoints(t *testing.T) {
 		paths, ok := doc["paths"].(map[string]any)
 		if !ok || paths["/item/{signature}"] == nil {
 			t.Errorf("expected doc.json paths to contain '/item/{signature}', got %v", paths)
+		}
+		itemPath, ok := paths["/item/{signature}"].(map[string]any)
+		if !ok {
+			t.Fatalf("expected paths['/item/{signature}'] to be an object, got %T", paths["/item/{signature}"])
+		}
+		for _, method := range []string{"get", "post", "delete"} {
+			if itemPath[method] == nil {
+				t.Errorf("expected paths['/item/{signature}'] to contain method %q", method)
+			}
 		}
 	})
 }
@@ -227,6 +246,47 @@ func TestRestEndpoints(t *testing.T) {
 		itemBytes, _ := json.Marshal(item)
 
 		req := httptest.NewRequest(http.MethodPost, "/rest/item/test-sig-2", bytes.NewBuffer(itemBytes))
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", validToken))
+		w := httptest.NewRecorder()
+		errCtrl.srv.Handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusInternalServerError {
+			t.Errorf("expected status 500, got %d", w.Code)
+		}
+	})
+
+	t.Run("deleteSignature unauthorized", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodDelete, "/rest/item/test-sig-1", nil)
+		w := httptest.NewRecorder()
+		ctrl.srv.Handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusUnauthorized {
+			t.Errorf("expected status 401, got %d", w.Code)
+		}
+	})
+
+	t.Run("deleteSignature success", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodDelete, "/rest/item/test-sig-1", nil)
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", validToken))
+		w := httptest.NewRecorder()
+		ctrl.srv.Handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d: %s", w.Code, w.Body.String())
+		}
+		if !strings.Contains(w.Body.String(), "object test-sig-1 deleted") {
+			t.Errorf("expected body to contain 'object test-sig-1 deleted', got: %s", w.Body.String())
+		}
+		if _, ok := mockRes.entries["test-sig-1"]; ok {
+			t.Errorf("expected entry test-sig-1 to be deleted from resolver, but it still exists")
+		}
+	})
+
+	t.Run("deleteSignature internal error", func(t *testing.T) {
+		errResolver := &mockResolver{err: errors.New("database failure")}
+		errCtrl := NewController("localhost:8080", "http://localhost:8080/graphql", nil, errResolver, nil, secret, logger)
+
+		req := httptest.NewRequest(http.MethodDelete, "/rest/item/test-sig-1", nil)
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", validToken))
 		w := httptest.NewRecorder()
 		errCtrl.srv.Handler.ServeHTTP(w, req)

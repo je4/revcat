@@ -49,4 +49,16 @@ func TestBadgerResolver_StoreAndLoadEntry(t *testing.T) {
 	if entries[0].Signature != "test-sig-1" || entries[0].Source != "test-source" {
 		t.Errorf("unexpected entry loaded: %+v", entries[0])
 	}
+
+	if err := res.DeleteEntry(ctx, "test-sig-1"); err != nil {
+		t.Fatalf("DeleteEntry failed: %v", err)
+	}
+
+	entriesAfterDelete, err := res.LoadEntries(ctx, []string{"test-sig-1"})
+	if err != nil {
+		t.Fatalf("LoadEntries after delete failed: %v", err)
+	}
+	if len(entriesAfterDelete) != 0 {
+		t.Fatalf("expected 0 entries after delete, got %d", len(entriesAfterDelete))
+	}
 }

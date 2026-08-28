@@ -186,13 +186,13 @@ func TestRestAuthMiddleware(t *testing.T) {
 		}
 	})
 
-	t.Run("invalid token sets context error but passes", func(t *testing.T) {
+	t.Run("invalid token returns unauthorized", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/test", nil)
 		req.Header.Set("Authorization", "Bearer invalid.token.payload")
 		w := httptest.NewRecorder()
 		r.ServeHTTP(w, req)
-		if w.Code != http.StatusOK {
-			t.Errorf("expected status %d, got %d", http.StatusOK, w.Code)
+		if w.Code != http.StatusUnauthorized {
+			t.Errorf("expected status %d, got %d", http.StatusUnauthorized, w.Code)
 		}
 	})
 

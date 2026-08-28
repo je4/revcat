@@ -94,6 +94,7 @@ func NewController(localAddr, externalAddr string, cert *tls.Certificate, server
 	restRouter.Use(restAuthMiddleware(syncJWTKey, logger))
 	restRouter.GET("/item/:signature", ctrl.getSignature)
 	restRouter.POST("/item/:signature", ctrl.updateSignature)
+	restRouter.DELETE("/item/:signature", ctrl.deleteSignature)
 
 	subRouter := router.Group("/graphql")
 	subRouter.Use(cors.Default())
@@ -123,6 +124,13 @@ type Controller struct {
 	cert         *tls.Certificate
 	logger       zLogger.ZLogger
 	resolver     resolver.Resolver
+}
+
+func (ctrl *Controller) Handler() http.Handler {
+	if ctrl.srv != nil {
+		return ctrl.srv.Handler
+	}
+	return nil
 }
 
 func (ctrl *Controller) Start() error {

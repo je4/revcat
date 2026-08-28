@@ -860,4 +860,16 @@ func (r *ElasticResolver) StoreEntry(ctx context.Context, signature string, data
 	return nil
 }
 
+func (r *ElasticResolver) DeleteEntry(ctx context.Context, signature string) error {
+	if signature == "" {
+		return errors.New("signature is empty")
+	}
+	_, err := r.elastic.Delete(r.index, signature).Do(ctx)
+	if err != nil {
+		return errors.Wrapf(err, "cannot delete '%s' entry from index '%s'", signature, r.index)
+	}
+	r.objectCache.Remove(signature)
+	return nil
+}
+
 var _ Resolver = (*ElasticResolver)(nil)

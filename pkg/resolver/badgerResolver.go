@@ -32,6 +32,9 @@ func (b *badgerResolver) LoadEntries(ctx context.Context, signatures []string) (
 		for _, signature := range signatures {
 			item, err := txn.Get([]byte(signature))
 			if err != nil {
+				if errors.Is(err, badger.ErrKeyNotFound) {
+					continue
+				}
 				return errors.Wrapf(err, "cannot get item %v", signature)
 			}
 			if err := item.Value(func(val []byte) error {
@@ -190,6 +193,22 @@ func (b *badgerResolver) StoreEntry(ctx context.Context, signature string, data 
 		return txn.Set([]byte(signature), buf.Bytes())
 	}); err != nil {
 		return errors.Wrapf(err, "cannot store item %v in badger", signature)
+	}
+	return nil
+}
+
+func (b *badgerResolver) DeleteEntry(ctx context.Context, signature string) error {
+	if signature == "" {
+		return errors.New("signature is empty")
+	}
+	if err := b.db.Update(func(txn *badger.Txn) error {
+		err := txn.Delete([]byte(signature))
+		if errors.Is(err, badger.ErrKeyNotFound) {
+			return nil
+		}
+		return err
+	}); err != nil {
+		return errors.Wrapf(err, "cannot delete item %v from badger", signature)
 	}
 	return nil
 }

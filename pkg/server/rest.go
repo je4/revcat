@@ -27,7 +27,7 @@ func restAuthMiddleware(syncJWTKey string, logger zLogger.ZLogger) gin.HandlerFu
 
 		if _, err := validateJWT(tokenString, syncJWTKey, &jwt.RegisteredClaims{}, 4*time.Hour, logger); err != nil {
 			setContextValue(c, "error", err.Error())
-			c.Next()
+			c.AbortWithStatusJSON(http.StatusUnauthorized, "invalid bearer token")
 			return
 		}
 		c.Next()
@@ -89,4 +89,25 @@ func (ctrl *Controller) updateSignature(c *gin.Context) {
 		return
 	}
 	c.String(http.StatusOK, "object %s stored", data.Signature)
+}
+
+// @Summary      Delete item by signature
+// @Description  Delete catalog entry by signature from resolver
+// @Tags         item
+// @Produce      plain
+// @Param        signature path string true "Item Signature"
+// @Security     BearerAuth
+// @Success      200 {string} string "object deleted"
+// @Failure      401 {string} string "unauthorized"
+// @Failure      500 {object} map[string]string "internal error"
+// @Router       /item/{signature} [delete]
+func (ctrl *Controller) deleteSignature(c *gin.Context) {
+	signature := c.Param("signature")
+	ctrl.logger.Info().Msgf("deleteSignature: signature=%s", signature)
+	if err := ctrl.resolver.DeleteEntry(context.Background(), signature); err != nil {
+		ctrl.logger.Error().Err(err).Msgf("deleteSignature: signature=%s", signature)
+		c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+	c.String(http.StatusOK, "object %s deleted", signature)
 }

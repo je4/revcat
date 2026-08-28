@@ -186,6 +186,36 @@ info:
   version: "2.0"
 paths:
   /item/{signature}:
+    delete:
+      description: Delete catalog entry by signature from resolver
+      parameters:
+      - description: Item Signature
+        in: path
+        name: signature
+        required: true
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: object deleted
+          schema:
+            type: string
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "500":
+          description: internal error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete item by signature
+      tags:
+      - item
     get:
       description: Load catalog entry by signature from resolver
       parameters:
