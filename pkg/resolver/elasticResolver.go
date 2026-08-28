@@ -140,8 +140,8 @@ func (r *ElasticResolver) LoadEntries(ctx context.Context, signatures []string) 
 			if !ok {
 				return nil, errors.Errorf("cannot convert doc %v to map", docInt)
 			}
-			if doc.Source_ == nil {
-				return nil, errors.Errorf("source of doc %v is nil", doc)
+			if !doc.Found || doc.Source_ == nil {
+				continue
 			}
 			jsonBytes := doc.Source_
 			source := sourcetype.SourceData{ID: doc.Id_}
