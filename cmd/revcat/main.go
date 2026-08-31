@@ -25,7 +25,6 @@ import (
 	"time"
 
 	"github.com/dgraph-io/badger/v4"
-	"github.com/elastic/elastic-transport-go/v8/elastictransport"
 	elasticsearch "github.com/elastic/go-elasticsearch/v8"
 	"github.com/je4/revcat/v2/config"
 	"github.com/je4/revcat/v2/data/certs"
@@ -109,7 +108,7 @@ func main() {
 		//
 		MaxRetries: 5,
 
-		Logger: &elastictransport.ColorLogger{Output: os.Stdout},
+		//Logger: &elastictransport.ColorLogger{Output: os.Stdout},
 		//		Transport: doer,
 	}
 	if conf.ElasticSearch.Debug {

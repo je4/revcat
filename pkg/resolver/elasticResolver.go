@@ -608,7 +608,7 @@ func (r *ElasticResolver) Search(
 		}
 		result.Facets = append(result.Facets, facet)
 	}
-	r.logger.Debug().Msgf("total count %d, from %d, num %d", result.TotalCount, from, num)
+	//r.logger.Debug().Msgf("total count %d, from %d, num %d", result.TotalCount, from, num)
 	if result.TotalCount > from+num {
 		result.PageInfo.HasNextPage = true
 		nFrom := min(from+num-1, result.TotalCount-1)

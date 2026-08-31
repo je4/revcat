@@ -75,6 +75,7 @@ func NewController(localAddr, externalAddr string, cert *tls.Certificate, server
 	// for faster access
 	clientByApiKey := make(map[string]*config.Client)
 	for _, client := range clients {
+		logger.Debug().Msgf("adding client %s with apikey '%s'", client.Name, client.Apikey.String())
 		clientByApiKey[string(client.Apikey)] = client
 	}
 
