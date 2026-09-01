@@ -17,6 +17,14 @@ index = "fhnw_ink"
 apikey = "%%ELASTIC_APIKEY%%"
 debug = true
 
+[elasticsearch.roleweights]
+"Autor" = 3.0
+"Komponist" = 2.5
+"Künstler" = 2.5
+"Fotograf" = 2.0
+"Herausgeber" = 1.2
+"Übersetzer" = 1.1
+
 [[client]]
 name = "performance"
 apikey = "%%TEST.APIKEY%%"

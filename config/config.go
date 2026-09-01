@@ -29,10 +29,11 @@ type Client struct {
 }
 
 type ElasticSearchConfig struct {
-	Endpoint []string         `toml:"endpoint"`
-	Index    string           `toml:"index"`
-	ApiKey   config.EnvString `toml:"apikey"`
-	Debug    bool             `toml:"debug"`
+	Endpoint    []string           `toml:"endpoint"`
+	Index       string             `toml:"index"`
+	ApiKey      config.EnvString   `toml:"apikey"`
+	Debug       bool               `toml:"debug"`
+	RoleWeights map[string]float64 `toml:"roleweights"`
 }
 
 type ZoomConfig struct {

@@ -14,6 +14,8 @@ import (
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/core/search"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/functionboostmode"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/functionscoremode"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/operator"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types/enums/sortorder"
 	"github.com/je4/revcat/v2/config"
@@ -22,10 +24,11 @@ import (
 	"github.com/je4/utils/v2/pkg/zLogger"
 )
 
-func NewElasticResolver(elastic *elasticsearch.TypedClient, index string, clients []*config.Client, logger zLogger.ZLogger) *ElasticResolver {
+func NewElasticResolver(elastic *elasticsearch.TypedClient, index string, clients []*config.Client, roleWeights map[string]float64, logger zLogger.ZLogger) *ElasticResolver {
 	r := &ElasticResolver{
 		elastic:     elastic,
 		index:       index,
+		roleWeights: roleWeights,
 		logger:      logger,
 		objectCache: gcache.New(800).LRU().Build(),
 		client:      make(map[string]*config.Client),
@@ -42,6 +45,7 @@ type ElasticResolver struct {
 	index       string
 	objectCache gcache.Cache
 	client      map[string]*config.Client
+	roleWeights map[string]float64
 	jwtKey      string
 	jwtAlgs     []string
 	jwtMaxAge   time.Duration
@@ -496,6 +500,64 @@ func (r *ElasticResolver) Search(
 				Must:   esMust,
 				Should: esShould,
 			},
+		}
+	}
+	if len(r.roleWeights) > 0 && query != "" && searchRequest.Query != nil {
+		roles := make([]string, 0, len(r.roleWeights))
+		for role := range r.roleWeights {
+			roles = append(roles, role)
+		}
+		slices.Sort(roles)
+
+		var scoreFunctions []types.FunctionScore
+		for _, role := range roles {
+			weight := r.roleWeights[role]
+			if weight <= 0 {
+				continue
+			}
+			w := types.Float64(weight)
+			rRole := role
+			scoreFunctions = append(scoreFunctions, types.FunctionScore{
+				Filter: &types.Query{
+					Nested: &types.NestedQuery{
+						Path: "persons",
+						Query: types.Query{
+							Bool: &types.BoolQuery{
+								Must: []types.Query{
+									{
+										SimpleQueryString: &types.SimpleQueryStringQuery{
+											Query:  query,
+											Fields: []string{"persons.name"},
+										},
+									},
+									{
+										Term: map[string]types.TermQuery{
+											"persons.role.keyword": {
+												Value: rRole,
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+				Weight: &w,
+			})
+		}
+
+		if len(scoreFunctions) > 0 {
+			scoreMode := functionscoremode.Max
+			boostMode := functionboostmode.Multiply
+
+			searchRequest.Query = &types.Query{
+				FunctionScore: &types.FunctionScoreQuery{
+					Query:     searchRequest.Query,
+					Functions: scoreFunctions,
+					ScoreMode: &scoreMode,
+					BoostMode: &boostMode,
+				},
+			}
 		}
 	}
 	sorts := []*types.SortOptions{}

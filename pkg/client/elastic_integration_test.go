@@ -83,7 +83,7 @@ func TestGlobalElasticsearchClientService(t *testing.T) {
 
 	// 5. Initialize Resolver and Server Controller
 	logger := newTestLogger()
-	serverResolver := resolver.NewElasticResolver(elastic, conf.ElasticSearch.Index, conf.Client, logger)
+	serverResolver := resolver.NewElasticResolver(elastic, conf.ElasticSearch.Index, conf.Client, conf.ElasticSearch.RoleWeights, logger)
 	syncJWTKey := "integration-test-sync-jwt-key"
 	ctrl := server.NewController("localhost:0", "http://localhost:0/graphql", nil, serverResolver, conf.Client, syncJWTKey, logger)
 	ts := httptest.NewServer(ctrl.Handler())
