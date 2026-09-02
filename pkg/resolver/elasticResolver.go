@@ -741,6 +741,9 @@ func (r *ElasticResolver) Search(
 	}
 	for _, hit := range resp.Hits.Hits {
 		source := &sourcetype.SourceData{}
+		if hit.Id_ != nil {
+			source.ID = *hit.Id_
+		}
 		if err := json.Unmarshal(hit.Source_, source); err != nil {
 			return nil, errors.Wrapf(err, "cannot unmarshal hit %v", hit)
 		}

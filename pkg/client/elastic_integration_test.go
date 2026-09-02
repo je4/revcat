@@ -14,6 +14,7 @@ import (
 	"github.com/je4/revcat/v2/pkg/resolver"
 	"github.com/je4/revcat/v2/pkg/server"
 	"github.com/je4/revcat/v2/pkg/sourcetype"
+	"go.ub.unibas.ch/metastring/pkg/metaString"
 )
 
 func loadEnvFromFiles() {
@@ -181,4 +182,181 @@ func TestGlobalElasticsearchClientService(t *testing.T) {
 			t.Fatalf("expected error reading deleted item, but got item: %+v", itemAfterDelete)
 		}
 	})
+}
+
+func TestSearchRoleScoreFunctionIntegration(t *testing.T) {
+	// 1. Attempt loading environment variables from .env if present
+	loadEnvFromFiles()
+
+	// 2. Load configuration from config/revcat.toml
+	conf := &config.RevCatConfig{
+		ElasticSearch: config.ElasticSearchConfig{
+			Debug: false,
+		},
+	}
+	if err := config.LoadRevCatConfig(config.ConfigFS, "revcat.toml", conf); err != nil {
+		t.Fatalf("failed to load revcat.toml configuration: %v", err)
+	}
+
+	// 3. Fetch Elasticsearch API key live from the environment variable
+	apiKey := os.Getenv("ELASTIC_APIKEY")
+	if apiKey == "" {
+		t.Skip("skipping test: ELASTIC_APIKEY environment variable is not set")
+	}
+
+	// 4. Initialize Elasticsearch typed client
+	elasticConfig := elasticsearch.Config{
+		Addresses: conf.ElasticSearch.Endpoint,
+		APIKey:    apiKey,
+	}
+	elastic, err := elasticsearch.NewTypedClient(elasticConfig)
+	if err != nil {
+		t.Skipf("skipping test: cannot create typed elasticsearch client: %v", err)
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	if _, err := elastic.Info().Do(ctx); err != nil {
+		t.Skipf("skipping test: cannot contact elasticsearch at %v: %v", conf.ElasticSearch.Endpoint, err)
+	}
+
+	// 5. Configure clients: one with role weights (author boosted) and one without role weights
+	clientWithRoles := &config.Client{
+		Name:   "client_with_roles",
+		Groups: []string{"global/guest"},
+		RoleWeights: map[string]float64{
+			"author":      50.0,
+			"contributor": 1.0,
+		},
+	}
+	clientWithoutRoles := &config.Client{
+		Name:        "client_without_roles",
+		Groups:      []string{"global/guest"},
+		RoleWeights: map[string]float64{},
+	}
+	clients := []*config.Client{clientWithRoles, clientWithoutRoles}
+
+	logger := newTestLogger()
+	testResolver := resolver.NewElasticResolver(elastic, conf.ElasticSearch.Index, clients, nil, nil, logger)
+
+	// 6. Create test documents
+	nowNano := time.Now().UnixNano()
+	targetName := fmt.Sprintf("RoleScoreTarget_%d", nowNano)
+	sigAuthorDoc := fmt.Sprintf("role-test-author-%d", nowNano)
+	sigContribDoc := fmt.Sprintf("role-test-contrib-%d", nowNano)
+
+	// Doc A: role is "author", title is a standard generic title (matches query ONLY via persons.name)
+	docAuthor := &sourcetype.SourceData{
+		Signature: sigAuthorDoc,
+		Source:    "role-integration-test-source",
+		Persons: []sourcetype.Person{
+			{
+				Name: targetName,
+				Role: "author",
+			},
+		},
+		ACL: map[string][]string{
+			"meta":    {"global/guest"},
+			"content": {"global/guest"},
+		},
+		Category: []string{"zotero2!!PCB_Basel"},
+	}
+	_ = docAuthor.SetTitle(metaString.NewMetaString("Generic Document Title Alpha"))
+
+	// Doc B: role is "contributor", title explicitly contains targetName (matches query in BOTH title AND persons.name -> higher base score)
+	docContrib := &sourcetype.SourceData{
+		Signature: sigContribDoc,
+		Source:    "role-integration-test-source",
+		Persons: []sourcetype.Person{
+			{
+				Name: targetName,
+				Role: "contributor",
+			},
+		},
+		ACL: map[string][]string{
+			"meta":    {"global/guest"},
+			"content": {"global/guest"},
+		},
+		Category: []string{"zotero2!!PCB_Basel"},
+	}
+	_ = docContrib.SetTitle(metaString.NewMetaString(fmt.Sprintf("Explicit Match %s in Title", targetName)))
+
+	// 7. Cleanup after test completion
+	t.Cleanup(func() {
+		_ = testResolver.DeleteEntry(context.Background(), sigAuthorDoc)
+		_ = testResolver.DeleteEntry(context.Background(), sigContribDoc)
+	})
+
+	// Store both entries into Elasticsearch
+	if err := testResolver.StoreEntry(ctx, sigAuthorDoc, docAuthor); err != nil {
+		t.Fatalf("failed to store docAuthor: %v", err)
+	}
+	if err := testResolver.StoreEntry(ctx, sigContribDoc, docContrib); err != nil {
+		t.Fatalf("failed to store docContrib: %v", err)
+	}
+
+	// Wait for Elasticsearch indexing refresh interval
+	time.Sleep(2 * time.Second)
+
+	// 8. Search without role scoring
+	ctxWithoutRoles := context.WithValue(ctx, "groups", []string{"global/guest"})
+	ctxWithoutRoles = context.WithValue(ctxWithoutRoles, "client", "client_without_roles")
+
+	t.Logf("Searching for query %q", targetName)
+	resWithoutRoles, err := testResolver.Search(
+		ctxWithoutRoles,
+		"all",
+		targetName,
+		nil, nil, nil, nil, nil, nil, nil,
+	)
+	if err != nil {
+		t.Fatalf("search without role scoring failed: %v", err)
+	}
+	t.Logf("TotalCount without roles: %d, Edges len: %d", resWithoutRoles.TotalCount, len(resWithoutRoles.Edges))
+
+	// 9. Search with role scoring
+	ctxWithRoles := context.WithValue(ctx, "groups", []string{"global/guest"})
+	ctxWithRoles = context.WithValue(ctxWithRoles, "client", "client_with_roles")
+
+	resWithRoles, err := testResolver.Search(
+		ctxWithRoles,
+		"all",
+		targetName,
+		nil, nil, nil, nil, nil, nil, nil,
+	)
+	if err != nil {
+		t.Fatalf("search with role scoring failed: %v", err)
+	}
+
+	// 10. Verify results
+	if len(resWithoutRoles.Edges) < 2 {
+		t.Fatalf("expected at least 2 results without role scoring, got %d", len(resWithoutRoles.Edges))
+	}
+	if len(resWithRoles.Edges) < 2 {
+		t.Fatalf("expected at least 2 results with role scoring, got %d", len(resWithRoles.Edges))
+	}
+
+	firstWithout := resWithoutRoles.Edges[0].Base.Signature
+	secondWithout := resWithoutRoles.Edges[1].Base.Signature
+	firstWith := resWithRoles.Edges[0].Base.Signature
+	secondWith := resWithRoles.Edges[1].Base.Signature
+
+	t.Logf("Result ranking without role score function: 1st=%s, 2nd=%s", firstWithout, secondWithout)
+	t.Logf("Result ranking with role score function:    1st=%s, 2nd=%s", firstWith, secondWith)
+
+	// Without role weights, docContrib ranks higher due to title match
+	if firstWithout != sigContribDoc {
+		t.Errorf("expected docContrib (%s) to rank 1st without role score function, got %s", sigContribDoc, firstWithout)
+	}
+
+	// With role weights, docAuthor gets boosted by author role weight and ranks higher
+	if firstWith != sigAuthorDoc {
+		t.Errorf("expected docAuthor (%s) to rank 1st with role score function, got %s", sigAuthorDoc, firstWith)
+	}
+
+	// Confirm that the result ranking differs
+	if firstWithout == firstWith {
+		t.Errorf("expected role score function to alter ranking order, but top result was identical: %s", firstWith)
+	}
 }
