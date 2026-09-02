@@ -4,6 +4,7 @@ import (
 	"context"
 	json1 "encoding/json"
 	"encoding/json/v2"
+	"fmt"
 	"regexp"
 	"slices"
 	"strings"
@@ -24,14 +25,41 @@ import (
 	"github.com/je4/utils/v2/pkg/zLogger"
 )
 
-func NewElasticResolver(elastic *elasticsearch.TypedClient, index string, clients []*config.Client, roleWeights map[string]float64, logger zLogger.ZLogger) *ElasticResolver {
+var defaultSearchFields = []string{
+	"title",
+	"persons.name",
+	"collectiontitle",
+	"series",
+	"tags",
+	"category",
+	"abstract",
+	"notes.title",
+	"notes.note",
+	"media.*.fulltext",
+}
+
+var defaultFieldWeights = map[string]float64{
+	"title":            4.0,
+	"persons.name":     4.0,
+	"collectiontitle":  2.0,
+	"series":           2.0,
+	"tags":             2.0,
+	"category":         1.5,
+	"abstract":         1.1,
+	"notes.title":      1.2,
+	"notes.note":       1.0,
+	"media.*.fulltext": 1.0,
+}
+
+func NewElasticResolver(elastic *elasticsearch.TypedClient, index string, clients []*config.Client, roleWeights map[string]float64, fieldWeights map[string]float64, logger zLogger.ZLogger) *ElasticResolver {
 	r := &ElasticResolver{
-		elastic:     elastic,
-		index:       index,
-		roleWeights: roleWeights,
-		logger:      logger,
-		objectCache: gcache.New(800).LRU().Build(),
-		client:      make(map[string]*config.Client),
+		elastic:      elastic,
+		index:        index,
+		roleWeights:  roleWeights,
+		fieldWeights: fieldWeights,
+		logger:       logger,
+		objectCache:  gcache.New(800).LRU().Build(),
+		client:       make(map[string]*config.Client),
 	}
 	for _, client := range clients {
 		r.client[client.Name] = client
@@ -40,15 +68,16 @@ func NewElasticResolver(elastic *elasticsearch.TypedClient, index string, client
 }
 
 type ElasticResolver struct {
-	elastic     *elasticsearch.TypedClient
-	logger      zLogger.ZLogger
-	index       string
-	objectCache gcache.Cache
-	client      map[string]*config.Client
-	roleWeights map[string]float64
-	jwtKey      string
-	jwtAlgs     []string
-	jwtMaxAge   time.Duration
+	elastic      *elasticsearch.TypedClient
+	logger       zLogger.ZLogger
+	index        string
+	objectCache  gcache.Cache
+	client       map[string]*config.Client
+	roleWeights  map[string]float64
+	fieldWeights map[string]float64
+	jwtKey       string
+	jwtAlgs      []string
+	jwtMaxAge    time.Duration
 }
 
 func BuildBaseFilter(client *config.Client, groups ...string) ([]types.Query, error) {
@@ -342,18 +371,27 @@ func (r *ElasticResolver) Search(
 		"media.webrecorder.",
 	}
 	if query != "" {
-		// 1. Definition der Felder (wie bisher)
-		fields := []string{
-			"title^4",
-			"persons.name^4",
-			"collectiontitle^2",
-			"series^2",
-			"tags^2",
-			"category^1.5",
-			"abstract^1.1",
-			"notes.title^1.2",
-			"notes.note^1.0",
-			"media.*.fulltext^1.0",
+		getWeight := func(name string) float64 {
+			if client != nil && client.FieldWeights != nil {
+				if w, ok := client.FieldWeights[name]; ok && w > 0 {
+					return w
+				}
+			}
+			if r.fieldWeights != nil {
+				if w, ok := r.fieldWeights[name]; ok && w > 0 {
+					return w
+				}
+			}
+			if def, ok := defaultFieldWeights[name]; ok {
+				return def
+			}
+			return 1.0
+		}
+
+		// 1. Definition der Felder
+		fields := make([]string, len(defaultSearchFields))
+		for i, name := range defaultSearchFields {
+			fields[i] = fmt.Sprintf("%s^%v", name, getWeight(name))
 		}
 
 		// Filterung nach searchType
@@ -365,7 +403,12 @@ func (r *ElasticResolver) Search(
 		case "title":
 			fields = []string{"title"}
 		case "fulltext":
-			fields = []string{"abstract^1.1", "notes.title^1.2", "notes.note^1.0", "media.*.fulltext^1.0"}
+			fields = []string{
+				fmt.Sprintf("abstract^%v", getWeight("abstract")),
+				fmt.Sprintf("notes.title^%v", getWeight("notes.title")),
+				fmt.Sprintf("notes.note^%v", getWeight("notes.note")),
+				fmt.Sprintf("media.*.fulltext^%v", getWeight("media.*.fulltext")),
+			}
 		case "collection":
 			fields = []string{"collection"}
 		case "signature":

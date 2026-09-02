@@ -18,12 +18,29 @@ apikey = "%%ELASTIC_APIKEY%%"
 debug = true
 
 [elasticsearch.roleweights]
-"Autor" = 3.0
-"Komponist" = 2.5
-"Künstler" = 2.5
-"Fotograf" = 2.0
-"Herausgeber" = 1.2
-"Übersetzer" = 1.1
+"author" = 3.0
+"artist" = 2.5
+"director" = 2.5
+"performer" = 2.5
+"composer" = 2.5
+"Composer" = 2.5
+"camera" = 2.0
+"editor" = 1.5
+"creator" = 2.0
+"contributor" = 1.2
+"translator" = 1.1
+
+[elasticsearch.fieldweights]
+"title" = 4.0
+"persons.name" = 4.0
+"collectiontitle" = 2.0
+"series" = 2.0
+"tags" = 2.0
+"category" = 1.5
+"abstract" = 1.1
+"notes.title" = 1.2
+"notes.note" = 1.0
+"media.*.fulltext" = 1.0
 
 [[client]]
 name = "performance"
@@ -33,9 +50,23 @@ jwtkey = "%%TEST.JWTKEY%%" # ":Xf/#|IKYrDsNi4]LN*o(W7;:"
 jwtalg = ["HS256","HS384","HS512"]
 jwtmaxage = "10m"
 [client.roleweights]
-"Künstler" = 3.0
-"Performer" = 3.0
-"Autor" = 2.0
+"artist" = 4.0
+"performer" = 4.0
+"director" = 1.5
+"author" = 4.0
+"eventcurator" = 2.0
+"contributor" = 2.0
+[client.fieldweights]
+"title" = 4.0
+"persons.name" = 4.0
+"collectiontitle" = 2.0
+"series" = 2.0
+"tags" = 2.0
+"category" = 1.5
+"abstract" = 1.1
+"notes.title" = 1.2
+"notes.note" = 1.0
+"media.*.fulltext" = 1.0
 [[client.and]]
 [[client.and.or]]
 field = "category.keyword"
@@ -65,6 +96,19 @@ jwtkey = "%%TEST.JWTKEY%%" # ":Xf/#|IKYrDsNi4]LN*o(W7;:"
 jwtalg = ["HS256","HS384","HS512"]
 jwtmaxage = "10m"
 [client.roleweights]
-"Autor" = 4.0
-"Herausgeber" = 2.0
-"Übersetzer" = 1.5
+"author" = 4.0
+"editor" = 2.0
+"creator" = 2.0
+"translator" = 1.5
+"contributor" = 1.2
+[client.fieldweights]
+"title" = 5.0
+"persons.name" = 4.0
+"collectiontitle" = 2.0
+"series" = 2.0
+"tags" = 2.0
+"category" = 1.5
+"abstract" = 1.1
+"notes.title" = 1.2
+"notes.note" = 1.0
+"media.*.fulltext" = 1.0

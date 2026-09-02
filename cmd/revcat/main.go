@@ -152,7 +152,7 @@ func main() {
 
 	var serverResolver resolver.Resolver
 	if !*local {
-		serverResolver = resolver.NewElasticResolver(elastic, conf.ElasticSearch.Index, conf.Client, conf.ElasticSearch.RoleWeights, logger)
+		serverResolver = resolver.NewElasticResolver(elastic, conf.ElasticSearch.Index, conf.Client, conf.ElasticSearch.RoleWeights, conf.ElasticSearch.FieldWeights, logger)
 	} else {
 		options := badger.DefaultOptions(conf.Badger)
 		if runtime.GOOS != "windows" {
