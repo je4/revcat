@@ -19,13 +19,14 @@ type ClientANDQuery struct {
 }
 
 type Client struct {
-	Name      string           `toml:"name"`
-	Apikey    config.EnvString `toml:"apikey"`
-	Groups    []string         `toml:"groups"`
-	AND       []ClientANDQuery `toml:"and"`
-	JWTKey    config.EnvString `toml:"jwtkey"`
-	JWTAlgs   []string         `toml:"jwtalg"`
-	JWTMaxAge config.Duration  `toml:"jwtmaxage"`
+	Name        string             `toml:"name"`
+	Apikey      config.EnvString   `toml:"apikey"`
+	Groups      []string           `toml:"groups"`
+	AND         []ClientANDQuery   `toml:"and"`
+	JWTKey      config.EnvString   `toml:"jwtkey"`
+	JWTAlgs     []string           `toml:"jwtalg"`
+	JWTMaxAge   config.Duration    `toml:"jwtmaxage"`
+	RoleWeights map[string]float64 `toml:"roleweights"`
 }
 
 type ElasticSearchConfig struct {

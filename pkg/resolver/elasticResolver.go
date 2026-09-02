@@ -502,16 +502,21 @@ func (r *ElasticResolver) Search(
 			},
 		}
 	}
-	if len(r.roleWeights) > 0 && query != "" && searchRequest.Query != nil {
-		roles := make([]string, 0, len(r.roleWeights))
-		for role := range r.roleWeights {
+	roleWeights := r.roleWeights
+	if client != nil && len(client.RoleWeights) > 0 {
+		roleWeights = client.RoleWeights
+	}
+
+	if len(roleWeights) > 0 && query != "" && searchRequest.Query != nil {
+		roles := make([]string, 0, len(roleWeights))
+		for role := range roleWeights {
 			roles = append(roles, role)
 		}
 		slices.Sort(roles)
 
 		var scoreFunctions []types.FunctionScore
 		for _, role := range roles {
-			weight := r.roleWeights[role]
+			weight := roleWeights[role]
 			if weight <= 0 {
 				continue
 			}
