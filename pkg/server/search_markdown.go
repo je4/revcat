@@ -178,9 +178,17 @@ func renderSearchMarkdown(query string, clientName string, baselineName string, 
 
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf("# Search Prioritization & Ranking Matrix: %q\n\n", query))
+	queryTitle := fmt.Sprintf("%q", query)
+	if query == "" {
+		queryTitle = `"" (empty)`
+	}
+	sb.WriteString(fmt.Sprintf("# Search Prioritization & Ranking Matrix: %s\n\n", queryTitle))
 	sb.WriteString("### Metadata\n")
-	sb.WriteString(fmt.Sprintf("- **Query**: `%s`\n", query))
+	if query == "" {
+		sb.WriteString("- **Query**: `(empty)`\n")
+	} else {
+		sb.WriteString(fmt.Sprintf("- **Query**: `%s`\n", query))
+	}
 	sb.WriteString(fmt.Sprintf("- **Client**: `%s`\n", clientName))
 	sb.WriteString(fmt.Sprintf("- **Baseline**: `%s`\n", baselineName))
 	sb.WriteString(fmt.Sprintf("- **Evaluated Hits Limit**: `%d`\n", limit))
@@ -339,6 +347,7 @@ func renderSearchMarkdown(query string, clientName string, baselineName string, 
 // @Produce      plain
 // @Param        query path string false "Search Query"
 // @Param        q query string false "Alternative query parameter"
+// @Param        allow_empty query bool false "Allow empty query execution for baseline/filter inspection"
 // @Param        client query string false "Client name (default: performance)"
 // @Param        baseline query string false "Baseline client name (default: default_baseline)"
 // @Param        limit query int false "Maximum number of hits to evaluate (default: 30)"
@@ -365,7 +374,9 @@ func (ctrl *Controller) searchMarkdown(c *gin.Context) {
 		rawQuery = strings.TrimSpace(c.Query("query"))
 	}
 
-	if rawQuery == "" {
+	allowEmpty := true // strings.EqualFold(c.Query("allow_empty"), "true") || strings.EqualFold(c.Query("allowEmpty"), "true") || strings.EqualFold(c.Query("empty"), "true")
+
+	if rawQuery == "" && !allowEmpty {
 		c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{"error": "search query is required"})
 		return
 	}

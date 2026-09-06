@@ -443,6 +443,24 @@ func TestSearchMarkdownEndpoints(t *testing.T) {
 		}
 	})
 
+	t.Run("search empty query with allow_empty=true", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/rest/search/?allow_empty=true&client=performance&baseline=default_baseline", nil)
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", validToken))
+		w := httptest.NewRecorder()
+		ctrl.srv.Handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d: %s", w.Code, w.Body.String())
+		}
+		body := w.Body.String()
+		if !strings.Contains(body, `**Query**: `+"`(empty)`") {
+			t.Errorf("expected body to contain empty query metadata, got: %s", body)
+		}
+		if !strings.Contains(body, "# Search Prioritization & Ranking Matrix: \"\" (empty)") {
+			t.Errorf("expected body to contain empty query title, got: %s", body)
+		}
+	})
+
 	t.Run("search success with markdown output", func(t *testing.T) {
 		req := httptest.NewRequest(http.MethodGet, "/rest/search/muda%20mathis", nil)
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", validToken))

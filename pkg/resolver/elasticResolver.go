@@ -789,7 +789,9 @@ func (r *ElasticResolver) Search(
 	if result.TotalCount > from+num {
 		result.PageInfo.HasNextPage = true
 		nFrom := min(from+num-1, result.TotalCount-1)
-		r.logger.Debug().Msgf("next: from %d, num %d", nFrom, num)
+		if r.logger != nil {
+			r.logger.Debug().Msgf("next: from %d, num %d", nFrom, num)
+		}
 		if result.PageInfo.EndCursor, err = NewCursor(nFrom, num).Encode(); err != nil {
 			return nil, errors.Wrap(err, "cannot marshal end cursor")
 		}
@@ -797,7 +799,9 @@ func (r *ElasticResolver) Search(
 	if from > 0 {
 		result.PageInfo.HasPreviousPage = true
 		nFrom := max(from-num-1, -1)
-		r.logger.Debug().Msgf("prev: from %d, num %d", nFrom, num)
+		if r.logger != nil {
+			r.logger.Debug().Msgf("prev: from %d, num %d", nFrom, num)
+		}
 		if result.PageInfo.StartCursor, err = NewCursor(nFrom, num).Encode(); err != nil {
 			return nil, errors.Wrap(err, "cannot marshal end cursor")
 		}

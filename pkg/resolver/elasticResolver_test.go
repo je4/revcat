@@ -576,3 +576,199 @@ func TestElasticResolver_SearchWeightsFulltext(t *testing.T) {
 		t.Errorf("expected 'media.*.fulltext^4.2' in fulltext search query, got: %s", jsonStr)
 	}
 }
+
+func TestElasticResolver_EmptyQueryAcrossClients(t *testing.T) {
+	var capturedBody struct {
+		Query struct {
+			Bool struct {
+				Filter []map[string]json.RawMessage `json:"filter"`
+				Must   []json.RawMessage            `json:"must"`
+				Should []json.RawMessage            `json:"should"`
+			} `json:"bool"`
+		} `json:"query"`
+	}
+	var capturedSize int
+	var capturedFrom int
+
+	mockHitsJSON := `{
+		"hits": {
+			"total": {"value": 3, "relation": "eq"},
+			"hits": [
+				{
+					"_id": "doc1",
+					"_source": {
+						"signature": "doc1",
+						"source": "test",
+						"category": ["zotero2!!PCB_Basel"],
+						"acl": {
+							"meta": ["global/guest"],
+							"content": ["global/guest"]
+						}
+					}
+				},
+				{
+					"_id": "doc2",
+					"_source": {
+						"signature": "doc2",
+						"source": "test",
+						"category": ["bangbang"],
+						"acl": {
+							"meta": ["global/guest"]
+						}
+					}
+				},
+				{
+					"_id": "doc3_no_meta",
+					"_source": {
+						"signature": "doc3_no_meta",
+						"source": "test",
+						"category": ["zotero2!!PCB_Basel"],
+						"acl": {
+							"content": ["global/guest"]
+						}
+					}
+				}
+			]
+		}
+	}`
+
+	elastic, err := elasticsearch.NewTypedClient(elasticsearch.Config{
+		Transport: searchCaptureTransport(func(req *http.Request) (*http.Response, error) {
+			capturedBody = struct {
+				Query struct {
+					Bool struct {
+						Filter []map[string]json.RawMessage `json:"filter"`
+						Must   []json.RawMessage            `json:"must"`
+						Should []json.RawMessage            `json:"should"`
+					} `json:"bool"`
+				} `json:"query"`
+			}{}
+			bodyBytes, err := io.ReadAll(req.Body)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if err := json.Unmarshal(bodyBytes, &capturedBody); err != nil {
+				t.Fatal(err)
+			}
+			var paging struct {
+				From int `json:"from"`
+				Size int `json:"size"`
+			}
+			_ = json.Unmarshal(bodyBytes, &paging)
+			capturedFrom = paging.From
+			capturedSize = paging.Size
+
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     http.Header{"X-Elastic-Product": []string{"Elasticsearch"}},
+				Body:       io.NopCloser(strings.NewReader(mockHitsJSON)),
+			}, nil
+		}),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	clientPerformance := &config.Client{
+		Name:   "performance",
+		Groups: []string{"global/guest"},
+		AND: []config.ClientANDQuery{
+			{
+				OR: []config.ClientOrQuery{
+					{
+						Field:  "category.keyword",
+						Values: []string{"zotero2!!PCB_Basel", "bangbang"},
+					},
+				},
+			},
+		},
+		FieldWeights: map[string]map[string]float64{
+			"[persons].role": {"artist": 4.0},
+		},
+	}
+
+	clientInk := &config.Client{
+		Name:   "ink",
+		Groups: []string{"global/guest"},
+	}
+
+	clientBaseline := &config.Client{
+		Name: "default_baseline",
+	}
+
+	r := NewElasticResolver(elastic, "test_index", []*config.Client{clientPerformance, clientInk, clientBaseline}, nil, nil, nil)
+
+	// 1. Performance client empty query
+	t.Run("performance_client_empty_query", func(t *testing.T) {
+		ctx := context.WithValue(context.Background(), "client", "performance")
+		ctx = context.WithValue(ctx, "groups", []string{"global/guest"})
+		size := 20
+		first := 5
+		res, err := r.Search(ctx, "all", "", nil, nil, nil, &first, &size, nil, nil)
+		if err != nil {
+			t.Fatalf("Search failed: %v", err)
+		}
+		if res.TotalCount != 3 {
+			t.Errorf("expected TotalCount 3, got %d", res.TotalCount)
+		}
+		// Doc 1 and Doc 2 have meta ACL, Doc 3 does not have meta ACL
+		if len(res.Edges) != 2 {
+			t.Errorf("expected 2 edges after ACL meta filtering, got %d", len(res.Edges))
+		}
+		if capturedSize != 20 {
+			t.Errorf("expected size 20 in request, got %d", capturedSize)
+		}
+		if capturedFrom != 5 {
+			t.Errorf("expected from 5 in request, got %d", capturedFrom)
+		}
+		if len(capturedBody.Query.Bool.Must) != 0 {
+			t.Errorf("expected empty Must clauses for empty query, got %d", len(capturedBody.Query.Bool.Must))
+		}
+		if len(capturedBody.Query.Bool.Should) != 0 {
+			t.Errorf("expected empty Should clauses for empty query, got %d", len(capturedBody.Query.Bool.Should))
+		}
+		// Check that category filter and ACL filter are present in Filter clauses
+		filterBytes, _ := json.Marshal(capturedBody.Query.Bool.Filter)
+		filterStr := string(filterBytes)
+		if !strings.Contains(filterStr, "zotero2!!PCB_Basel") || !strings.Contains(filterStr, "bangbang") {
+			t.Errorf("expected category filter values in Filter clause, got: %s", filterStr)
+		}
+		if !strings.Contains(filterStr, "acl.meta.keyword") || !strings.Contains(filterStr, "global/guest") {
+			t.Errorf("expected ACL filter in Filter clause, got: %s", filterStr)
+		}
+	})
+
+	// 2. Ink client empty query (no category filter)
+	t.Run("ink_client_empty_query", func(t *testing.T) {
+		ctx := context.WithValue(context.Background(), "client", "ink")
+		ctx = context.WithValue(ctx, "groups", []string{"global/guest"})
+		res, err := r.Search(ctx, "all", "", nil, nil, nil, nil, nil, nil, nil)
+		if err != nil {
+			t.Fatalf("Search failed: %v", err)
+		}
+		if len(res.Edges) != 2 {
+			t.Errorf("expected 2 edges, got %d", len(res.Edges))
+		}
+		filterBytes, _ := json.Marshal(capturedBody.Query.Bool.Filter)
+		filterStr := string(filterBytes)
+		if strings.Contains(filterStr, "category.keyword") {
+			t.Errorf("ink client should NOT have category.keyword filter, got: %s", filterStr)
+		}
+		if !strings.Contains(filterStr, "acl.meta.keyword") {
+			t.Errorf("expected ACL filter in Filter clause, got: %s", filterStr)
+		}
+	})
+
+	// 3. Baseline client empty query with default groups
+	t.Run("baseline_client_empty_query", func(t *testing.T) {
+		ctx := context.WithValue(context.Background(), "client", "default_baseline")
+		ctx = context.WithValue(ctx, "groups", []string{"global/guest"})
+		res, err := r.Search(ctx, "all", "", nil, nil, nil, nil, nil, nil, nil)
+		if err != nil {
+			t.Fatalf("Search failed: %v", err)
+		}
+		if len(res.Edges) != 2 {
+			t.Errorf("expected 2 edges, got %d", len(res.Edges))
+		}
+	})
+}

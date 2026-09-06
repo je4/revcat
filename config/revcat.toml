@@ -112,3 +112,8 @@ jwtmaxage = "10m"
 "media.*.fulltext" = 1.0
 
 [client.fieldweights."[persons].role"]
+"author" = 4.0
+"editor" = 2.0
+"creator" = 2.0
+"translator" = 1.5
+"contributor" = 1.2
