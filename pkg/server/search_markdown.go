@@ -3,10 +3,12 @@ package server
 import (
 	"context"
 	"fmt"
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/je4/revcat/v2/config"
@@ -27,20 +29,71 @@ func truncateString(s string, maxLen int) string {
 	return string(runes[:maxLen-2]) + ".."
 }
 
+func calculateDateAddedBoost(dateAddedStr string, now time.Time) (float64, *time.Time) {
+	if dateAddedStr == "" {
+		return 0.0, nil
+	}
+	var t time.Time
+	var err error
+	formats := []string{
+		time.RFC3339,
+		time.RFC3339Nano,
+		"2006-01-02T15:04:05Z07:00",
+		"2006-01-02T15:04:05",
+		"2006-01-02",
+	}
+	for _, layout := range formats {
+		t, err = time.Parse(layout, dateAddedStr)
+		if err == nil {
+			break
+		}
+	}
+	if err != nil {
+		return 0.0, nil
+	}
+
+	diff := now.Sub(t).Hours() / 24.0
+	if diff < 0 {
+		diff = 0
+	}
+
+	decay1 := 0.5
+	scale1 := 30.0
+	weight1 := 0.15
+	score1 := weight1 * math.Exp((math.Log(decay1)/(scale1*scale1))*diff*diff)
+
+	decay2 := 0.1
+	scale2 := 335.0
+	weight2 := 0.10
+	var score2 float64
+	if diff <= 30.0 {
+		score2 = weight2
+	} else {
+		d2 := diff - 30.0
+		score2 = weight2 * math.Exp((math.Log(decay2)/(scale2*scale2))*d2*d2)
+	}
+
+	totalBoost := score1 + score2
+	return totalBoost, &t
+}
+
 type searchMatrixRow struct {
-	perfRank    int
-	baseRank    int
-	hasBaseRank bool
-	delta       int
-	sig         string
-	title       string
-	docType     string
-	typeBoost   float64
-	topRole     string
-	roleBoost   float64
-	maxBoost    float64
-	tier        string
-	status      string
+	perfRank       int
+	baseRank       int
+	hasBaseRank    bool
+	delta          int
+	sig            string
+	title          string
+	docType        string
+	typeBoost      float64
+	topRole        string
+	roleBoost      float64
+	dateAddedDesc  string
+	dateAddedBoost float64
+	achievedBoost  float64
+	score          *float64
+	tier           string
+	status         string
 }
 
 // renderSearchMarkdown builds a GitHub-Flavored Markdown report comparing target client ranking against baseline
@@ -76,6 +129,10 @@ func renderSearchMarkdown(query string, clientName string, baselineName string, 
 		}
 	}
 
+	isEmptyQuery := strings.TrimSpace(query) == ""
+	hasAddedBoost := clientConfig != nil && clientConfig.AddedBoost
+	now := time.Now()
+
 	var rows []searchMatrixRow
 
 	if resTarget != nil {
@@ -91,8 +148,31 @@ func renderSearchMarkdown(query string, clientName string, baselineName string, 
 				typeStr = *base.Type
 			}
 			typeBoost := 1.0
-			if w, ok := typeWeights[typeStr]; ok {
-				typeBoost = w
+
+			topRole := "none"
+			maxRoleBoost := 1.0
+
+			if !isEmptyQuery {
+				if w, ok := typeWeights[typeStr]; ok {
+					typeBoost = w
+				}
+				for _, p := range base.Person {
+					if p == nil {
+						continue
+					}
+					role := ""
+					if p.Role != nil {
+						role = *p.Role
+					}
+					if w, ok := roleWeights[role]; ok {
+						if w > maxRoleBoost {
+							maxRoleBoost = w
+							topRole = role
+						}
+					} else if topRole == "none" && role != "" {
+						topRole = role
+					}
+				}
 			}
 
 			var titleStr string
@@ -100,23 +180,19 @@ func renderSearchMarkdown(query string, clientName string, baselineName string, 
 				titleStr = base.Title[0].Value
 			}
 
-			topRole := "none"
-			maxRoleBoost := 1.0
-			for _, p := range base.Person {
-				if p == nil {
-					continue
+			dateAddedDesc := "n/a"
+			var dateAddedBoost float64
+			if hasAddedBoost {
+				dateAddedStr := ""
+				if base.DateAdded != nil {
+					dateAddedStr = *base.DateAdded
 				}
-				role := ""
-				if p.Role != nil {
-					role = *p.Role
-				}
-				if w, ok := roleWeights[role]; ok {
-					if w > maxRoleBoost {
-						maxRoleBoost = w
-						topRole = role
-					}
-				} else if topRole == "none" && role != "" {
-					topRole = role
+				boost, parsedTime := calculateDateAddedBoost(dateAddedStr, now)
+				dateAddedBoost = boost
+				if parsedTime != nil {
+					dateAddedDesc = fmt.Sprintf("%s (+%.2f)", parsedTime.Format("2006-01-02"), boost)
+				} else {
+					dateAddedDesc = "none (+0.00)"
 				}
 			}
 
@@ -125,11 +201,16 @@ func renderSearchMarkdown(query string, clientName string, baselineName string, 
 				effectiveMaxBoost = maxRoleBoost
 			}
 
-			tier := "Tier 3 [1.0x]"
-			if effectiveMaxBoost >= 4.0 {
-				tier = "Tier 1 [4-5x]"
-			} else if effectiveMaxBoost >= 1.5 {
-				tier = "Tier 2 [1.5-2x]"
+			achievedBoost := effectiveMaxBoost
+			if hasAddedBoost {
+				achievedBoost += dateAddedBoost
+			}
+
+			tier := "Tier 3 [1.0-1.4x]"
+			if achievedBoost >= 4.0 {
+				tier = "Tier 1 [4.0x+]"
+			} else if achievedBoost >= 1.5 {
+				tier = "Tier 2 [1.5-3.9x]"
 			}
 
 			baseRank, inBaseline := baselineRankMap[base.Signature]
@@ -137,7 +218,7 @@ func renderSearchMarkdown(query string, clientName string, baselineName string, 
 			status := "NEW (Top)"
 			if inBaseline {
 				delta = baseRank - perfRank
-				if effectiveMaxBoost > 1.0 {
+				if achievedBoost > 1.0 {
 					if delta > 0 {
 						status = "BOOSTED (+Δ)"
 					} else if delta < 0 {
@@ -154,24 +235,27 @@ func renderSearchMarkdown(query string, clientName string, baselineName string, 
 						status = "STABLE (=)"
 					}
 				}
-			} else if effectiveMaxBoost > 1.0 {
+			} else if achievedBoost > 1.0 {
 				status = "BOOSTED (NEW)"
 			}
 
 			rows = append(rows, searchMatrixRow{
-				perfRank:    perfRank,
-				baseRank:    baseRank,
-				hasBaseRank: inBaseline,
-				delta:       delta,
-				sig:         base.Signature,
-				title:       titleStr,
-				docType:     typeStr,
-				typeBoost:   typeBoost,
-				topRole:     topRole,
-				roleBoost:   maxRoleBoost,
-				maxBoost:    effectiveMaxBoost,
-				tier:        tier,
-				status:      status,
+				perfRank:       perfRank,
+				baseRank:       baseRank,
+				hasBaseRank:    inBaseline,
+				delta:          delta,
+				sig:            base.Signature,
+				title:          titleStr,
+				docType:        typeStr,
+				typeBoost:      typeBoost,
+				topRole:        topRole,
+				roleBoost:      maxRoleBoost,
+				dateAddedDesc:  dateAddedDesc,
+				dateAddedBoost: dateAddedBoost,
+				achievedBoost:  achievedBoost,
+				score:          edge.Score,
+				tier:           tier,
+				status:         status,
 			})
 		}
 	}
@@ -203,8 +287,8 @@ func renderSearchMarkdown(query string, clientName string, baselineName string, 
 	sb.WriteString(fmt.Sprintf("- **Total Hits**: `%d` (Target Client) vs `%d` (Baseline)\n\n", totalTarget, totalBaseline))
 
 	sb.WriteString("### Weighting & Ranking Matrix\n\n")
-	sb.WriteString("| Rank | Base # | Delta | Signature | Title | Type (Boost) | Role (Boost) | Max Boost | Tier | Status |\n")
-	sb.WriteString("| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n")
+	sb.WriteString("| Rank | Base # | Delta | Signature | Title | Type (Boost) | Role (Boost) | Date Added (Boost) | Achieved Weight | Tier | Status |\n")
+	sb.WriteString("| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n")
 
 	for _, row := range rows {
 		baseRankStr := "n/a"
@@ -225,8 +309,8 @@ func renderSearchMarkdown(query string, clientName string, baselineName string, 
 		safeTitle := strings.ReplaceAll(row.title, "|", "\\|")
 		shortTitle := truncateString(safeTitle, 35)
 
-		sb.WriteString(fmt.Sprintf("| [#%02d] | %s | %s | `%s` | %s | %s | %s | x%.1f | %s | %s |\n",
-			row.perfRank, baseRankStr, deltaStr, row.sig, shortTitle, typeDesc, roleDesc, row.maxBoost, row.tier, row.status))
+		sb.WriteString(fmt.Sprintf("| [#%02d] | %s | %s | `%s` | %s | %s | %s | %s | x%.2f | %s | %s |\n",
+			row.perfRank, baseRankStr, deltaStr, row.sig, shortTitle, typeDesc, roleDesc, row.dateAddedDesc, row.achievedBoost, row.tier, row.status))
 	}
 	sb.WriteString("\n")
 
@@ -287,11 +371,11 @@ func renderSearchMarkdown(query string, clientName string, baselineName string, 
 	}
 
 	sb.WriteString("### Tier Distribution & Statistical Analysis\n\n")
-	sb.WriteString(fmt.Sprintf("- **Tier 1 (High Boost 4.0-5.0x)**: %d docs | %d in Top 10 (%.1f%%) | %d rank improved | Avg Delta: %s\n",
+	sb.WriteString(fmt.Sprintf("- **Tier 1 (High Boost 4.0x+)**: %d docs | %d in Top 10 (%.1f%%) | %d rank improved | Avg Delta: %s\n",
 		statsTier1.totalCount, statsTier1.top10Count, top10Tier1Pct, statsTier1.improvedCount, avgDeltaStr(statsTier1)))
-	sb.WriteString(fmt.Sprintf("- **Tier 2 (Med Boost 1.5-2.0x)**: %d docs | %d in Top 10 (%.1f%%) | %d rank improved | Avg Delta: %s\n",
+	sb.WriteString(fmt.Sprintf("- **Tier 2 (Med Boost 1.5-3.9x)**: %d docs | %d in Top 10 (%.1f%%) | %d rank improved | Avg Delta: %s\n",
 		statsTier2.totalCount, statsTier2.top10Count, top10Tier2Pct, statsTier2.improvedCount, avgDeltaStr(statsTier2)))
-	sb.WriteString(fmt.Sprintf("- **Tier 3 (Base 1.0x)**: %d docs | %d in Top 10 (%.1f%%) | %d rank improved | Avg Delta: %s\n\n",
+	sb.WriteString(fmt.Sprintf("- **Tier 3 (Base 1.0-1.4x)**: %d docs | %d in Top 10 (%.1f%%) | %d rank improved | Avg Delta: %s\n\n",
 		statsTier3.totalCount, statsTier3.top10Count, top10Tier3Pct, statsTier3.improvedCount, avgDeltaStr(statsTier3)))
 
 	top10Boosted := statsTier1.top10Count + statsTier2.top10Count

@@ -834,6 +834,10 @@ func (r *ElasticResolver) Search(
 		}
 		if ok, found := access["meta"]; ok && found {
 			entry := r.sourceToMediathekFullEntry(nil, source, access["content"], mediaProtected)
+			if hit.Score_ != nil {
+				scoreVal := float64(*hit.Score_)
+				entry.Score = &scoreVal
+			}
 			result.Edges = append(result.Edges, entry)
 		}
 	}

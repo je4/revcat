@@ -91,6 +91,7 @@ type ComplexityRoot struct {
 		Category          func(childComplexity int) int
 		CollectionTitle   func(childComplexity int) int
 		Date              func(childComplexity int) int
+		DateAdded         func(childComplexity int) int
 		ID                func(childComplexity int) int
 		License           func(childComplexity int) int
 		MediaCount        func(childComplexity int) int
@@ -120,6 +121,7 @@ type ComplexityRoot struct {
 		Media          func(childComplexity int) int
 		Notes          func(childComplexity int) int
 		ReferencesFull func(childComplexity int) int
+		Score          func(childComplexity int) int
 	}
 
 	MultiLangString struct {
@@ -388,6 +390,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.MediathekBaseEntry.Date(childComplexity), true
+	case "MediathekBaseEntry.dateAdded":
+		if e.ComplexityRoot.MediathekBaseEntry.DateAdded == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MediathekBaseEntry.DateAdded(childComplexity), true
 	case "MediathekBaseEntry.id":
 		if e.ComplexityRoot.MediathekBaseEntry.ID == nil {
 			break
@@ -545,6 +553,12 @@ func (e *executableSchema) Complexity(ctx context.Context, typeName, field strin
 		}
 
 		return e.ComplexityRoot.MediathekFullEntry.ReferencesFull(childComplexity), true
+	case "MediathekFullEntry.score":
+		if e.ComplexityRoot.MediathekFullEntry.Score == nil {
+			break
+		}
+
+		return e.ComplexityRoot.MediathekFullEntry.Score(childComplexity), true
 
 	case "MultiLangString.lang":
 		if e.ComplexityRoot.MultiLangString.Lang == nil {
@@ -925,6 +939,8 @@ func (ec *executionContext) childFields_MediathekBaseEntry(ctx context.Context, 
 		return ec.fieldContext_MediathekBaseEntry_place(ctx, field)
 	case "date":
 		return ec.fieldContext_MediathekBaseEntry_date(ctx, field)
+	case "dateAdded":
+		return ec.fieldContext_MediathekBaseEntry_dateAdded(ctx, field)
 	case "collectionTitle":
 		return ec.fieldContext_MediathekBaseEntry_collectionTitle(ctx, field)
 	case "person":
@@ -977,6 +993,8 @@ func (ec *executionContext) childFields_MediathekFullEntry(ctx context.Context, 
 		return ec.fieldContext_MediathekFullEntry_extra(ctx, field)
 	case "media":
 		return ec.fieldContext_MediathekFullEntry_media(ctx, field)
+	case "score":
+		return ec.fieldContext_MediathekFullEntry_score(ctx, field)
 	}
 	return nil, fmt.Errorf("no field named %q was found under type MediathekFullEntry", field.Name)
 }
@@ -2113,6 +2131,29 @@ func (ec *executionContext) fieldContext_MediathekBaseEntry_date(_ context.Conte
 	return graphql.NewScalarFieldContext("MediathekBaseEntry", field, false, false, errors.New("field of type String does not have child fields"))
 }
 
+func (ec *executionContext) _MediathekBaseEntry_dateAdded(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_MediathekBaseEntry_dateAdded(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.DateAdded, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *string) graphql.Marshaler {
+			return ec.marshalOString2ᚖstring(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_MediathekBaseEntry_dateAdded(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("MediathekBaseEntry", field, false, false, errors.New("field of type String does not have child fields"))
+}
+
 func (ec *executionContext) _MediathekBaseEntry_collectionTitle(ctx context.Context, field graphql.CollectedField, obj *model.MediathekBaseEntry) (ret graphql.Marshaler) {
 	return graphql.ResolveField(
 		ctx,
@@ -2739,6 +2780,29 @@ func (ec *executionContext) fieldContext_MediathekFullEntry_media(_ context.Cont
 		},
 	}
 	return fc, nil
+}
+
+func (ec *executionContext) _MediathekFullEntry_score(ctx context.Context, field graphql.CollectedField, obj *model.MediathekFullEntry) (ret graphql.Marshaler) {
+	return graphql.ResolveField(
+		ctx,
+		ec.OperationContext,
+		field,
+		func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return ec.fieldContext_MediathekFullEntry_score(ctx, field)
+		},
+		func(ctx context.Context) (any, error) {
+			return obj.Score, nil
+		},
+		nil,
+		func(ctx context.Context, selections ast.SelectionSet, v *float64) graphql.Marshaler {
+			return ec.marshalOFloat2ᚖfloat64(ctx, selections, v)
+		},
+		true,
+		false,
+	)
+}
+func (ec *executionContext) fieldContext_MediathekFullEntry_score(_ context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	return graphql.NewScalarFieldContext("MediathekFullEntry", field, false, false, errors.New("field of type Float does not have child fields"))
 }
 
 func (ec *executionContext) _MultiLangString_lang(ctx context.Context, field graphql.CollectedField, obj *model.MultiLangString) (ret graphql.Marshaler) {
@@ -5357,6 +5421,11 @@ func (ec *executionContext) _MediathekBaseEntry(ctx context.Context, sel ast.Sel
 			if out.Values[i] == graphql.RequiredNull {
 				out.Invalids++
 			}
+		case "dateAdded":
+			out.Values[i] = ec._MediathekBaseEntry_dateAdded(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				out.Invalids++
+			}
 		case "collectionTitle":
 			out.Values[i] = ec._MediathekBaseEntry_collectionTitle(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
@@ -5535,6 +5604,11 @@ func (ec *executionContext) _MediathekFullEntry(ctx context.Context, sel ast.Sel
 			}
 		case "media":
 			out.Values[i] = ec._MediathekFullEntry_media(ctx, field, obj)
+			if out.Values[i] == graphql.RequiredNull {
+				atomic.AddUint32(&out.Invalids, 1)
+			}
+		case "score":
+			out.Values[i] = ec._MediathekFullEntry_score(ctx, field, obj)
 			if out.Values[i] == graphql.RequiredNull {
 				atomic.AddUint32(&out.Invalids, 1)
 			}
@@ -7025,6 +7099,23 @@ func (ec *executionContext) marshalOFloat2ᚕfloat64ᚄ(ctx context.Context, sel
 	}
 
 	return ret
+}
+
+func (ec *executionContext) unmarshalOFloat2ᚖfloat64(ctx context.Context, v any) (*float64, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOFloat2ᚖfloat64(ctx context.Context, sel ast.SelectionSet, v *float64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	_ = sel
+	res := graphql.MarshalFloatContext(*v)
+	return graphql.WrapContextMarshaler(ctx, res)
 }
 
 func (ec *executionContext) unmarshalOInFacet2ᚕᚖgithubᚗcomᚋje4ᚋrevcatᚋv2ᚋtoolsᚋgraphᚋmodelᚐInFacetᚄ(ctx context.Context, v any) ([]*model.InFacet, error) {

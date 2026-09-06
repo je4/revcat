@@ -96,6 +96,7 @@ type MediathekBaseEntry struct {
 	Series            *string            `json:"series,omitempty"`
 	Place             *string            `json:"place,omitempty"`
 	Date              *string            `json:"date,omitempty"`
+	DateAdded         *string            `json:"dateAdded,omitempty"`
 	CollectionTitle   *string            `json:"collectionTitle,omitempty"`
 	Person            []*Person          `json:"person,omitempty"`
 	Catalog           []string           `json:"catalog,omitempty"`
@@ -122,6 +123,7 @@ type MediathekFullEntry struct {
 	ReferencesFull []*MediathekBaseEntry `json:"referencesFull,omitempty"`
 	Extra          []*KeyValue           `json:"extra,omitempty"`
 	Media          []*MediaList          `json:"media,omitempty"`
+	Score          *float64              `json:"score,omitempty"`
 }
 
 type MultiLangString struct {

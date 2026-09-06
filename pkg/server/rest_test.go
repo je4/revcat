@@ -459,6 +459,18 @@ func TestSearchMarkdownEndpoints(t *testing.T) {
 		if !strings.Contains(body, "# Search Prioritization & Ranking Matrix: \"\" (empty)") {
 			t.Errorf("expected body to contain empty query title, got: %s", body)
 		}
+		// In empty query, role boost must be none (x1.0) and type boost x1.0, Tier 3 [1.0-1.4x]
+		expectedEmptySnippets := []string{
+			`| [#01] | #02 | +1 | ` + "`sig-perf-1`" + ` | Performance Mathis | performance (x1.0) | none (x1.0) | n/a | x1.00 | Tier 3 [1.0-1.4x] | PROMOTED (+Δ) |`,
+			`| [#02] | #01 | -1 | ` + "`sig-book-2`" + ` | Book Mathis | book (x1.0) | none (x1.0) | n/a | x1.00 | Tier 3 [1.0-1.4x] | UNBOOSTED (-Δ) |`,
+			`- **Tier 3 (Base 1.0-1.4x)**: 2 docs | 2 in Top 10 (100.0%)`,
+			`**Top 10 Boosted Dominance**: 0.0% of Top 10 have active weight boosts`,
+		}
+		for _, snippet := range expectedEmptySnippets {
+			if !strings.Contains(body, snippet) {
+				t.Errorf("expected body to contain snippet:\n%s\n\nGot body:\n%s", snippet, body)
+			}
+		}
 	})
 
 	t.Run("search success with markdown output", func(t *testing.T) {
@@ -481,12 +493,12 @@ func TestSearchMarkdownEndpoints(t *testing.T) {
 			`**Query**: ` + "`muda mathis`",
 			`**Client**: ` + "`performance`",
 			`**Baseline**: ` + "`default_baseline`",
-			`| Rank | Base # | Delta | Signature | Title | Type (Boost) | Role (Boost) | Max Boost | Tier | Status |`,
-			`| [#01] | #02 | +1 | ` + "`sig-perf-1`" + ` | Performance Mathis | performance (x5.0) | performer (x4.0) | x5.0 | Tier 1 [4-5x] | BOOSTED (+Δ) |`,
-			`| [#02] | #01 | -1 | ` + "`sig-book-2`" + ` | Book Mathis | book (x1.0) | contributor (x2.0) | x2.0 | Tier 2 [1.5-2x] | BOOSTED (-Δ) |`,
+			`| Rank | Base # | Delta | Signature | Title | Type (Boost) | Role (Boost) | Date Added (Boost) | Achieved Weight | Tier | Status |`,
+			`| [#01] | #02 | +1 | ` + "`sig-perf-1`" + ` | Performance Mathis | performance (x5.0) | performer (x4.0) | n/a | x5.00 | Tier 1 [4.0x+] | BOOSTED (+Δ) |`,
+			`| [#02] | #01 | -1 | ` + "`sig-book-2`" + ` | Book Mathis | book (x1.0) | contributor (x2.0) | n/a | x2.00 | Tier 2 [1.5-3.9x] | BOOSTED (-Δ) |`,
 			`### Tier Distribution & Statistical Analysis`,
-			`Tier 1 (High Boost 4.0-5.0x)`,
-			`Tier 2 (Med Boost 1.5-2.0x)`,
+			`Tier 1 (High Boost 4.0x+)`,
+			`Tier 2 (Med Boost 1.5-3.9x)`,
 			`### Prioritization & Filter Invariants`,
 			`**Top 10 Boosted Dominance**`,
 			`**Category Filter Enforcement**: PASS`,
@@ -496,6 +508,133 @@ func TestSearchMarkdownEndpoints(t *testing.T) {
 			if !strings.Contains(body, snippet) {
 				t.Errorf("expected body to contain snippet:\n%s\n\nGot body:\n%s", snippet, body)
 			}
+		}
+	})
+
+	t.Run("search with AddedBoost enabled client", func(t *testing.T) {
+		addedClient := &config.Client{
+			Name:       "added_boost_client",
+			AddedBoost: true,
+			FieldWeights: map[string]map[string]float64{
+				"type": {"performance": 5.0},
+			},
+		}
+
+		todayDateStr := now.Format(time.RFC3339)
+		todayDisplay := now.Format("2006-01-02")
+		resTargetAdded := &model.SearchResult{
+			TotalCount: 2,
+			Edges: []*model.MediathekFullEntry{
+				{
+					ID: "sig-recent-1",
+					Base: &model.MediathekBaseEntry{
+						Signature: "sig-recent-1",
+						Type:      strPtr("performance"),
+						Title:     []*model.MultiLangString{{Value: "Recent Event"}},
+						DateAdded: &todayDateStr,
+					},
+				},
+				{
+					ID: "sig-no-date-2",
+					Base: &model.MediathekBaseEntry{
+						Signature: "sig-no-date-2",
+						Type:      strPtr("book"),
+						Title:     []*model.MultiLangString{{Value: "Undated Book"}},
+					},
+				},
+			},
+		}
+
+		mockResAdded := &mockResolver{
+			searchByClient: map[string]*model.SearchResult{
+				"added_boost_client": resTargetAdded,
+				"default_baseline":   resBaseline,
+			},
+		}
+
+		ctrlAdded := NewController("localhost:8080", "http://localhost:8080/graphql", nil, mockResAdded, []*config.Client{addedClient, perfClient}, secret, logger)
+
+		req := httptest.NewRequest(http.MethodGet, "/rest/search/recent?client=added_boost_client&baseline=default_baseline", nil)
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", validToken))
+		w := httptest.NewRecorder()
+		ctrlAdded.srv.Handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d: %s", w.Code, w.Body.String())
+		}
+		body := w.Body.String()
+		expectedAddedBoostSnippet1 := fmt.Sprintf("%s (+0.25)", todayDisplay)
+		if !strings.Contains(body, expectedAddedBoostSnippet1) {
+			t.Errorf("expected body to contain active date added boost %s, got: %s", expectedAddedBoostSnippet1, body)
+		}
+		if !strings.Contains(body, "none (+0.00)") {
+			t.Errorf("expected body to contain none (+0.00) for missing date added, got: %s", body)
+		}
+		if !strings.Contains(body, "x5.25") {
+			t.Errorf("expected body to contain achieved weight x5.25 for recent boosted item, got: %s", body)
+		}
+		if !strings.Contains(body, "x1.00") {
+			t.Errorf("expected body to contain achieved weight x1.00 for item without date added, got: %s", body)
+		}
+	})
+
+	t.Run("search empty query with AddedBoost enabled client", func(t *testing.T) {
+		addedClient := &config.Client{
+			Name:       "added_boost_client",
+			AddedBoost: true,
+			FieldWeights: map[string]map[string]float64{
+				"type":           {"performance": 5.0},
+				"[persons].role": {"performer": 4.0},
+			},
+		}
+
+		todayDateStr := now.Format(time.RFC3339)
+		todayDisplay := now.Format("2006-01-02")
+		resTargetAdded := &model.SearchResult{
+			TotalCount: 1,
+			Edges: []*model.MediathekFullEntry{
+				{
+					ID: "sig-recent-1",
+					Base: &model.MediathekBaseEntry{
+						Signature: "sig-recent-1",
+						Type:      strPtr("performance"),
+						Title:     []*model.MultiLangString{{Value: "Recent Event"}},
+						DateAdded: &todayDateStr,
+						Person: []*model.Person{
+							{Name: "Performer Person", Role: strPtr("performer")},
+						},
+					},
+				},
+			},
+		}
+
+		mockResAdded := &mockResolver{
+			searchByClient: map[string]*model.SearchResult{
+				"added_boost_client": resTargetAdded,
+				"default_baseline":   resBaseline,
+			},
+		}
+
+		ctrlAdded := NewController("localhost:8080", "http://localhost:8080/graphql", nil, mockResAdded, []*config.Client{addedClient}, secret, logger)
+
+		req := httptest.NewRequest(http.MethodGet, "/rest/search/?allow_empty=true&client=added_boost_client&baseline=default_baseline", nil)
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", validToken))
+		w := httptest.NewRecorder()
+		ctrlAdded.srv.Handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d: %s", w.Code, w.Body.String())
+		}
+		body := w.Body.String()
+		if !strings.Contains(body, "none (x1.0)") {
+			t.Errorf("expected empty query to show role none (x1.0), got: %s", body)
+		}
+		expectedAddedBoostSnippet := fmt.Sprintf("%s (+0.25)", todayDisplay)
+		if !strings.Contains(body, expectedAddedBoostSnippet) {
+			t.Errorf("expected empty query to show date added boost %s, got: %s", expectedAddedBoostSnippet, body)
+		}
+		if !strings.Contains(body, "x1.25") {
+			t.Errorf("expected empty query with added boost to show achieved weight x1.25, got: %s", body)
 		}
 	})
 

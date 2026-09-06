@@ -772,3 +772,55 @@ func TestElasticResolver_EmptyQueryAcrossClients(t *testing.T) {
 		}
 	})
 }
+
+func TestElasticResolver_HitScoreMapping(t *testing.T) {
+	fakeHitScore := 4.25
+	mockResponseJSON := `{
+		"hits": {
+			"total": {"value": 1, "relation": "eq"},
+			"hits": [
+				{
+					"_id": "sig-score-1",
+					"_score": 4.25,
+					"_source": {
+						"signature": "sig-score-1",
+						"source": "test-source",
+						"acl": {"meta": ["global/guest"]}
+					}
+				}
+			]
+		}
+	}`
+
+	elastic, err := elasticsearch.NewTypedClient(elasticsearch.Config{
+		Transport: searchCaptureTransport(func(req *http.Request) (*http.Response, error) {
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     http.Header{"X-Elastic-Product": []string{"Elasticsearch"}},
+				Body:       io.NopCloser(strings.NewReader(mockResponseJSON)),
+			}, nil
+		}),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	client := &config.Client{Name: "test", Groups: []string{"global/guest"}}
+	r := NewElasticResolver(elastic, "test_index", []*config.Client{client}, nil, nil, nil)
+	ctx := context.WithValue(context.Background(), "client", client.Name)
+	ctx = context.WithValue(ctx, "groups", []string{"global/guest"})
+
+	res, err := r.Search(ctx, "all", "test", nil, nil, nil, nil, nil, nil, nil)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(res.Edges) != 1 {
+		t.Fatalf("expected 1 edge, got %d", len(res.Edges))
+	}
+	if res.Edges[0].Score == nil {
+		t.Fatal("expected entry.Score to be populated, got nil")
+	}
+	if *res.Edges[0].Score != fakeHitScore {
+		t.Errorf("expected score %v, got %v", fakeHitScore, *res.Edges[0].Score)
+	}
+}

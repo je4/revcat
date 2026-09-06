@@ -18,6 +18,9 @@ require (
 	github.com/je4/utils/v2 v2.0.71
 	github.com/pkg/errors v0.9.1
 	github.com/rs/zerolog v1.35.1
+	github.com/swaggo/files v1.0.1
+	github.com/swaggo/gin-swagger v1.6.0
+	github.com/swaggo/swag v1.16.4
 	github.com/vektah/gqlparser/v2 v2.5.36
 	gitlab.switch.ch/ub-unibas/rdv2/ubcat/v2 v2.0.53
 	go.ub.unibas.ch/metastring v0.0.0-20260521152056-ddd7a58efff1
@@ -68,9 +71,6 @@ require (
 	github.com/quic-go/qpack v0.6.0 // indirect
 	github.com/quic-go/quic-go v0.61.0 // indirect
 	github.com/sosodev/duration v1.4.0 // indirect
-	github.com/swaggo/files v1.0.1 // indirect
-	github.com/swaggo/gin-swagger v1.6.0 // indirect
-	github.com/swaggo/swag v1.16.4 // indirect
 	github.com/twitchyliquid64/golang-asm v0.15.1 // indirect
 	github.com/ugorji/go/codec v1.3.2 // indirect
 	github.com/yuin/goldmark v1.8.5 // indirect

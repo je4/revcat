@@ -223,6 +223,12 @@ func sourceToMediathekBaseEntry(src *sourcetype.SourceData) *model.MediathekBase
 	license := src.GetLicense()
 	srcType := src.GetType()
 
+	var dateAdded *string
+	if !src.GetDateAdded().IsZero() {
+		dateAddedStr := src.GetDateAdded().Format(time.RFC3339)
+		dateAdded = &dateAddedStr
+	}
+
 	entry := &model.MediathekBaseEntry{
 		ID:                src.GetID(),
 		Signature:         src.GetSignature(),
@@ -233,6 +239,7 @@ func sourceToMediathekBaseEntry(src *sourcetype.SourceData) *model.MediathekBase
 		Series:            &series,
 		Place:             &place,
 		Date:              &date,
+		DateAdded:         dateAdded,
 		Person:            []*model.Person{},
 		Category:          src.GetCategory(),
 		Tags:              src.GetTags(),
