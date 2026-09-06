@@ -611,6 +611,39 @@ func (r *ElasticResolver) Search(
 			}
 		}
 	}
+	if client.AddedBoost {
+		dateBoost := func(scale, offset string, decay, weight float64) types.FunctionScore {
+			return types.FunctionScore{
+				Filter: &types.Query{Exists: &types.ExistsQuery{Field: "dateadded"}},
+				Gauss: &types.DateDecayFunction{
+					DecayFunctionBaseDateMathDuration: map[string]types.DecayPlacementDateMathDuration{
+						"dateadded": {
+							Origin: new("now"),
+							Scale:  scale,
+							Offset: offset,
+							Decay:  new(types.Float64(decay)),
+						},
+					},
+				},
+				Weight: new(types.Float64(weight)),
+			}
+		}
+		// Add the recency bonus after any role weighting.
+		searchRequest.Query = &types.Query{
+			FunctionScore: &types.FunctionScoreQuery{
+				Query: searchRequest.Query,
+				Functions: []types.FunctionScore{
+					dateBoost("30d", "0d", 0.5, 0.15),
+					dateBoost("335d", "30d", 0.1, 0.10),
+					// Without a matching function Elasticsearch defaults to 1.
+					// This keeps the bonus at zero when dateadded is missing.
+					{Weight: new(types.Float64(0))},
+				},
+				ScoreMode: &functionscoremode.Sum,
+				BoostMode: &functionboostmode.Sum,
+			},
+		}
+	}
 	sorts := []*types.SortOptions{}
 	for _, s := range sort {
 		if !sortFieldRegexp.MatchString(s.Field) {

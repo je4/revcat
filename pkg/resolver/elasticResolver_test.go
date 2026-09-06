@@ -1,13 +1,100 @@
 package resolver
 
 import (
+	"context"
 	"encoding/json"
+	"io"
+	"net/http"
 	"strings"
 	"testing"
 
+	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"github.com/je4/revcat/v2/config"
 )
+
+type searchCaptureTransport func(*http.Request) (*http.Response, error)
+
+func (f searchCaptureTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	return f(req)
+}
+
+func TestElasticResolver_AddedBoost(t *testing.T) {
+	for _, enabled := range []bool{false, true} {
+		for _, query := range []string{"", "test"} {
+			t.Run(strings.Join([]string{map[bool]string{false: "disabled", true: "enabled"}[enabled], query}, "/"), func(t *testing.T) {
+				var body struct {
+					Query map[string]json.RawMessage `json:"query"`
+				}
+				elastic, err := elasticsearch.NewTypedClient(elasticsearch.Config{
+					Transport: searchCaptureTransport(func(req *http.Request) (*http.Response, error) {
+						if err := json.NewDecoder(req.Body).Decode(&body); err != nil {
+							t.Fatal(err)
+						}
+						return &http.Response{
+							StatusCode: http.StatusOK,
+							Header:     http.Header{"X-Elastic-Product": []string{"Elasticsearch"}},
+							Body:       io.NopCloser(strings.NewReader(`{"hits":{"total":{"value":0,"relation":"eq"},"hits":[]}}`)),
+						}, nil
+					}),
+				})
+				if err != nil {
+					t.Fatal(err)
+				}
+				client := &config.Client{Name: "test", AddedBoost: enabled, RoleWeights: map[string]float64{"author": 3}}
+				r := NewElasticResolver(elastic, "test", []*config.Client{client}, nil, nil, nil)
+				ctx := context.WithValue(context.Background(), "client", client.Name)
+				if _, err := r.Search(ctx, "all", query, nil, nil, nil, nil, nil, nil, nil); err != nil {
+					t.Fatal(err)
+				}
+				if enabled {
+					var score struct {
+						Functions []struct {
+							Filter struct {
+								Exists struct {
+									Field string `json:"field"`
+								} `json:"exists"`
+							} `json:"filter"`
+							Gauss map[string]struct {
+								Origin string  `json:"origin"`
+								Scale  string  `json:"scale"`
+								Offset string  `json:"offset"`
+								Decay  float64 `json:"decay"`
+							} `json:"gauss"`
+							Weight float64 `json:"weight"`
+						} `json:"functions"`
+						ScoreMode string                     `json:"score_mode"`
+						BoostMode string                     `json:"boost_mode"`
+						Query     map[string]json.RawMessage `json:"query"`
+					}
+					if err := json.Unmarshal(body.Query["function_score"], &score); err != nil {
+						t.Fatal(err)
+					}
+					if score.ScoreMode != "sum" || score.BoostMode != "sum" || len(score.Functions) != 3 {
+						t.Fatalf("unexpected added boost: %+v", score)
+					}
+					for i, fn := range score.Functions[:2] {
+						date := fn.Gauss["dateadded"]
+						if fn.Filter.Exists.Field != "dateadded" || date.Origin != "now" || date.Scale != []string{"30d", "335d"}[i] || date.Offset != []string{"0d", "30d"}[i] || date.Decay != []float64{0.5, 0.1}[i] || fn.Weight != []float64{0.15, 0.10}[i] {
+							t.Errorf("unexpected decay function %d: %+v", i, fn)
+						}
+					}
+					if score.Functions[2].Weight != 0 || score.Functions[2].Filter.Exists.Field != "" || score.Functions[2].Gauss != nil {
+						t.Error("expected unconditional zero fallback")
+					}
+					body.Query = score.Query
+				}
+				if query == "" {
+					if _, ok := body.Query["bool"]; !ok {
+						t.Error("expected original bool query")
+					}
+				} else if !strings.Contains(string(body.Query["function_score"]), `"boost_mode":"multiply"`) {
+					t.Error("expected existing role boost to be preserved")
+				}
+			})
+		}
+	}
+}
 
 func TestLoadRevCatConfig_RoleWeights(t *testing.T) {
 	conf := &config.RevCatConfig{}
