@@ -28,6 +28,7 @@ type Client struct {
 	JWTMaxAge    config.Duration    `toml:"jwtmaxage"`
 	RoleWeights  map[string]float64 `toml:"roleweights"`
 	FieldWeights map[string]float64 `toml:"fieldweights"`
+	AddedBoost   bool               `toml:"addedboost"`
 }
 
 type ElasticSearchConfig struct {

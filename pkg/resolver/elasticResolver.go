@@ -548,6 +548,8 @@ func (r *ElasticResolver) Search(
 	roleWeights := r.roleWeights
 	if client != nil && len(client.RoleWeights) > 0 {
 		roleWeights = client.RoleWeights
+	} else if client != nil {
+		r.logger.Debug().Msgf("client role weights not found for client %s", client.Name)
 	}
 
 	if len(roleWeights) > 0 && query != "" && searchRequest.Query != nil {
@@ -565,6 +567,7 @@ func (r *ElasticResolver) Search(
 			}
 			w := types.Float64(weight)
 			rRole := role
+			// r.logger.Debug().Msgf("role %s weight %f", rRole, weight)
 			scoreFunctions = append(scoreFunctions, types.FunctionScore{
 				Filter: &types.Query{
 					Nested: &types.NestedQuery{
