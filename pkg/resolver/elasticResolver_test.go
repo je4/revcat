@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/elastic/go-elasticsearch/v8"
-	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
 	"github.com/je4/revcat/v2/config"
 )
 
@@ -41,7 +40,7 @@ func TestElasticResolver_AddedBoost(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				client := &config.Client{Name: "test", AddedBoost: enabled, RoleWeights: map[string]float64{"author": 3}}
+				client := &config.Client{Name: "test", AddedBoost: enabled, FieldWeights: map[string]map[string]float64{"[persons].role": {"author": 3}}}
 				r := NewElasticResolver(elastic, "test", []*config.Client{client}, nil, nil, nil)
 				ctx := context.WithValue(context.Background(), "client", client.Name)
 				if _, err := r.Search(ctx, "all", query, nil, nil, nil, nil, nil, nil, nil); err != nil {
@@ -96,14 +95,80 @@ func TestElasticResolver_AddedBoost(t *testing.T) {
 	}
 }
 
-func TestLoadRevCatConfig_RoleWeights(t *testing.T) {
+func TestParseFieldKey(t *testing.T) {
+	tests := []struct {
+		input             string
+		expectedPath      string
+		expectedFullField string
+		expectedTermField string
+	}{
+		{
+			input:             "[persons].role",
+			expectedPath:      "persons",
+			expectedFullField: "persons.role",
+			expectedTermField: "persons.role.keyword",
+		},
+		{
+			input:             "[media.audio].type",
+			expectedPath:      "media.audio",
+			expectedFullField: "media.audio.type",
+			expectedTermField: "media.audio.type.keyword",
+		},
+		{
+			input:             "[persons].identifier.url",
+			expectedPath:      "persons",
+			expectedFullField: "persons.identifier.url",
+			expectedTermField: "persons.identifier.url.keyword",
+		},
+		{
+			input:             "[persons].role.keyword",
+			expectedPath:      "persons",
+			expectedFullField: "persons.role.keyword",
+			expectedTermField: "persons.role.keyword",
+		},
+		{
+			input:             "category",
+			expectedPath:      "",
+			expectedFullField: "category",
+			expectedTermField: "category.keyword",
+		},
+		{
+			input:             "category.keyword",
+			expectedPath:      "",
+			expectedFullField: "category.keyword",
+			expectedTermField: "category.keyword",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			path, fullField, termField := parseFieldKey(tt.input)
+			if path != tt.expectedPath {
+				t.Errorf("parseFieldKey(%q) path = %q, want %q", tt.input, path, tt.expectedPath)
+			}
+			if fullField != tt.expectedFullField {
+				t.Errorf("parseFieldKey(%q) fullField = %q, want %q", tt.input, fullField, tt.expectedFullField)
+			}
+			if termField != tt.expectedTermField {
+				t.Errorf("parseFieldKey(%q) termField = %q, want %q", tt.input, termField, tt.expectedTermField)
+			}
+		})
+	}
+}
+
+func TestLoadRevCatConfig_FieldWeights(t *testing.T) {
 	conf := &config.RevCatConfig{}
 	if err := config.LoadRevCatConfig(config.ConfigFS, "revcat.toml", conf); err != nil {
 		t.Fatalf("failed to load revcat.toml: %v", err)
 	}
 
-	if len(conf.ElasticSearch.RoleWeights) == 0 {
-		t.Fatalf("expected roleweights to be parsed from revcat.toml, but got empty map")
+	if len(conf.ElasticSearch.FieldWeights) == 0 {
+		t.Fatalf("expected fieldweights to be parsed from revcat.toml, but got empty map")
+	}
+
+	globalPersonRoleWeights, ok := conf.ElasticSearch.FieldWeights["[persons].role"]
+	if !ok {
+		t.Fatalf("expected '[persons].role' to be present in ElasticSearch.FieldWeights")
 	}
 
 	expectedRoles := map[string]float64{
@@ -121,142 +186,13 @@ func TestLoadRevCatConfig_RoleWeights(t *testing.T) {
 	}
 
 	for role, expectedWeight := range expectedRoles {
-		weight, ok := conf.ElasticSearch.RoleWeights[role]
+		weight, ok := globalPersonRoleWeights[role]
 		if !ok {
-			t.Errorf("expected role %q to be present in roleweights", role)
+			t.Errorf("expected role %q to be present in global [persons].role weights", role)
 			continue
 		}
 		if weight != expectedWeight {
 			t.Errorf("expected role %q to have weight %v, got %v", role, expectedWeight, weight)
-		}
-	}
-
-	// Verify client-specific roleweights
-	var performanceClient, inkClient *config.Client
-	for _, c := range conf.Client {
-		if c.Name == "performance" {
-			performanceClient = c
-		}
-		if c.Name == "ink" {
-			inkClient = c
-		}
-	}
-
-	if performanceClient == nil {
-		t.Fatal("expected client 'performance' to exist in config")
-	}
-	if performanceClient.RoleWeights["artist"] != 4.0 || performanceClient.RoleWeights["performer"] != 4.0 || performanceClient.RoleWeights["director"] != 1.5 {
-		t.Errorf("unexpected roleweights for client 'performance': %v", performanceClient.RoleWeights)
-	}
-
-	if inkClient == nil {
-		t.Fatal("expected client 'ink' to exist in config")
-	}
-	if inkClient.RoleWeights["author"] != 4.0 || inkClient.RoleWeights["editor"] != 2.0 {
-		t.Errorf("unexpected roleweights for client 'ink': %v", inkClient.RoleWeights)
-	}
-}
-
-func TestElasticResolver_FunctionScoreQueryGeneration(t *testing.T) {
-	roleWeights := map[string]float64{
-		"Autor":      3.0,
-		"Übersetzer": 1.1,
-	}
-
-	r := &ElasticResolver{
-		roleWeights: roleWeights,
-	}
-
-	query := "Max Mustermann"
-
-	// Mock building query matching ElasticResolver logic
-	roles := []string{"Autor", "Übersetzer"}
-	var scoreFunctions []types.FunctionScore
-	for _, role := range roles {
-		weight := r.roleWeights[role]
-		w := types.Float64(weight)
-		rRole := role
-		scoreFunctions = append(scoreFunctions, types.FunctionScore{
-			Filter: &types.Query{
-				Nested: &types.NestedQuery{
-					Path: "persons",
-					Query: types.Query{
-						Bool: &types.BoolQuery{
-							Must: []types.Query{
-								{
-									SimpleQueryString: &types.SimpleQueryStringQuery{
-										Query:  query,
-										Fields: []string{"persons.name"},
-									},
-								},
-								{
-									Term: map[string]types.TermQuery{
-										"persons.role.keyword": {
-											Value: rRole,
-										},
-									},
-								},
-							},
-						},
-					},
-				},
-			},
-			Weight: &w,
-		})
-	}
-
-	if len(scoreFunctions) != 2 {
-		t.Fatalf("expected 2 score functions, got %d", len(scoreFunctions))
-	}
-
-	data, err := json.Marshal(scoreFunctions)
-	if err != nil {
-		t.Fatalf("failed to marshal score functions: %v", err)
-	}
-
-	jsonStr := string(data)
-	if !strings.Contains(jsonStr, `"path":"persons"`) {
-		t.Errorf("expected JSON to contain persons nested path, got: %s", jsonStr)
-	}
-	if !strings.Contains(jsonStr, `"persons.role.keyword":{"value":"Autor"}`) {
-		t.Errorf("expected JSON to contain Autor role filter, got: %s", jsonStr)
-	}
-	if !strings.Contains(jsonStr, `"persons.role.keyword":{"value":"Übersetzer"}`) {
-		t.Errorf("expected JSON to contain Übersetzer role filter, got: %s", jsonStr)
-	}
-}
-
-func TestLoadRevCatConfig_FieldWeights(t *testing.T) {
-	conf := &config.RevCatConfig{}
-	if err := config.LoadRevCatConfig(config.ConfigFS, "revcat.toml", conf); err != nil {
-		t.Fatalf("failed to load revcat.toml: %v", err)
-	}
-
-	if len(conf.ElasticSearch.FieldWeights) == 0 {
-		t.Fatalf("expected fieldweights to be parsed from revcat.toml, but got empty map")
-	}
-
-	expectedFields := map[string]float64{
-		"title":            4.0,
-		"persons.name":     4.0,
-		"collectiontitle":  2.0,
-		"series":           2.0,
-		"tags":             2.0,
-		"category":         1.5,
-		"abstract":         1.1,
-		"notes.title":      1.2,
-		"notes.note":       1.0,
-		"media.*.fulltext": 1.0,
-	}
-
-	for field, expectedWeight := range expectedFields {
-		weight, ok := conf.ElasticSearch.FieldWeights[field]
-		if !ok {
-			t.Errorf("expected field %q to be present in fieldweights", field)
-			continue
-		}
-		if weight != expectedWeight {
-			t.Errorf("expected field %q to have weight %v, got %v", field, expectedWeight, weight)
 		}
 	}
 
@@ -274,90 +210,369 @@ func TestLoadRevCatConfig_FieldWeights(t *testing.T) {
 	if performanceClient == nil {
 		t.Fatal("expected client 'performance' to exist in config")
 	}
-	if performanceClient.FieldWeights["title"] != 4.0 {
-		t.Errorf("unexpected fieldweights for client 'performance': %v", performanceClient.FieldWeights)
+	perfRoles, ok := performanceClient.FieldWeights["[persons].role"]
+	if !ok {
+		t.Fatalf("expected client 'performance' to have '[persons].role' in fieldweights")
+	}
+	if perfRoles["artist"] != 4.0 || perfRoles["performer"] != 4.0 || perfRoles["director"] != 1.5 || perfRoles["author"] != 4.0 || perfRoles["eventcurator"] != 2.0 || perfRoles["contributor"] != 2.0 {
+		t.Errorf("unexpected roleweights for client 'performance': %v", perfRoles)
 	}
 
 	if inkClient == nil {
 		t.Fatal("expected client 'ink' to exist in config")
 	}
-	if inkClient.FieldWeights["title"] != 5.0 {
-		t.Errorf("unexpected fieldweights for client 'ink': %v", inkClient.FieldWeights)
+	inkRoles, ok := inkClient.FieldWeights["[persons].role"]
+	if !ok {
+		t.Fatalf("expected client 'ink' to have '[persons].role' in fieldweights")
+	}
+	if inkRoles["author"] != 4.0 || inkRoles["editor"] != 2.0 || inkRoles["creator"] != 2.0 || inkRoles["translator"] != 1.5 || inkRoles["contributor"] != 1.2 {
+		t.Errorf("unexpected roleweights for client 'ink': %v", inkRoles)
 	}
 }
 
-func TestElasticResolver_FieldWeightsResolution(t *testing.T) {
-	// 1. Defaults when no config is provided
-	rDefault := &ElasticResolver{}
-	getWeightDefault := func(name string, client *config.Client) float64 {
-		if client != nil && client.FieldWeights != nil {
-			if w, ok := client.FieldWeights[name]; ok && w > 0 {
-				return w
-			}
-		}
-		if rDefault.fieldWeights != nil {
-			if w, ok := rDefault.fieldWeights[name]; ok && w > 0 {
-				return w
-			}
-		}
-		if def, ok := defaultFieldWeights[name]; ok {
-			return def
-		}
-		return 1.0
-	}
-
-	if getWeightDefault("title", nil) != 4.0 {
-		t.Errorf("expected default title weight 4.0, got %v", getWeightDefault("title", nil))
-	}
-	if getWeightDefault("category", nil) != 1.5 {
-		t.Errorf("expected default category weight 1.5, got %v", getWeightDefault("category", nil))
-	}
-
-	// 2. Custom global weights override defaults
-	rCustom := &ElasticResolver{
-		fieldWeights: map[string]float64{
-			"title": 6.0,
+func TestElasticResolver_FunctionScoreQueryGeneration(t *testing.T) {
+	fieldWeights := map[string]map[string]float64{
+		"[persons].role": {
+			"Autor":      3.0,
+			"Übersetzer": 1.1,
+		},
+		"[media.audio].type": {
+			"interview": 2.0,
+		},
+		"category": {
+			"art": 2.5,
+		},
+		"empty_weights": {
+			"none": 0.0,
 		},
 	}
-	getWeightCustom := func(name string, client *config.Client) float64 {
-		if client != nil && client.FieldWeights != nil {
-			if w, ok := client.FieldWeights[name]; ok && w > 0 {
-				return w
-			}
-		}
-		if rCustom.fieldWeights != nil {
-			if w, ok := rCustom.fieldWeights[name]; ok && w > 0 {
-				return w
-			}
-		}
-		if def, ok := defaultFieldWeights[name]; ok {
-			return def
-		}
-		return 1.0
+
+	var capturedBody struct {
+		Query map[string]json.RawMessage `json:"query"`
 	}
 
-	if getWeightCustom("title", nil) != 6.0 {
-		t.Errorf("expected global custom title weight 6.0, got %v", getWeightCustom("title", nil))
-	}
-	if getWeightCustom("abstract", nil) != 1.1 {
-		t.Errorf("expected fallback default abstract weight 1.1, got %v", getWeightCustom("abstract", nil))
+	elastic, err := elasticsearch.NewTypedClient(elasticsearch.Config{
+		Transport: searchCaptureTransport(func(req *http.Request) (*http.Response, error) {
+			if err := json.NewDecoder(req.Body).Decode(&capturedBody); err != nil {
+				t.Fatal(err)
+			}
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     http.Header{"X-Elastic-Product": []string{"Elasticsearch"}},
+				Body:       io.NopCloser(strings.NewReader(`{"hits":{"total":{"value":0,"relation":"eq"},"hits":[]}}`)),
+			}, nil
+		}),
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 
-	// 3. Client-specific weights override global weights
 	client := &config.Client{
-		FieldWeights: map[string]float64{
-			"title": 8.0,
-			"tags":  5.0,
+		Name:         "test_client",
+		FieldWeights: fieldWeights,
+	}
+
+	r := NewElasticResolver(elastic, "test_index", []*config.Client{client}, nil, nil, nil)
+	ctx := context.WithValue(context.Background(), "client", client.Name)
+
+	query := "Max Mustermann"
+	if _, err := r.Search(ctx, "all", query, nil, nil, nil, nil, nil, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+
+	funcScoreBytes, ok := capturedBody.Query["function_score"]
+	if !ok {
+		t.Fatal("expected function_score query in search request")
+	}
+
+	jsonStr := string(funcScoreBytes)
+
+	// Verify single-level nested field [persons].role
+	if !strings.Contains(jsonStr, `"path":"persons"`) {
+		t.Errorf("expected JSON to contain persons nested path, got: %s", jsonStr)
+	}
+	if !strings.Contains(jsonStr, `"fields":["persons.name"]`) {
+		t.Errorf("expected JSON to contain persons.name search field, got: %s", jsonStr)
+	}
+	if !strings.Contains(jsonStr, `"persons.role.keyword":{"value":"Autor"}`) {
+		t.Errorf("expected JSON to contain Autor role filter, got: %s", jsonStr)
+	}
+	if !strings.Contains(jsonStr, `"persons.role.keyword":{"value":"Übersetzer"}`) {
+		t.Errorf("expected JSON to contain Übersetzer role filter, got: %s", jsonStr)
+	}
+
+	// Verify multi-level nested field [media.audio].type
+	if !strings.Contains(jsonStr, `"path":"media.audio"`) {
+		t.Errorf("expected JSON to contain media.audio nested path, got: %s", jsonStr)
+	}
+	if !strings.Contains(jsonStr, `"fields":["media.audio.*"]`) {
+		t.Errorf("expected JSON to contain media.audio.* search field, got: %s", jsonStr)
+	}
+	if !strings.Contains(jsonStr, `"media.audio.type.keyword":{"value":"interview"}`) {
+		t.Errorf("expected JSON to contain media.audio.type.keyword filter, got: %s", jsonStr)
+	}
+
+	// Verify root-level field category
+	if !strings.Contains(jsonStr, `"category.keyword":{"value":"art"}`) {
+		t.Errorf("expected JSON to contain category.keyword root term filter, got: %s", jsonStr)
+	}
+
+	// Verify zero-weight was excluded
+	if strings.Contains(jsonStr, `"none"`) {
+		t.Errorf("expected zero weight 'none' to be excluded from score functions, got: %s", jsonStr)
+	}
+
+	// Verify boost mode and score mode
+	if !strings.Contains(jsonStr, `"boost_mode":"multiply"`) {
+		t.Errorf("expected boost_mode multiply, got: %s", jsonStr)
+	}
+	if !strings.Contains(jsonStr, `"score_mode":"max"`) {
+		t.Errorf("expected score_mode max, got: %s", jsonStr)
+	}
+}
+
+func TestElasticResolver_FieldWeightsPrecedence(t *testing.T) {
+	var capturedBody struct {
+		Query map[string]json.RawMessage `json:"query"`
+	}
+
+	elastic, err := elasticsearch.NewTypedClient(elasticsearch.Config{
+		Transport: searchCaptureTransport(func(req *http.Request) (*http.Response, error) {
+			if err := json.NewDecoder(req.Body).Decode(&capturedBody); err != nil {
+				t.Fatal(err)
+			}
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     http.Header{"X-Elastic-Product": []string{"Elasticsearch"}},
+				Body:       io.NopCloser(strings.NewReader(`{"hits":{"total":{"value":0,"relation":"eq"},"hits":[]}}`)),
+			}, nil
+		}),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	globalWeights := map[string]map[string]float64{
+		"[persons].role": {
+			"author": 2.0,
 		},
 	}
 
-	if getWeightCustom("title", client) != 8.0 {
-		t.Errorf("expected client-specific title weight 8.0, got %v", getWeightCustom("title", client))
+	clientCustom := &config.Client{
+		Name: "custom_client",
+		FieldWeights: map[string]map[string]float64{
+			"[persons].role": {
+				"author": 5.0,
+			},
+		},
 	}
-	if getWeightCustom("tags", client) != 5.0 {
-		t.Errorf("expected client-specific tags weight 5.0, got %v", getWeightCustom("tags", client))
+
+	clientFallback := &config.Client{
+		Name: "fallback_client",
 	}
-	if getWeightCustom("abstract", client) != 1.1 {
-		t.Errorf("expected fallback abstract weight 1.1, got %v", getWeightCustom("abstract", client))
+
+	r := NewElasticResolver(elastic, "test_index", []*config.Client{clientCustom, clientFallback}, nil, globalWeights, nil)
+
+	// 1. Client with custom weights
+	ctxCustom := context.WithValue(context.Background(), "client", clientCustom.Name)
+	if _, err := r.Search(ctxCustom, "all", "test", nil, nil, nil, nil, nil, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+	jsonCustom := string(capturedBody.Query["function_score"])
+	if !strings.Contains(jsonCustom, `"weight":5`) {
+		t.Errorf("expected client-specific weight 5, got: %s", jsonCustom)
+	}
+
+	// 2. Client with fallback to global weights
+	ctxFallback := context.WithValue(context.Background(), "client", clientFallback.Name)
+	if _, err := r.Search(ctxFallback, "all", "test", nil, nil, nil, nil, nil, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+	jsonFallback := string(capturedBody.Query["function_score"])
+	if !strings.Contains(jsonFallback, `"weight":2`) {
+		t.Errorf("expected global fallback weight 2, got: %s", jsonFallback)
+	}
+}
+
+func TestLoadRevCatConfig_SearchWeights(t *testing.T) {
+	conf := &config.RevCatConfig{}
+	if err := config.LoadRevCatConfig(config.ConfigFS, "revcat.toml", conf); err != nil {
+		t.Fatalf("failed to load revcat.toml: %v", err)
+	}
+
+	if len(conf.ElasticSearch.SearchWeights) == 0 {
+		t.Fatalf("expected searchweights to be parsed from revcat.toml, but got empty map")
+	}
+
+	expectedFields := map[string]float64{
+		"title":            4.0,
+		"persons.name":     4.0,
+		"collectiontitle":  2.0,
+		"series":           2.0,
+		"tags":             2.0,
+		"category":         1.5,
+		"abstract":         1.1,
+		"notes.title":      1.2,
+		"notes.note":       1.0,
+		"media.*.fulltext": 1.0,
+	}
+
+	for field, expectedWeight := range expectedFields {
+		weight, ok := conf.ElasticSearch.SearchWeights[field]
+		if !ok {
+			t.Errorf("expected field %q to be present in searchweights", field)
+			continue
+		}
+		if weight != expectedWeight {
+			t.Errorf("expected field %q to have weight %v, got %v", field, expectedWeight, weight)
+		}
+	}
+
+	// Verify client-specific searchweights
+	var performanceClient, inkClient *config.Client
+	for _, c := range conf.Client {
+		if c.Name == "performance" {
+			performanceClient = c
+		}
+		if c.Name == "ink" {
+			inkClient = c
+		}
+	}
+
+	if performanceClient == nil {
+		t.Fatal("expected client 'performance' to exist in config")
+	}
+	if performanceClient.SearchWeights["title"] != 3.0 || performanceClient.SearchWeights["persons.name"] != 5.0 {
+		t.Errorf("unexpected searchweights for client 'performance': %v", performanceClient.SearchWeights)
+	}
+
+	if inkClient == nil {
+		t.Fatal("expected client 'ink' to exist in config")
+	}
+	if inkClient.SearchWeights["title"] != 3.0 || inkClient.SearchWeights["persons.name"] != 5.0 {
+		t.Errorf("unexpected searchweights for client 'ink': %v", inkClient.SearchWeights)
+	}
+}
+
+func TestElasticResolver_SearchWeightsPrecedence(t *testing.T) {
+	var capturedBody struct {
+		Query map[string]json.RawMessage `json:"query"`
+	}
+
+	elastic, err := elasticsearch.NewTypedClient(elasticsearch.Config{
+		Transport: searchCaptureTransport(func(req *http.Request) (*http.Response, error) {
+			if err := json.NewDecoder(req.Body).Decode(&capturedBody); err != nil {
+				t.Fatal(err)
+			}
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     http.Header{"X-Elastic-Product": []string{"Elasticsearch"}},
+				Body:       io.NopCloser(strings.NewReader(`{"hits":{"total":{"value":0,"relation":"eq"},"hits":[]}}`)),
+			}, nil
+		}),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	globalSearchWeights := map[string]float64{
+		"title":        7.0,
+		"persons.name": 8.0,
+	}
+
+	clientCustom := &config.Client{
+		Name: "custom_client",
+		SearchWeights: map[string]float64{
+			"title": 9.0,
+		},
+	}
+
+	clientFallback := &config.Client{
+		Name: "fallback_client",
+	}
+
+	r := NewElasticResolver(elastic, "test_index", []*config.Client{clientCustom, clientFallback}, globalSearchWeights, nil, nil)
+
+	// 1. Client with custom weight for title (should be 9.0) and global weight for persons.name (should be 8.0)
+	ctxCustom := context.WithValue(context.Background(), "client", clientCustom.Name)
+	if _, err := r.Search(ctxCustom, "all", "test", nil, nil, nil, nil, nil, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+	bodyBytes, _ := json.Marshal(capturedBody)
+	jsonCustom := string(bodyBytes)
+	if !strings.Contains(jsonCustom, `"title^9"`) {
+		t.Errorf("expected client-specific search weight 'title^9', got: %s", jsonCustom)
+	}
+	if !strings.Contains(jsonCustom, `"persons.name^8"`) {
+		t.Errorf("expected global search weight 'persons.name^8', got: %s", jsonCustom)
+	}
+
+	// 2. Client fallback: global weight for title (7.0) and fallback for tags (default 2.0)
+	ctxFallback := context.WithValue(context.Background(), "client", clientFallback.Name)
+	if _, err := r.Search(ctxFallback, "all", "test", nil, nil, nil, nil, nil, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+	bodyBytesFallback, _ := json.Marshal(capturedBody)
+	jsonFallback := string(bodyBytesFallback)
+	if !strings.Contains(jsonFallback, `"title^7"`) {
+		t.Errorf("expected global search weight 'title^7', got: %s", jsonFallback)
+	}
+	if !strings.Contains(jsonFallback, `"tags^2"`) {
+		t.Errorf("expected default search weight 'tags^2', got: %s", jsonFallback)
+	}
+}
+
+func TestElasticResolver_SearchWeightsFulltext(t *testing.T) {
+	var capturedBody struct {
+		Query map[string]json.RawMessage `json:"query"`
+	}
+
+	elastic, err := elasticsearch.NewTypedClient(elasticsearch.Config{
+		Transport: searchCaptureTransport(func(req *http.Request) (*http.Response, error) {
+			if err := json.NewDecoder(req.Body).Decode(&capturedBody); err != nil {
+				t.Fatal(err)
+			}
+			return &http.Response{
+				StatusCode: http.StatusOK,
+				Header:     http.Header{"X-Elastic-Product": []string{"Elasticsearch"}},
+				Body:       io.NopCloser(strings.NewReader(`{"hits":{"total":{"value":0,"relation":"eq"},"hits":[]}}`)),
+			}, nil
+		}),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	client := &config.Client{
+		Name: "test_fulltext_client",
+		SearchWeights: map[string]float64{
+			"abstract":         3.5,
+			"notes.title":      2.5,
+			"notes.note":       1.8,
+			"media.*.fulltext": 4.2,
+		},
+	}
+
+	r := NewElasticResolver(elastic, "test_index", []*config.Client{client}, nil, nil, nil)
+	ctx := context.WithValue(context.Background(), "client", client.Name)
+
+	if _, err := r.Search(ctx, "fulltext", "test query", nil, nil, nil, nil, nil, nil, nil); err != nil {
+		t.Fatal(err)
+	}
+
+	bodyBytes, _ := json.Marshal(capturedBody)
+	jsonStr := string(bodyBytes)
+
+	if !strings.Contains(jsonStr, `"abstract^3.5"`) {
+		t.Errorf("expected 'abstract^3.5' in fulltext search query, got: %s", jsonStr)
+	}
+	if !strings.Contains(jsonStr, `"notes.title^2.5"`) {
+		t.Errorf("expected 'notes.title^2.5' in fulltext search query, got: %s", jsonStr)
+	}
+	if !strings.Contains(jsonStr, `"notes.note^1.8"`) {
+		t.Errorf("expected 'notes.note^1.8' in fulltext search query, got: %s", jsonStr)
+	}
+	if !strings.Contains(jsonStr, `"media.*.fulltext^4.2"`) {
+		t.Errorf("expected 'media.*.fulltext^4.2' in fulltext search query, got: %s", jsonStr)
 	}
 }

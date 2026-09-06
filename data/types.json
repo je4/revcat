@@ -1,0 +1,1574 @@
+[
+  {
+    "key": "thesis",
+    "doc_count": 6069
+  },
+  {
+    "key": "Work",
+    "doc_count": 2218
+  },
+  {
+    "key": "videorecording",
+    "doc_count": 1929
+  },
+  {
+    "key": "Performance",
+    "doc_count": 1842
+  },
+  {
+    "key": "performance",
+    "doc_count": 1597
+  },
+  {
+    "key": "audiorecording",
+    "doc_count": 1293
+  },
+  {
+    "key": "film",
+    "doc_count": 1150
+  },
+  {
+    "key": "document",
+    "doc_count": 1014
+  },
+  {
+    "key": "webpage",
+    "doc_count": 917
+  },
+  {
+    "key": "book",
+    "doc_count": 886
+  },
+  {
+    "key": "artwork",
+    "doc_count": 781
+  },
+  {
+    "key": "presentation",
+    "doc_count": 757
+  },
+  {
+    "key": "journalarticle",
+    "doc_count": 435
+  },
+  {
+    "key": "Module",
+    "doc_count": 429
+  },
+  {
+    "key": "report",
+    "doc_count": 335
+  },
+  {
+    "key": "studie (lehrressource)",
+    "doc_count": 328
+  },
+  {
+    "key": "fotografie",
+    "doc_count": 241
+  },
+  {
+    "key": "booksection",
+    "doc_count": 238
+  },
+  {
+    "key": "motet",
+    "doc_count": 212
+  },
+  {
+    "key": "ausstellung",
+    "doc_count": 198
+  },
+  {
+    "key": "dataset",
+    "doc_count": 196
+  },
+  {
+    "key": "mp4",
+    "doc_count": 170
+  },
+  {
+    "key": "interview",
+    "doc_count": 100
+  },
+  {
+    "key": "blogpost",
+    "doc_count": 96
+  },
+  {
+    "key": "conferencepaper",
+    "doc_count": 96
+  },
+  {
+    "key": "",
+    "doc_count": 69
+  },
+  {
+    "key": "video, farbe, ton",
+    "doc_count": 64
+  },
+  {
+    "key": "online – performance event",
+    "doc_count": 63
+  },
+  {
+    "key": "16:9",
+    "doc_count": 56
+  },
+  {
+    "key": "perfomance",
+    "doc_count": 47
+  },
+  {
+    "key": "mov",
+    "doc_count": 34
+  },
+  {
+    "key": "konzert",
+    "doc_count": 29
+  },
+  {
+    "key": "u-matic hb",
+    "doc_count": 29
+  },
+  {
+    "key": "performances",
+    "doc_count": 28
+  },
+  {
+    "key": "reisebericht",
+    "doc_count": 26
+  },
+  {
+    "key": "u-matic lb",
+    "doc_count": 26
+  },
+  {
+    "key": "attachment",
+    "doc_count": 24
+  },
+  {
+    "key": "note",
+    "doc_count": 24
+  },
+  {
+    "key": "4:3",
+    "doc_count": 23
+  },
+  {
+    "key": "video",
+    "doc_count": 23
+  },
+  {
+    "key": "workshop",
+    "doc_count": 23
+  },
+  {
+    "key": "betacam sp",
+    "doc_count": 20
+  },
+  {
+    "key": "dokumentation",
+    "doc_count": 20
+  },
+  {
+    "key": """ursprungsformat: u-matic low band
+    pal / farbe / stereo""",
+    "doc_count": 20
+  },
+  {
+    "key": "installation",
+    "doc_count": 19
+  },
+  {
+    "key": "treffen",
+    "doc_count": 18
+  },
+  {
+    "key": "ausstellungsprojekt",
+    "doc_count": 15
+  },
+  {
+    "key": "collection",
+    "doc_count": 15
+  },
+  {
+    "key": "performancereihe",
+    "doc_count": 15
+  },
+  {
+    "key": "minidv",
+    "doc_count": 13
+  },
+  {
+    "key": "austellung",
+    "doc_count": 12
+  },
+  {
+    "key": "gespräch",
+    "doc_count": 12
+  },
+  {
+    "key": "projekt",
+    "doc_count": 12
+  },
+  {
+    "key": "video recording",
+    "doc_count": 12
+  },
+  {
+    "key": "videos",
+    "doc_count": 12
+  },
+  {
+    "key": "educational resource",
+    "doc_count": 11
+  },
+  {
+    "key": "podcast",
+    "doc_count": 11
+  },
+  {
+    "key": "fest",
+    "doc_count": 10
+  },
+  {
+    "key": "japan standart 1",
+    "doc_count": 10
+  },
+  {
+    "key": "event",
+    "doc_count": 9
+  },
+  {
+    "key": "konzerte",
+    "doc_count": 9
+  },
+  {
+    "key": "magazinearticle",
+    "doc_count": 9
+  },
+  {
+    "key": "newspaperarticle",
+    "doc_count": 9
+  },
+  {
+    "key": "release",
+    "doc_count": 9
+  },
+  {
+    "key": "vortrag",
+    "doc_count": 9
+  },
+  {
+    "key": "bericht",
+    "doc_count": 8
+  },
+  {
+    "key": "diskussion",
+    "doc_count": 8
+  },
+  {
+    "key": "fotos",
+    "doc_count": 7
+  },
+  {
+    "key": "peformance",
+    "doc_count": 7
+  },
+  {
+    "key": "präsentation",
+    "doc_count": 7
+  },
+  {
+    "key": "benefizessen",
+    "doc_count": 6
+  },
+  {
+    "key": "einweihung",
+    "doc_count": 6
+  },
+  {
+    "key": "filme",
+    "doc_count": 6
+  },
+  {
+    "key": "gesprächsveranstaltung",
+    "doc_count": 6
+  },
+  {
+    "key": "hd, ton",
+    "doc_count": 6
+  },
+  {
+    "key": "klanginstallation",
+    "doc_count": 6
+  },
+  {
+    "key": "performanceabend",
+    "doc_count": 6
+  },
+  {
+    "key": "performativer vortrag",
+    "doc_count": 6
+  },
+  {
+    "key": "präsenationen",
+    "doc_count": 6
+  },
+  {
+    "key": "reihe",
+    "doc_count": 6
+  },
+  {
+    "key": "rene pulver  erzählt über video aktivismus und seine sammlung.",
+    "doc_count": 6
+  },
+  {
+    "key": "videoinstallation",
+    "doc_count": 6
+  },
+  {
+    "key": "Kunst",
+    "doc_count": 5
+  },
+  {
+    "key": """ursprungsformat: betacam
+    pal / farbe / stereo""",
+    "doc_count": 5
+  },
+  {
+    "key": "video, s/w, ton",
+    "doc_count": 5
+  },
+  {
+    "key": "adventskalender",
+    "doc_count": 4
+  },
+  {
+    "key": "dokumentarfilm",
+    "doc_count": 4
+  },
+  {
+    "key": "dvcam video",
+    "doc_count": 4
+  },
+  {
+    "key": "dvcam video, dvd",
+    "doc_count": 4
+  },
+  {
+    "key": "filmabend",
+    "doc_count": 4
+  },
+  {
+    "key": "performance art",
+    "doc_count": 4
+  },
+  {
+    "key": "präsentationen",
+    "doc_count": 4
+  },
+  {
+    "key": "seminar",
+    "doc_count": 4
+  },
+  {
+    "key": "studiosituation mit publikum",
+    "doc_count": 4
+  },
+  {
+    "key": "symposium",
+    "doc_count": 4
+  },
+  {
+    "key": "videoprogramm",
+    "doc_count": 4
+  },
+  {
+    "key": "vorlesung",
+    "doc_count": 4
+  },
+  {
+    "key": "aktion, gespräch",
+    "doc_count": 3
+  },
+  {
+    "key": "art history",
+    "doc_count": 3
+  },
+  {
+    "key": "audioinstallation",
+    "doc_count": 3
+  },
+  {
+    "key": "audiovisuelle performance",
+    "doc_count": 3
+  },
+  {
+    "key": "aufführungen",
+    "doc_count": 3
+  },
+  {
+    "key": "ausstellung und künstlerbuch",
+    "doc_count": 3
+  },
+  {
+    "key": "ausstellung und zeichnerinnentreffen",
+    "doc_count": 3
+  },
+  {
+    "key": "ausstellung, computer/video-installation",
+    "doc_count": 3
+  },
+  {
+    "key": "ausstellung, installation",
+    "doc_count": 3
+  },
+  {
+    "key": "ausstellung, malerei",
+    "doc_count": 3
+  },
+  {
+    "key": "ausstellung, multimedia",
+    "doc_count": 3
+  },
+  {
+    "key": "ausstellung, reisebericht, präsentation",
+    "doc_count": 3
+  },
+  {
+    "key": "ausstellung, skulpturales stilleben installation",
+    "doc_count": 3
+  },
+  {
+    "key": "ausstellung, stilleben videoinstalltion",
+    "doc_count": 3
+  },
+  {
+    "key": "ausstellung, videoinstallation",
+    "doc_count": 3
+  },
+  {
+    "key": "ausstellung, videopool",
+    "doc_count": 3
+  },
+  {
+    "key": "ausstellung, zwischenlandung installation",
+    "doc_count": 3
+  },
+  {
+    "key": "ausstellungen",
+    "doc_count": 3
+  },
+  {
+    "key": "ausstellungs- und performanceprojekt",
+    "doc_count": 3
+  },
+  {
+    "key": "ausstellungsperformance",
+    "doc_count": 3
+  },
+  {
+    "key": "bibliothek",
+    "doc_count": 3
+  },
+  {
+    "key": "bilder",
+    "doc_count": 3
+  },
+  {
+    "key": "bilder, visueller dialog",
+    "doc_count": 3
+  },
+  {
+    "key": "bilderreihe",
+    "doc_count": 3
+  },
+  {
+    "key": "brunch",
+    "doc_count": 3
+  },
+  {
+    "key": "buchpräsentation, performance",
+    "doc_count": 3
+  },
+  {
+    "key": "conference",
+    "doc_count": 3
+  },
+  {
+    "key": "diplomausstellung",
+    "doc_count": 3
+  },
+  {
+    "key": "druckaustellung",
+    "doc_count": 3
+  },
+  {
+    "key": "edit-a-table",
+    "doc_count": 3
+  },
+  {
+    "key": "editier treffen",
+    "doc_count": 3
+  },
+  {
+    "key": "editieranlass, konzerte, tanz",
+    "doc_count": 3
+  },
+  {
+    "key": "editiertag",
+    "doc_count": 3
+  },
+  {
+    "key": "erarbeitungswochenenden",
+    "doc_count": 3
+  },
+  {
+    "key": "erfahrungsbericht",
+    "doc_count": 3
+  },
+  {
+    "key": "experiment",
+    "doc_count": 3
+  },
+  {
+    "key": "experiment im öffentlichn raum",
+    "doc_count": 3
+  },
+  {
+    "key": "fachtagung",
+    "doc_count": 3
+  },
+  {
+    "key": "festival",
+    "doc_count": 3
+  },
+  {
+    "key": "film, rede, gespräch, performances",
+    "doc_count": 3
+  },
+  {
+    "key": "filme, tanz",
+    "doc_count": 3
+  },
+  {
+    "key": "flash-animationen",
+    "doc_count": 3
+  },
+  {
+    "key": "forschungsfenster",
+    "doc_count": 3
+  },
+  {
+    "key": "foto",
+    "doc_count": 3
+  },
+  {
+    "key": "generalversammlung",
+    "doc_count": 3
+  },
+  {
+    "key": "hd, ohne ton",
+    "doc_count": 3
+  },
+  {
+    "key": "informelles treffes",
+    "doc_count": 3
+  },
+  {
+    "key": "infotag",
+    "doc_count": 3
+  },
+  {
+    "key": "installative performance",
+    "doc_count": 3
+  },
+  {
+    "key": "inszenierung",
+    "doc_count": 3
+  },
+  {
+    "key": "inszenierung, darstellung",
+    "doc_count": 3
+  },
+  {
+    "key": "interaktive installation, performance",
+    "doc_count": 3
+  },
+  {
+    "key": "intervention",
+    "doc_count": 3
+  },
+  {
+    "key": "kasko-bar",
+    "doc_count": 3
+  },
+  {
+    "key": "klanginstallation, konzerte, klangworkshops und performances.",
+    "doc_count": 3
+  },
+  {
+    "key": "konzert, gespräch",
+    "doc_count": 3
+  },
+  {
+    "key": "kooperation",
+    "doc_count": 3
+  },
+  {
+    "key": "kooperationen",
+    "doc_count": 3
+  },
+  {
+    "key": "kunstprojekt",
+    "doc_count": 3
+  },
+  {
+    "key": "kunstprojekt mit täglichen events",
+    "doc_count": 3
+  },
+  {
+    "key": "künstlergespräche",
+    "doc_count": 3
+  },
+  {
+    "key": "laden-kunstprojekt",
+    "doc_count": 3
+  },
+  {
+    "key": "live-acts, installation, podium",
+    "doc_count": 3
+  },
+  {
+    "key": "lyrik interdisziplinär",
+    "doc_count": 3
+  },
+  {
+    "key": "map",
+    "doc_count": 3
+  },
+  {
+    "key": "meeting of protest foto/ton-installation, ausstellung",
+    "doc_count": 3
+  },
+  {
+    "key": "messe",
+    "doc_count": 3
+  },
+  {
+    "key": "minifestival",
+    "doc_count": 3
+  },
+  {
+    "key": "mixed material",
+    "doc_count": 3
+  },
+  {
+    "key": "musik",
+    "doc_count": 3
+  },
+  {
+    "key": "musikalisches event",
+    "doc_count": 3
+  },
+  {
+    "key": "narrative bildkombination",
+    "doc_count": 3
+  },
+  {
+    "key": "news",
+    "doc_count": 3
+  },
+  {
+    "key": "online ausstellung",
+    "doc_count": 3
+  },
+  {
+    "key": "performance festival",
+    "doc_count": 3
+  },
+  {
+    "key": "performance, installation",
+    "doc_count": 3
+  },
+  {
+    "key": "performance, live-elektronik, videoprojektion",
+    "doc_count": 3
+  },
+  {
+    "key": "performance, transformation",
+    "doc_count": 3
+  },
+  {
+    "key": "performance-ausflug",
+    "doc_count": 3
+  },
+  {
+    "key": "performance-konzert",
+    "doc_count": 3
+  },
+  {
+    "key": "performance-konzil",
+    "doc_count": 3
+  },
+  {
+    "key": "performance-sport",
+    "doc_count": 3
+  },
+  {
+    "key": "performance-wochenende",
+    "doc_count": 3
+  },
+  {
+    "key": "performanceaufnahme",
+    "doc_count": 3
+  },
+  {
+    "key": "performanceaustausch",
+    "doc_count": 3
+  },
+  {
+    "key": "performanceinstallation",
+    "doc_count": 3
+  },
+  {
+    "key": "performances, aktionen",
+    "doc_count": 3
+  },
+  {
+    "key": "performances, ausstellung, sympsion",
+    "doc_count": 3
+  },
+  {
+    "key": "performances, gespräche",
+    "doc_count": 3
+  },
+  {
+    "key": "performances, installationen, lesungen",
+    "doc_count": 3
+  },
+  {
+    "key": "performancevideo",
+    "doc_count": 3
+  },
+  {
+    "key": "performatives radio, texte, vorgelesen von lesefreudigen künstler*innen.",
+    "doc_count": 3
+  },
+  {
+    "key": "plattform",
+    "doc_count": 3
+  },
+  {
+    "key": "podiumsgespräch",
+    "doc_count": 3
+  },
+  {
+    "key": "presentation, performance",
+    "doc_count": 3
+  },
+  {
+    "key": "presseartikel",
+    "doc_count": 3
+  },
+  {
+    "key": "projekttag",
+    "doc_count": 3
+  },
+  {
+    "key": "prozessorientiertes ausstellungsprojekt",
+    "doc_count": 3
+  },
+  {
+    "key": "präsenation",
+    "doc_count": 3
+  },
+  {
+    "key": "präsentation von performance-projekte",
+    "doc_count": 3
+  },
+  {
+    "key": "quicktime movies mit sound-bildcollagen",
+    "doc_count": 3
+  },
+  {
+    "key": "raumbezogene soloperformance",
+    "doc_count": 3
+  },
+  {
+    "key": "raumexperiment",
+    "doc_count": 3
+  },
+  {
+    "key": "rauminstallation",
+    "doc_count": 3
+  },
+  {
+    "key": "raummalerei",
+    "doc_count": 3
+  },
+  {
+    "key": "recherche",
+    "doc_count": 3
+  },
+  {
+    "key": "reisebericht, performance",
+    "doc_count": 3
+  },
+  {
+    "key": "rohmaterial",
+    "doc_count": 3
+  },
+  {
+    "key": "rückblick",
+    "doc_count": 3
+  },
+  {
+    "key": "saisonbeschreibung",
+    "doc_count": 3
+  },
+  {
+    "key": "salon",
+    "doc_count": 3
+  },
+  {
+    "key": "schwerpunktwochenende",
+    "doc_count": 3
+  },
+  {
+    "key": "sculpture sympósion",
+    "doc_count": 3
+  },
+  {
+    "key": "seminarprojekt",
+    "doc_count": 3
+  },
+  {
+    "key": "soundinstallation",
+    "doc_count": 3
+  },
+  {
+    "key": "sportanlass",
+    "doc_count": 3
+  },
+  {
+    "key": "sw fotos",
+    "doc_count": 3
+  },
+  {
+    "key": "szenen mischung",
+    "doc_count": 3
+  },
+  {
+    "key": "szenische installation",
+    "doc_count": 3
+  },
+  {
+    "key": "tanz und objektbasierte performance",
+    "doc_count": 3
+  },
+  {
+    "key": "theater",
+    "doc_count": 3
+  },
+  {
+    "key": "treffen, performance-präsentation",
+    "doc_count": 3
+  },
+  {
+    "key": "tvbroadcast",
+    "doc_count": 3
+  },
+  {
+    "key": """ursprungsformat: u-matic low band
+    pal / farbe / mono""",
+    "doc_count": 3
+  },
+  {
+    "key": "video dv cam",
+    "doc_count": 3
+  },
+  {
+    "key": "video, dvd",
+    "doc_count": 3
+  },
+  {
+    "key": "video-konzert-installation",
+    "doc_count": 3
+  },
+  {
+    "key": "videos, musik",
+    "doc_count": 3
+  },
+  {
+    "key": "videovorträge, ausstellung",
+    "doc_count": 3
+  },
+  {
+    "key": "wandzeichnungen, zeichnerinnentreffen, verkaufsevent",
+    "doc_count": 3
+  },
+  {
+    "key": "weekend-seminar",
+    "doc_count": 3
+  },
+  {
+    "key": "work in progress, tanz, performance",
+    "doc_count": 3
+  },
+  {
+    "key": "worshop",
+    "doc_count": 3
+  },
+  {
+    "key": "zeichnungen, fotoheft",
+    "doc_count": 3
+  },
+  {
+    "key": "zeitschrift",
+    "doc_count": 3
+  },
+  {
+    "key": "zeitschrift-release",
+    "doc_count": 3
+  },
+  {
+    "key": "4:3, ohne ton",
+    "doc_count": 2
+  },
+  {
+    "key": "abschlussveranstaltung",
+    "doc_count": 2
+  },
+  {
+    "key": "ausflug",
+    "doc_count": 2
+  },
+  {
+    "key": "ausstellung, diskussionsraum",
+    "doc_count": 2
+  },
+  {
+    "key": "austellung, objektbetrachtung",
+    "doc_count": 2
+  },
+  {
+    "key": "dias",
+    "doc_count": 2
+  },
+  {
+    "key": "dokumentation der projekte",
+    "doc_count": 2
+  },
+  {
+    "key": "edit-a-thon",
+    "doc_count": 2
+  },
+  {
+    "key": "einzelausstellung",
+    "doc_count": 2
+  },
+  {
+    "key": "format",
+    "doc_count": 2
+  },
+  {
+    "key": "foto / still",
+    "doc_count": 2
+  },
+  {
+    "key": "fotografie / still",
+    "doc_count": 2
+  },
+  {
+    "key": "fotos und video recording",
+    "doc_count": 2
+  },
+  {
+    "key": "hdv video",
+    "doc_count": 2
+  },
+  {
+    "key": "hörspiel",
+    "doc_count": 2
+  },
+  {
+    "key": "interview rohmaterial",
+    "doc_count": 2
+  },
+  {
+    "key": "journal",
+    "doc_count": 2
+  },
+  {
+    "key": "jubiläumsfest",
+    "doc_count": 2
+  },
+  {
+    "key": "kabarett",
+    "doc_count": 2
+  },
+  {
+    "key": "lecture performance",
+    "doc_count": 2
+  },
+  {
+    "key": "lectures",
+    "doc_count": 2
+  },
+  {
+    "key": "m4v",
+    "doc_count": 2
+  },
+  {
+    "key": "moderation",
+    "doc_count": 2
+  },
+  {
+    "key": "nummernabend",
+    "doc_count": 2
+  },
+  {
+    "key": "performanc, re enactmenbt",
+    "doc_count": 2
+  },
+  {
+    "key": "performance-präsentation",
+    "doc_count": 2
+  },
+  {
+    "key": "perfromance",
+    "doc_count": 2
+  },
+  {
+    "key": "series of online - performance events",
+    "doc_count": 2
+  },
+  {
+    "key": """ursprungsformat: betacam
+    pal / farbe / ohne ton""",
+    "doc_count": 2
+  },
+  {
+    "key": "verleihung",
+    "doc_count": 2
+  },
+  {
+    "key": "vhs video",
+    "doc_count": 2
+  },
+  {
+    "key": "video-performance-event thur 8.april 2021, 8 pm (ch), 4 pm (argentina, brasil)",
+    "doc_count": 2
+  },
+  {
+    "key": "videoaufzeichnung",
+    "doc_count": 2
+  },
+  {
+    "key": "videotrailer, farbe, ton",
+    "doc_count": 2
+  },
+  {
+    "key": "videovortrag",
+    "doc_count": 2
+  },
+  {
+    "key": "werkstatt",
+    "doc_count": 2
+  },
+  {
+    "key": "01:00:00",
+    "doc_count": 1
+  },
+  {
+    "key": "1 zoll c",
+    "doc_count": 1
+  },
+  {
+    "key": "2 channel video installation for may 26, 1995",
+    "doc_count": 1
+  },
+  {
+    "key": "35 bücher in unikater ausführung",
+    "doc_count": 1
+  },
+  {
+    "key": "4:3, ton",
+    "doc_count": 1
+  },
+  {
+    "key": "5 kanal video installation",
+    "doc_count": 1
+  },
+  {
+    "key": "abend",
+    "doc_count": 1
+  },
+  {
+    "key": "akai 1/4 zoll",
+    "doc_count": 1
+  },
+  {
+    "key": "animierter film, ton",
+    "doc_count": 1
+  },
+  {
+    "key": "art exhibition",
+    "doc_count": 1
+  },
+  {
+    "key": "artwork, kunstvideo",
+    "doc_count": 1
+  },
+  {
+    "key": "aufruf",
+    "doc_count": 1
+  },
+  {
+    "key": "ausstellungsdokumentation",
+    "doc_count": 1
+  },
+  {
+    "key": "case",
+    "doc_count": 1
+  },
+  {
+    "key": "computerprogram",
+    "doc_count": 1
+  },
+  {
+    "key": "dias, digitalprints",
+    "doc_count": 1
+  },
+  {
+    "key": "dias, video",
+    "doc_count": 1
+  },
+  {
+    "key": "digibeta beta",
+    "doc_count": 1
+  },
+  {
+    "key": "diskussionsabend",
+    "doc_count": 1
+  },
+  {
+    "key": "documentation, ressources",
+    "doc_count": 1
+  },
+  {
+    "key": "dokumentation anlässlich ihrer preisverleihung",
+    "doc_count": 1
+  },
+  {
+    "key": "dokumentation des internet-gesprächs",
+    "doc_count": 1
+  },
+  {
+    "key": "dokumentationsprojekt",
+    "doc_count": 1
+  },
+  {
+    "key": "erfahren der dimension zeit",
+    "doc_count": 1
+  },
+  {
+    "key": "film- & video-project, s/w & farbe, ton",
+    "doc_count": 1
+  },
+  {
+    "key": "flyer",
+    "doc_count": 1
+  },
+  {
+    "key": "forumpost",
+    "doc_count": 1
+  },
+  {
+    "key": "fotomontage",
+    "doc_count": 1
+  },
+  {
+    "key": "fotos, video, animation",
+    "doc_count": 1
+  },
+  {
+    "key": "fotos, videos",
+    "doc_count": 1
+  },
+  {
+    "key": "führung",
+    "doc_count": 1
+  },
+  {
+    "key": "gopro video",
+    "doc_count": 1
+  },
+  {
+    "key": "hd (original dv-pal 4:3), sound",
+    "doc_count": 1
+  },
+  {
+    "key": "hd video",
+    "doc_count": 1
+  },
+  {
+    "key": "hd video, color, sound, 1'36''",
+    "doc_count": 1
+  },
+  {
+    "key": "hd video, color, sound, 1'54''",
+    "doc_count": 1
+  },
+  {
+    "key": "hd video, color, sound, 10'23''",
+    "doc_count": 1
+  },
+  {
+    "key": "hd video, color, sound, 11'56''",
+    "doc_count": 1
+  },
+  {
+    "key": "hd video, color, sound, 13'39''",
+    "doc_count": 1
+  },
+  {
+    "key": "hd video, color, sound, 14'14''",
+    "doc_count": 1
+  },
+  {
+    "key": "hd video, color, sound, 2'24''",
+    "doc_count": 1
+  },
+  {
+    "key": "hd video, color, sound, 3'03''",
+    "doc_count": 1
+  },
+  {
+    "key": "hd video, color, sound, 3'37''",
+    "doc_count": 1
+  },
+  {
+    "key": "hd video, color, sound, 4'10''",
+    "doc_count": 1
+  },
+  {
+    "key": "hd video, color, sound, 4'8''",
+    "doc_count": 1
+  },
+  {
+    "key": "hd video, color, sound, 5'04''",
+    "doc_count": 1
+  },
+  {
+    "key": "hd video, color, sound, 5'21''",
+    "doc_count": 1
+  },
+  {
+    "key": "hd video, color, sound, 5'25''",
+    "doc_count": 1
+  },
+  {
+    "key": "hd video, color, sound, 6'10''",
+    "doc_count": 1
+  },
+  {
+    "key": "hd video, color, sound, 60'1''",
+    "doc_count": 1
+  },
+  {
+    "key": "hd video, color, sound, 7'32''",
+    "doc_count": 1
+  },
+  {
+    "key": "hdv video, animation",
+    "doc_count": 1
+  },
+  {
+    "key": "hdv video, dvd",
+    "doc_count": 1
+  },
+  {
+    "key": "hi8 ntsc",
+    "doc_count": 1
+  },
+  {
+    "key": "hi8 video, dvd",
+    "doc_count": 1
+  },
+  {
+    "key": "installation & konzert",
+    "doc_count": 1
+  },
+  {
+    "key": "jpg",
+    "doc_count": 1
+  },
+  {
+    "key": "keynote",
+    "doc_count": 1
+  },
+  {
+    "key": "konzept",
+    "doc_count": 1
+  },
+  {
+    "key": "kurzvorträge",
+    "doc_count": 1
+  },
+  {
+    "key": "lecture",
+    "doc_count": 1
+  },
+  {
+    "key": "lehrmittel",
+    "doc_count": 1
+  },
+  {
+    "key": "letter",
+    "doc_count": 1
+  },
+  {
+    "key": "malerei",
+    "doc_count": 1
+  },
+  {
+    "key": "malerei und video",
+    "doc_count": 1
+  },
+  {
+    "key": "manuscript",
+    "doc_count": 1
+  },
+  {
+    "key": "mischtechnik",
+    "doc_count": 1
+  },
+  {
+    "key": "modekollektion",
+    "doc_count": 1
+  },
+  {
+    "key": "monatsmodell",
+    "doc_count": 1
+  },
+  {
+    "key": "motette",
+    "doc_count": 1
+  },
+  {
+    "key": "musikshow",
+    "doc_count": 1
+  },
+  {
+    "key": "negative 6x6, barytauszüge",
+    "doc_count": 1
+  },
+  {
+    "key": "offenspule 1/2“",
+    "doc_count": 1
+  },
+  {
+    "key": "pal / farbe / mono",
+    "doc_count": 1
+  },
+  {
+    "key": "pal / farbe / stereo. ursprungsformat: u-matic low band",
+    "doc_count": 1
+  },
+  {
+    "key": "performance, rauminstallation, kunst",
+    "doc_count": 1
+  },
+  {
+    "key": "performative aktion",
+    "doc_count": 1
+  },
+  {
+    "key": "performativer wissensaustausch",
+    "doc_count": 1
+  },
+  {
+    "key": "performing arts",
+    "doc_count": 1
+  },
+  {
+    "key": "plakat",
+    "doc_count": 1
+  },
+  {
+    "key": "plattentaufe",
+    "doc_count": 1
+  },
+  {
+    "key": "podiums-diskussion",
+    "doc_count": 1
+  },
+  {
+    "key": "realtalk - austausch und kritikformat für künstler:innen",
+    "doc_count": 1
+  },
+  {
+    "key": "release, essen",
+    "doc_count": 1
+  },
+  {
+    "key": "rohmaterial, videoproduktion",
+    "doc_count": 1
+  },
+  {
+    "key": "slideshow",
+    "doc_count": 1
+  },
+  {
+    "key": "stream",
+    "doc_count": 1
+  },
+  {
+    "key": "stückentwicklung",
+    "doc_count": 1
+  },
+  {
+    "key": "super8, farbe, ton",
+    "doc_count": 1
+  },
+  {
+    "key": "text",
+    "doc_count": 1
+  },
+  {
+    "key": "u-matic hb lb",
+    "doc_count": 1
+  },
+  {
+    "key": "u-matic hb sp",
+    "doc_count": 1
+  },
+  {
+    "key": "ursprungsformat: 24 tv-apparate",
+    "doc_count": 1
+  },
+  {
+    "key": """ursprungsformat: 4 fotos
+    kein video""",
+    "doc_count": 1
+  },
+  {
+    "key": """ursprungsformat: betacam sp
+    pal / farbe / stereo""",
+    "doc_count": 1
+  },
+  {
+    "key": """ursprungsformat: japan standart 1
+    pal / s/w / mono""",
+    "doc_count": 1
+  },
+  {
+    "key": """ursprungsformat: shibaden 1/2"
+    pal / s/w / mehrkanalton""",
+    "doc_count": 1
+  },
+  {
+    "key": """ursprungsformat: u-matic low band
+    ntsc / farbe / stereo""",
+    "doc_count": 1
+  },
+  {
+    "key": """ursprungsformat: u-matic low band
+    pal / farbe / mono ch1 + ch2""",
+    "doc_count": 1
+  },
+  {
+    "key": """ursprungsformat: vhs
+    pal / farbe / ohne ton""",
+    "doc_count": 1
+  },
+  {
+    "key": """ursprungsformat: vhs
+    pal / mehrkanalton""",
+    "doc_count": 1
+  },
+  {
+    "key": "veranstaltung",
+    "doc_count": 1
+  },
+  {
+    "key": "versammlung",
+    "doc_count": 1
+  },
+  {
+    "key": "vhs",
+    "doc_count": 1
+  },
+  {
+    "key": "vhs video, film 16 mm",
+    "doc_count": 1
+  },
+  {
+    "key": "vhs video, mp4",
+    "doc_count": 1
+  },
+  {
+    "key": "vhs video, sw fotoauszüge",
+    "doc_count": 1
+  },
+  {
+    "key": "video dvcam",
+    "doc_count": 1
+  },
+  {
+    "key": "video hi8, überspielt auf dv cam",
+    "doc_count": 1
+  },
+  {
+    "key": "video, animation",
+    "doc_count": 1
+  },
+  {
+    "key": "video, dias",
+    "doc_count": 1
+  },
+  {
+    "key": "video, dias, fotos",
+    "doc_count": 1
+  },
+  {
+    "key": "video, foto, animation",
+    "doc_count": 1
+  },
+  {
+    "key": "video, fotos",
+    "doc_count": 1
+  },
+  {
+    "key": "video, performance, fotos",
+    "doc_count": 1
+  },
+  {
+    "key": "video, s/w",
+    "doc_count": 1
+  },
+  {
+    "key": "video, s/w, ton, multi-channel installation",
+    "doc_count": 1
+  },
+  {
+    "key": "videodokumentation, dvd",
+    "doc_count": 1
+  },
+  {
+    "key": "videoprojektion",
+    "doc_count": 1
+  },
+  {
+    "key": "vorstellung",
+    "doc_count": 1
+  },
+  {
+    "key": "workshop, ausstellung",
+    "doc_count": 1
+  }
+]

@@ -15,6 +15,93 @@ const docTemplaterevcat = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
+        "/search/{query}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Execute search query and return formatted Markdown report comparing client ranking against baseline",
+                "produces": [
+                    "text/plain"
+                ],
+                "tags": [
+                    "search"
+                ],
+                "summary": "Search and evaluate ranking matrix",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Search Query",
+                        "name": "query",
+                        "in": "path"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Alternative query parameter",
+                        "name": "q",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Client name (default: performance)",
+                        "name": "client",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Baseline client name (default: default_baseline)",
+                        "name": "baseline",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Maximum number of hits to evaluate (default: 30)",
+                        "name": "limit",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Access groups, comma-separated (default: global/guest)",
+                        "name": "groups",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Markdown formatted report",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "bad request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "unauthorized",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "internal error",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/item/{signature}": {
             "get": {
                 "security": [

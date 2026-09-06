@@ -38,7 +38,7 @@ var defaultSearchFields = []string{
 	"media.*.fulltext",
 }
 
-var defaultFieldWeights = map[string]float64{
+var defaultSearchWeights = map[string]float64{
 	"title":            4.0,
 	"persons.name":     4.0,
 	"collectiontitle":  2.0,
@@ -51,15 +51,15 @@ var defaultFieldWeights = map[string]float64{
 	"media.*.fulltext": 1.0,
 }
 
-func NewElasticResolver(elastic *elasticsearch.TypedClient, index string, clients []*config.Client, roleWeights map[string]float64, fieldWeights map[string]float64, logger zLogger.ZLogger) *ElasticResolver {
+func NewElasticResolver(elastic *elasticsearch.TypedClient, index string, clients []*config.Client, searchWeights map[string]float64, fieldWeights map[string]map[string]float64, logger zLogger.ZLogger) *ElasticResolver {
 	r := &ElasticResolver{
-		elastic:      elastic,
-		index:        index,
-		roleWeights:  roleWeights,
-		fieldWeights: fieldWeights,
-		logger:       logger,
-		objectCache:  gcache.New(800).LRU().Build(),
-		client:       make(map[string]*config.Client),
+		elastic:       elastic,
+		index:         index,
+		searchWeights: searchWeights,
+		fieldWeights:  fieldWeights,
+		logger:        logger,
+		objectCache:   gcache.New(800).LRU().Build(),
+		client:        make(map[string]*config.Client),
 	}
 	for _, client := range clients {
 		r.client[client.Name] = client
@@ -68,16 +68,16 @@ func NewElasticResolver(elastic *elasticsearch.TypedClient, index string, client
 }
 
 type ElasticResolver struct {
-	elastic      *elasticsearch.TypedClient
-	logger       zLogger.ZLogger
-	index        string
-	objectCache  gcache.Cache
-	client       map[string]*config.Client
-	roleWeights  map[string]float64
-	fieldWeights map[string]float64
-	jwtKey       string
-	jwtAlgs      []string
-	jwtMaxAge    time.Duration
+	elastic       *elasticsearch.TypedClient
+	logger        zLogger.ZLogger
+	index         string
+	objectCache   gcache.Cache
+	client        map[string]*config.Client
+	searchWeights map[string]float64
+	fieldWeights  map[string]map[string]float64
+	jwtKey        string
+	jwtAlgs       []string
+	jwtMaxAge     time.Duration
 }
 
 func BuildBaseFilter(client *config.Client, groups ...string) ([]types.Query, error) {
@@ -372,17 +372,17 @@ func (r *ElasticResolver) Search(
 	}
 	if query != "" {
 		getWeight := func(name string) float64 {
-			if client != nil && client.FieldWeights != nil {
-				if w, ok := client.FieldWeights[name]; ok && w > 0 {
+			if client != nil && client.SearchWeights != nil {
+				if w, ok := client.SearchWeights[name]; ok {
 					return w
 				}
 			}
-			if r.fieldWeights != nil {
-				if w, ok := r.fieldWeights[name]; ok && w > 0 {
+			if r.searchWeights != nil {
+				if w, ok := r.searchWeights[name]; ok {
 					return w
 				}
 			}
-			if def, ok := defaultFieldWeights[name]; ok {
+			if def, ok := defaultSearchWeights[name]; ok {
 				return def
 			}
 			return 1.0
@@ -545,56 +545,87 @@ func (r *ElasticResolver) Search(
 			},
 		}
 	}
-	roleWeights := r.roleWeights
-	if client != nil && len(client.RoleWeights) > 0 {
-		roleWeights = client.RoleWeights
-	} else if client != nil {
-		r.logger.Debug().Msgf("client role weights not found for client %s", client.Name)
+	fieldWeights := r.fieldWeights
+	if client != nil && len(client.FieldWeights) > 0 {
+		fieldWeights = client.FieldWeights
+	} else if client != nil && r.logger != nil {
+		r.logger.Debug().Msgf("client field weights not found for client %s", client.Name)
 	}
 
-	if len(roleWeights) > 0 && query != "" && searchRequest.Query != nil {
-		roles := make([]string, 0, len(roleWeights))
-		for role := range roleWeights {
-			roles = append(roles, role)
+	if len(fieldWeights) > 0 && query != "" && searchRequest.Query != nil {
+		fieldKeys := make([]string, 0, len(fieldWeights))
+		for k := range fieldWeights {
+			fieldKeys = append(fieldKeys, k)
 		}
-		slices.Sort(roles)
+		slices.Sort(fieldKeys)
 
 		var scoreFunctions []types.FunctionScore
-		for _, role := range roles {
-			weight := roleWeights[role]
-			if weight <= 0 {
+		for _, fieldKey := range fieldKeys {
+			valWeights := fieldWeights[fieldKey]
+			if len(valWeights) == 0 {
 				continue
 			}
-			w := types.Float64(weight)
-			rRole := role
-			// r.logger.Debug().Msgf("role %s weight %f", rRole, weight)
-			scoreFunctions = append(scoreFunctions, types.FunctionScore{
-				Filter: &types.Query{
-					Nested: &types.NestedQuery{
-						Path: "persons",
-						Query: types.Query{
-							Bool: &types.BoolQuery{
-								Must: []types.Query{
-									{
-										SimpleQueryString: &types.SimpleQueryStringQuery{
-											Query:  query,
-											Fields: []string{"persons.name"},
-										},
-									},
-									{
-										Term: map[string]types.TermQuery{
-											"persons.role.keyword": {
-												Value: rRole,
+			nestedPath, _, termField := parseFieldKey(fieldKey)
+
+			vals := make([]string, 0, len(valWeights))
+			for v := range valWeights {
+				vals = append(vals, v)
+			}
+			slices.Sort(vals)
+
+			for _, val := range vals {
+				weight := valWeights[val]
+				if weight <= 0 {
+					continue
+				}
+				w := types.Float64(weight)
+				rVal := val
+
+				if nestedPath != "" {
+					searchField := nestedPath + ".*"
+					if nestedPath == "persons" {
+						searchField = "persons.name"
+					}
+					scoreFunctions = append(scoreFunctions, types.FunctionScore{
+						Filter: &types.Query{
+							Nested: &types.NestedQuery{
+								Path: nestedPath,
+								Query: types.Query{
+									Bool: &types.BoolQuery{
+										Must: []types.Query{
+											{
+												SimpleQueryString: &types.SimpleQueryStringQuery{
+													Query:  query,
+													Fields: []string{searchField},
+												},
+											},
+											{
+												Term: map[string]types.TermQuery{
+													termField: {
+														Value: rVal,
+													},
+												},
 											},
 										},
 									},
 								},
 							},
 						},
-					},
-				},
-				Weight: &w,
-			})
+						Weight: &w,
+					})
+				} else {
+					scoreFunctions = append(scoreFunctions, types.FunctionScore{
+						Filter: &types.Query{
+							Term: map[string]types.TermQuery{
+								termField: {
+									Value: rVal,
+								},
+							},
+						},
+						Weight: &w,
+					})
+				}
+			}
 		}
 
 		if len(scoreFunctions) > 0 {

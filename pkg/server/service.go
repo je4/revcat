@@ -74,9 +74,11 @@ func validateJWT[T jwt.Claims](tokenString, key string, claims T, maxAge time.Du
 func NewController(localAddr, externalAddr string, cert *tls.Certificate, serverResolver resolver.Resolver, clients []*config.Client, syncJWTKey string, logger zLogger.ZLogger) *Controller {
 	// for faster access
 	clientByApiKey := make(map[string]*config.Client)
+	clientByName := make(map[string]*config.Client)
 	for _, client := range clients {
 		logger.Debug().Msgf("adding client %s with apikey '%s'", client.Name, client.Apikey.String())
 		clientByApiKey[string(client.Apikey)] = client
+		clientByName[client.Name] = client
 	}
 
 	ctrl := &Controller{
@@ -86,6 +88,7 @@ func NewController(localAddr, externalAddr string, cert *tls.Certificate, server
 		cert:         cert,
 		logger:       logger,
 		resolver:     serverResolver,
+		clientByName: clientByName,
 	}
 	router := gin.Default()
 	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, ginSwagger.InstanceName("revcat")))
@@ -96,6 +99,7 @@ func NewController(localAddr, externalAddr string, cert *tls.Certificate, server
 	restRouter.GET("/item/:signature", ctrl.getSignature)
 	restRouter.POST("/item/:signature", ctrl.updateSignature)
 	restRouter.DELETE("/item/:signature", ctrl.deleteSignature)
+	restRouter.GET("/search/*query", ctrl.searchMarkdown)
 
 	subRouter := router.Group("/graphql")
 	subRouter.Use(cors.Default())
@@ -125,6 +129,7 @@ type Controller struct {
 	cert         *tls.Certificate
 	logger       zLogger.ZLogger
 	resolver     resolver.Resolver
+	clientByName map[string]*config.Client
 }
 
 func (ctrl *Controller) Handler() http.Handler {
@@ -138,12 +143,14 @@ func (ctrl *Controller) Start() error {
 	go func() {
 		if ctrl.srv.TLSConfig == nil {
 			fmt.Printf("starting server at http://%s\n", ctrl.localAddr)
+			fmt.Printf("starting server at http://%s/swagger/index.html\n", ctrl.localAddr)
 			if err := ctrl.srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 				// unexpected error. port in use?
 				fmt.Errorf("server on '%s' ended: %v", ctrl.localAddr, err)
 			}
 		} else {
 			fmt.Printf("starting server at https://%s\n", ctrl.localAddr)
+			fmt.Printf("starting server at https://%s/swagger/index.html\n", ctrl.localAddr)
 			if err := ctrl.srv.ListenAndServeTLS("", ""); !errors.Is(err, http.ErrServerClosed) {
 				// unexpected error. port in use?
 				fmt.Errorf("server on '%s' ended: %v", ctrl.localAddr, err)

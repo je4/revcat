@@ -19,25 +19,26 @@ type ClientANDQuery struct {
 }
 
 type Client struct {
-	Name         string             `toml:"name"`
-	Apikey       config.EnvString   `toml:"apikey"`
-	Groups       []string           `toml:"groups"`
-	AND          []ClientANDQuery   `toml:"and"`
-	JWTKey       config.EnvString   `toml:"jwtkey"`
-	JWTAlgs      []string           `toml:"jwtalg"`
-	JWTMaxAge    config.Duration    `toml:"jwtmaxage"`
-	RoleWeights  map[string]float64 `toml:"roleweights"`
-	FieldWeights map[string]float64 `toml:"fieldweights"`
-	AddedBoost   bool               `toml:"addedboost"`
+	Name           string                        `toml:"name"`
+	Apikey         config.EnvString              `toml:"apikey"`
+	Groups         []string                      `toml:"groups"`
+	AND            []ClientANDQuery              `toml:"and"`
+	JWTKey         config.EnvString              `toml:"jwtkey"`
+	JWTAlgs        []string                      `toml:"jwtalg"`
+	JWTMaxAge      config.Duration               `toml:"jwtmaxage"`
+	SearchWeights  map[string]float64            `toml:"searchweights"`
+	FieldWeights   map[string]map[string]float64 `toml:"fieldweights"`
+	AddedBoost     bool                          `toml:"addedboost"`
+	ContentWeights map[string]float64            `toml:"contentweights"`
 }
 
 type ElasticSearchConfig struct {
-	Endpoint     []string           `toml:"endpoint"`
-	Index        string             `toml:"index"`
-	ApiKey       config.EnvString   `toml:"apikey"`
-	Debug        bool               `toml:"debug"`
-	RoleWeights  map[string]float64 `toml:"roleweights"`
-	FieldWeights map[string]float64 `toml:"fieldweights"`
+	Endpoint      []string                      `toml:"endpoint"`
+	Index         string                        `toml:"index"`
+	ApiKey        config.EnvString              `toml:"apikey"`
+	Debug         bool                          `toml:"debug"`
+	SearchWeights map[string]float64            `toml:"searchweights"`
+	FieldWeights  map[string]map[string]float64 `toml:"fieldweights"`
 }
 
 type ZoomConfig struct {

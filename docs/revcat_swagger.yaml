@@ -185,6 +185,62 @@ info:
   title: RevCat REST API
   version: "2.0"
 paths:
+  /search/{query}:
+    get:
+      description: Execute search query and return formatted Markdown report comparing client ranking against baseline
+      parameters:
+      - description: Search Query
+        in: path
+        name: query
+        type: string
+      - description: Alternative query parameter
+        in: query
+        name: q
+        type: string
+      - description: 'Client name (default: performance)'
+        in: query
+        name: client
+        type: string
+      - description: 'Baseline client name (default: default_baseline)'
+        in: query
+        name: baseline
+        type: string
+      - description: 'Maximum number of hits to evaluate (default: 30)'
+        in: query
+        name: limit
+        type: integer
+      - description: 'Access groups, comma-separated (default: global/guest)'
+        in: query
+        name: groups
+        type: string
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: Markdown formatted report
+          schema:
+            type: string
+        "400":
+          description: bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: unauthorized
+          schema:
+            type: string
+        "500":
+          description: internal error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Search and evaluate ranking matrix
+      tags:
+      - search
   /item/{signature}:
     delete:
       description: Delete catalog entry by signature from resolver

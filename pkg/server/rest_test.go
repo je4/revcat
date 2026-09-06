@@ -13,17 +13,32 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/je4/revcat/v2/config"
 	"github.com/je4/revcat/v2/pkg/sourcetype"
 	"github.com/je4/revcat/v2/tools/graph/model"
 )
 
 type mockResolver struct {
-	entries map[string]sourcetype.SourceData
-	err     error
+	entries        map[string]sourcetype.SourceData
+	err            error
+	searchResult   *model.SearchResult
+	searchByClient map[string]*model.SearchResult
 }
 
 func (m *mockResolver) Search(ctx context.Context, searchType string, query string, facets []*model.InFacet, filter []*model.InFilter, vector []float64, first *int, size *int, cursor *string, sort []*model.SortField) (*model.SearchResult, error) {
-	return nil, m.err
+	if m.err != nil {
+		return nil, m.err
+	}
+	if m.searchByClient != nil {
+		client, _ := ctx.Value("client").(string)
+		if res, ok := m.searchByClient[client]; ok {
+			return res, nil
+		}
+	}
+	if m.searchResult != nil {
+		return m.searchResult, nil
+	}
+	return &model.SearchResult{}, nil
 }
 
 func (m *mockResolver) MediathekEntries(ctx context.Context, signatures []string) ([]*model.MediathekFullEntry, error) {
@@ -104,6 +119,9 @@ func TestSwaggerEndpoints(t *testing.T) {
 		paths, ok := doc["paths"].(map[string]any)
 		if !ok || paths["/item/{signature}"] == nil {
 			t.Errorf("expected doc.json paths to contain '/item/{signature}', got %v", paths)
+		}
+		if paths["/search/{query}"] == nil {
+			t.Errorf("expected doc.json paths to contain '/search/{query}', got %v", paths)
 		}
 		itemPath, ok := paths["/item/{signature}"].(map[string]any)
 		if !ok {
@@ -287,6 +305,201 @@ func TestRestEndpoints(t *testing.T) {
 		errCtrl := NewController("localhost:8080", "http://localhost:8080/graphql", nil, errResolver, nil, secret, logger)
 
 		req := httptest.NewRequest(http.MethodDelete, "/rest/item/test-sig-1", nil)
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", validToken))
+		w := httptest.NewRecorder()
+		errCtrl.srv.Handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusInternalServerError {
+			t.Errorf("expected status 500, got %d", w.Code)
+		}
+	})
+}
+
+func TestSearchMarkdownEndpoints(t *testing.T) {
+	logger := newTestLogger()
+	secret := "test-sync-key"
+
+	strPtr := func(s string) *string {
+		return &s
+	}
+
+	perfClient := &config.Client{
+		Name: "performance",
+		FieldWeights: map[string]map[string]float64{
+			"type": {"performance": 5.0},
+			"[persons].role": {
+				"performer":   4.0,
+				"contributor": 2.0,
+			},
+		},
+		AND: []config.ClientANDQuery{
+			{
+				OR: []config.ClientOrQuery{
+					{
+						Field:  "category.keyword",
+						Values: []string{"zotero2!!PCB_Basel"},
+					},
+				},
+			},
+		},
+	}
+
+	resTarget := &model.SearchResult{
+		TotalCount: 2,
+		Edges: []*model.MediathekFullEntry{
+			{
+				ID: "sig-perf-1",
+				Base: &model.MediathekBaseEntry{
+					Signature: "sig-perf-1",
+					Type:      strPtr("performance"),
+					Title:     []*model.MultiLangString{{Value: "Performance Mathis"}},
+					Person: []*model.Person{
+						{Name: "Muda Mathis", Role: strPtr("performer")},
+					},
+					Category: []string{"zotero2!!PCB_Basel"},
+				},
+			},
+			{
+				ID: "sig-book-2",
+				Base: &model.MediathekBaseEntry{
+					Signature: "sig-book-2",
+					Type:      strPtr("book"),
+					Title:     []*model.MultiLangString{{Value: "Book Mathis"}},
+					Person: []*model.Person{
+						{Name: "Muda Mathis", Role: strPtr("contributor")},
+					},
+					Category: []string{"zotero2!!PCB_Basel"},
+				},
+			},
+		},
+	}
+
+	resBaseline := &model.SearchResult{
+		TotalCount: 2,
+		Edges: []*model.MediathekFullEntry{
+			{
+				ID: "sig-book-2",
+				Base: &model.MediathekBaseEntry{
+					Signature: "sig-book-2",
+					Type:      strPtr("book"),
+					Title:     []*model.MultiLangString{{Value: "Book Mathis"}},
+					Person: []*model.Person{
+						{Name: "Muda Mathis", Role: strPtr("contributor")},
+					},
+					Category: []string{"zotero2!!PCB_Basel"},
+				},
+			},
+			{
+				ID: "sig-perf-1",
+				Base: &model.MediathekBaseEntry{
+					Signature: "sig-perf-1",
+					Type:      strPtr("performance"),
+					Title:     []*model.MultiLangString{{Value: "Performance Mathis"}},
+					Person: []*model.Person{
+						{Name: "Muda Mathis", Role: strPtr("performer")},
+					},
+					Category: []string{"zotero2!!PCB_Basel"},
+				},
+			},
+		},
+	}
+
+	mockRes := &mockResolver{
+		searchByClient: map[string]*model.SearchResult{
+			"performance":      resTarget,
+			"default_baseline": resBaseline,
+		},
+	}
+
+	ctrl := NewController("localhost:8080", "http://localhost:8080/graphql", nil, mockRes, []*config.Client{perfClient}, secret, logger)
+
+	now := time.Now()
+	validToken, err := generateTestToken(secret, &jwt.RegisteredClaims{
+		IssuedAt:  jwt.NewNumericDate(now),
+		ExpiresAt: jwt.NewNumericDate(now.Add(1 * time.Hour)),
+	})
+	if err != nil {
+		t.Fatalf("failed to generate token: %v", err)
+	}
+
+	t.Run("search unauthorized", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/rest/search/muda%20mathis", nil)
+		w := httptest.NewRecorder()
+		ctrl.srv.Handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusUnauthorized {
+			t.Errorf("expected status 401, got %d", w.Code)
+		}
+	})
+
+	t.Run("search empty query bad request", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/rest/search/", nil)
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", validToken))
+		w := httptest.NewRecorder()
+		ctrl.srv.Handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusBadRequest {
+			t.Errorf("expected status 400, got %d", w.Code)
+		}
+	})
+
+	t.Run("search success with markdown output", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/rest/search/muda%20mathis", nil)
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", validToken))
+		w := httptest.NewRecorder()
+		ctrl.srv.Handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d: %s", w.Code, w.Body.String())
+		}
+		contentType := w.Header().Get("Content-Type")
+		if !strings.Contains(contentType, "text/markdown") {
+			t.Errorf("expected Content-Type text/markdown, got: %s", contentType)
+		}
+
+		body := w.Body.String()
+		expectedSnippets := []string{
+			`# Search Prioritization & Ranking Matrix: "muda mathis"`,
+			`**Query**: ` + "`muda mathis`",
+			`**Client**: ` + "`performance`",
+			`**Baseline**: ` + "`default_baseline`",
+			`| Rank | Base # | Delta | Signature | Title | Type (Boost) | Role (Boost) | Max Boost | Tier | Status |`,
+			`| [#01] | #02 | +1 | ` + "`sig-perf-1`" + ` | Performance Mathis | performance (x5.0) | performer (x4.0) | x5.0 | Tier 1 [4-5x] | BOOSTED (+Δ) |`,
+			`| [#02] | #01 | -1 | ` + "`sig-book-2`" + ` | Book Mathis | book (x1.0) | contributor (x2.0) | x2.0 | Tier 2 [1.5-2x] | BOOSTED (-Δ) |`,
+			`### Tier Distribution & Statistical Analysis`,
+			`Tier 1 (High Boost 4.0-5.0x)`,
+			`Tier 2 (Med Boost 1.5-2.0x)`,
+			`### Prioritization & Filter Invariants`,
+			`**Top 10 Boosted Dominance**`,
+			`**Category Filter Enforcement**: PASS`,
+		}
+
+		for _, snippet := range expectedSnippets {
+			if !strings.Contains(body, snippet) {
+				t.Errorf("expected body to contain snippet:\n%s\n\nGot body:\n%s", snippet, body)
+			}
+		}
+	})
+
+	t.Run("search with query parameters", func(t *testing.T) {
+		req := httptest.NewRequest(http.MethodGet, "/rest/search/?q=muda%20mathis&client=performance&baseline=default_baseline&limit=10&groups=custom_group", nil)
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", validToken))
+		w := httptest.NewRecorder()
+		ctrl.srv.Handler.ServeHTTP(w, req)
+
+		if w.Code != http.StatusOK {
+			t.Fatalf("expected status 200, got %d: %s", w.Code, w.Body.String())
+		}
+		if !strings.Contains(w.Body.String(), "**Evaluated Hits Limit**: `10`") {
+			t.Errorf("expected evaluated limit 10 in output, got: %s", w.Body.String())
+		}
+	})
+
+	t.Run("search internal resolver error", func(t *testing.T) {
+		errResolver := &mockResolver{err: errors.New("resolver search failed")}
+		errCtrl := NewController("localhost:8080", "http://localhost:8080/graphql", nil, errResolver, []*config.Client{perfClient}, secret, logger)
+
+		req := httptest.NewRequest(http.MethodGet, "/rest/search/muda%20mathis", nil)
 		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", validToken))
 		w := httptest.NewRecorder()
 		errCtrl.srv.Handler.ServeHTTP(w, req)

@@ -17,7 +17,19 @@ index = "fhnw_ink"
 apikey = "%%ELASTIC_APIKEY%%"
 debug = true
 
-[elasticsearch.roleweights]
+[elasticsearch.searchweights]
+"title" = 4.0
+"persons.name" = 4.0
+"collectiontitle" = 2.0
+"series" = 2.0
+"tags" = 2.0
+"category" = 1.5
+"abstract" = 1.1
+"notes.title" = 1.2
+"notes.note" = 1.0
+"media.*.fulltext" = 1.0
+
+[elasticsearch.fieldweights."[persons].role"]
 "author" = 3.0
 "artist" = 2.5
 "director" = 2.5
@@ -30,18 +42,6 @@ debug = true
 "contributor" = 1.2
 "translator" = 1.1
 
-[elasticsearch.fieldweights]
-"title" = 3.0
-"persons.name" = 5.0
-"collectiontitle" = 2.0
-"series" = 2.0
-"tags" = 2.0
-"category" = 1.5
-"abstract" = 1.1
-"notes.title" = 1.2
-"notes.note" = 1.0
-"media.*.fulltext" = 1.0
-
 [[client]]
 name = "performance"
 apikey = "%%TEST.APIKEY%%"
@@ -50,14 +50,7 @@ jwtkey = "%%TEST.JWTKEY%%" # ":Xf/#|IKYrDsNi4]LN*o(W7;:"
 jwtalg = ["HS256","HS384","HS512"]
 jwtmaxage = "10m"
 addedBoost = true
-[client.roleweights]
-"artist" = 4.0
-"performer" = 4.0
-"director" = 1.5
-"author" = 4.0
-"eventcurator" = 2.0
-"contributor" = 2.0
-[client.fieldweights]
+[client.searchweights]
 "title" = 3.0
 "persons.name" = 5.0
 "collectiontitle" = 2.0
@@ -68,6 +61,16 @@ addedBoost = true
 "notes.title" = 1.2
 "notes.note" = 1.0
 "media.*.fulltext" = 1.0
+[client.fieldweights.type]
+"performance" = 5.0
+"Performance" = 5.0
+[client.fieldweights."[persons].role"]
+"artist" = 4.0
+"performer" = 4.0
+"director" = 1.5
+"author" = 4.0
+"eventcurator" = 2.0
+"contributor" = 2.0
 [[client.and]]
 [[client.and.or]]
 field = "category.keyword"
@@ -96,13 +99,7 @@ groups = ["global/guest"]
 jwtkey = "%%TEST.JWTKEY%%" # ":Xf/#|IKYrDsNi4]LN*o(W7;:"
 jwtalg = ["HS256","HS384","HS512"]
 jwtmaxage = "10m"
-[client.roleweights]
-"author" = 4.0
-"editor" = 2.0
-"creator" = 2.0
-"translator" = 1.5
-"contributor" = 1.2
-[client.fieldweights]
+[client.searchweights]
 "title" = 3.0
 "persons.name" = 5.0
 "collectiontitle" = 2.0
@@ -113,3 +110,10 @@ jwtmaxage = "10m"
 "notes.title" = 1.2
 "notes.note" = 1.0
 "media.*.fulltext" = 1.0
+
+[client.fieldweights."[persons].role"]
+"author" = 4.0
+"editor" = 2.0
+"creator" = 2.0
+"translator" = 1.5
+"contributor" = 1.2

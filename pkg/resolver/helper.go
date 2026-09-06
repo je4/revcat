@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"regexp"
+	"strings"
 	"time"
 
 	"emperror.dev/errors"
@@ -55,6 +56,23 @@ func CheckJWTValid(tokenstring string, secret string, alg []string, maxAge time.
 }
 
 var nestedRegexp = regexp.MustCompile(`^\[([^\[\]]+)\]\.(.*)$`)
+
+func parseFieldKey(fieldKey string) (nestedPath string, fullFieldName string, termField string) {
+	matches := nestedRegexp.FindStringSubmatch(fieldKey)
+	if len(matches) == 3 {
+		nestedPath = matches[1]
+		field := matches[2]
+		fullFieldName = fmt.Sprintf("%s.%s", nestedPath, field)
+	} else {
+		nestedPath = ""
+		fullFieldName = fieldKey
+	}
+	termField = fullFieldName
+	if !strings.HasSuffix(termField, ".keyword") {
+		termField = termField + ".keyword"
+	}
+	return
+}
 
 func createFilterQuery(filter *model.InFilter) (*types.Query, error) {
 	if filter.ExistsTerm != nil {
